@@ -2,10 +2,8 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 
 	"fmt"
 
@@ -19,25 +17,11 @@ func main() {
 			"message": "pong",
 		})
 	})
-	// exactly the same as the built-in
-	schemacreate, erro := os.ReadFile("schema.sql")
-	if erro != nil {
-		fmt.Println("breaky")
-	}
-	fmt.Println(string(schemacreate))
-	db, err := sqlx.Open("sqlite3", ":memory:")
+
+	err := connectToDB()
 	if err != nil {
-		fmt.Println("breaky")
-	}
-
-	// force a connection and test that it worked
-	swagmoney := db.Ping()
-
-	db.MustExec(string(schemacreate))
-	if swagmoney != nil {
-		fmt.Println("breaky")
-	} else {
-		fmt.Println("not breaky")
+		fmt.Println("Error connecting to database:", err)
+		return
 	}
 
 	//Router: takes incoming requests and routes them to functions to handle them
@@ -57,7 +41,21 @@ func main() {
 }
 
 func createTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called createTask"})
+
+	var json Task //instance of Task struct defined in handler
+
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+
+	success, err := CreateTask(json) //pass struct into function to add Task to db
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})
+	}
 }
 
 func editTask(c *gin.Context) {
