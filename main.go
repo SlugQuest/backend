@@ -38,6 +38,7 @@ func main() {
 		v1.DELETE("tasks/:id", deleteTask)
 
 	}
+	loadDumbData()
 
 	fmt.Println("Running at http://localhost:8080")
 	r.Run() // listen and serve on 0.0.0.0:8080
@@ -60,6 +61,7 @@ func createTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})
 	}
 }
+
 
 func editTask(c *gin.Context) {
 	var json Task //instance of Task struct defined in handler

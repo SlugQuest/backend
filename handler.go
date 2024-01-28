@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -35,6 +36,19 @@ type TaskPreview struct {
 }
 
 var DB *sqlx.DB
+
+func loadDumbData() error {
+	// No recur patterns since we aren't using them yet
+	for i:= 1000; i < 1500; i++ {
+		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
+		lol, err := CreateTask(task)
+		if lol || (err != nil){
+			return err
+		}
+	}
+	return nil
+
+}
 
 func connectToDB() error {
 	// Read schema from file
