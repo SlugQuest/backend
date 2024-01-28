@@ -99,3 +99,11 @@ func CreateTask(task Task) (bool, error) {
 
 	return true, nil
 }
+
+func GetUserTask(int Uid) (Task, error) {
+	getTaskUserId := ;
+	rows, err = db.Query("SELECT * FROM TaskTable WHERE UserID=?", Uid);
+	for rows.Next(){
+		fmt.Println("gettask", rows.Scan())
+	}
+}
