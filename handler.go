@@ -127,9 +127,24 @@ func EditTask(task Task, id int) (bool, error) {
 	return true, nil
 }
 
-// func GetUserTask(Uid int) () {
-// 	rows, err := db.Query("SELECT * FROM TaskTable WHERE UserID=?", Uid)
-// 	for rows.Next(){
-// 		fmt.Println("gettask", rows.Scan())
-// 	}
-// }
+
+// Need hardcode Uid for testing until we have auth0
+func GetUserTask(Uid int) ([]*TaskPreview, error) {
+	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable WHERE UserID=?;", Uid)
+	var utaskArr []*TaskPreview
+	for rows.Next(){
+		taskprev := new(TaskPreview)
+		rows.Scan(&taskprev.TaskID, &taskprev.UserID,&taskprev.Category,&taskprev.TaskName,&taskprev.StartTime,&taskprev.EndTime,&taskprev.IsCompleted,&taskprev.IsRecurring,&taskprev.IsAllDay)
+		utaskArr = append(utaskArr, taskprev)
+	}
+	return utaskArr, err
+}
+
+func GetTaskId(Tid int) (Task, error){
+	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
+	var taskit Task
+	for rows.Next(){
+		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
+	}
+	return taskit, err
+}

@@ -9,6 +9,8 @@ import (
 	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
+
+
 )
 
 func main() {
@@ -85,10 +87,26 @@ func deleteTask(c *gin.Context) {
 }
 
 func getAllUserTasks(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called getAllUserTasks"})
+
+	uid := 1111
+	arr, err := GetUserTask(uid)
+	if err != nil {
+		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	}
+	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
 func getTaskById(c *gin.Context) {
-	id := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{"message": "Called GetTaskById on Id:" + id})
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if(err1 != nil){
+		fmt.Println("ERROR LOG:  str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	}
+	task, err := GetTaskId(tid)
+	if err != nil {
+		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	}
+	c.JSON(http.StatusOK, gin.H{"task": task})
 }

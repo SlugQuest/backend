@@ -22,9 +22,5 @@ go.work
 
 
 
-# Nix files (broke on my commit, i had to restore so addding for now)
-flake.lock
-go.mod
-go.sum
-gomod2nix.toml
+
 result
