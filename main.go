@@ -9,8 +9,6 @@ import (
 	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
-
-
 )
 
 func main() {
@@ -62,7 +60,6 @@ func createTask(c *gin.Context) {
 	}
 }
 
-
 func editTask(c *gin.Context) {
 	var json Task //instance of Task struct defined in handler
 	id, err := strconv.Atoi(c.Param("id"))
@@ -85,7 +82,18 @@ func editTask(c *gin.Context) {
 }
 
 func deleteTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called deleteTask"})
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+	}
+
+	success, err := DeleteTask(id)
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task", "details": err.Error()})
+	}
 }
 
 func getAllUserTasks(c *gin.Context) {
@@ -101,7 +109,7 @@ func getAllUserTasks(c *gin.Context) {
 
 func getTaskById(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
-	if(err1 != nil){
+	if err1 != nil {
 		fmt.Println("ERROR LOG:  str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 	}

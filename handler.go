@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -39,10 +39,10 @@ var DB *sqlx.DB
 
 func loadDumbData() error {
 	// No recur patterns since we aren't using them yet
-	for i:= 1000; i < 1500; i++ {
+	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
 		lol, err := CreateTask(task)
-		if lol || (err != nil){
+		if lol || (err != nil) {
 			return err
 		}
 	}
@@ -118,7 +118,7 @@ func EditTask(task Task, id int) (bool, error) {
 		return false, err
 	}
 
-	stmt, err := tx.Prepare(`
+	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
 		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, IsCompleted = ?, IsRecurring = ?, IsAllDay = ? 
 		WHERE TaskID = ?
@@ -141,24 +141,60 @@ func EditTask(task Task, id int) (bool, error) {
 	return true, nil
 }
 
+func DeleteTask(id int) (bool, error) {
+	tx, err := DB.Beginx()
+
+	if err != nil {
+		return false, err
+	}
+
+	// First, delete from RecurrencePatterns table
+	stmt1, err := DB.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
+	if err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	stmt2, err := DB.Preparex("DELETE FROM TASKTABLE where TaskId = ?")
+
+	if err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	defer stmt1.Close()
+	defer stmt2.Close()
+
+	_, err = stmt1.Exec(id)
+	_, err = stmt2.Exec(id)
+
+	if err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
 
 // Need hardcode Uid for testing until we have auth0
 func GetUserTask(Uid int) ([]*TaskPreview, error) {
 	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable WHERE UserID=?;", Uid)
 	var utaskArr []*TaskPreview
-	for rows.Next(){
+	for rows.Next() {
 		taskprev := new(TaskPreview)
-		rows.Scan(&taskprev.TaskID, &taskprev.UserID,&taskprev.Category,&taskprev.TaskName,&taskprev.StartTime,&taskprev.EndTime,&taskprev.IsCompleted,&taskprev.IsRecurring,&taskprev.IsAllDay)
+		rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.IsCompleted, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		utaskArr = append(utaskArr, taskprev)
 	}
 	return utaskArr, err
 }
 
-func GetTaskId(Tid int) (Task, error){
+func GetTaskId(Tid int) (Task, error) {
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
-	for rows.Next(){
-		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
+	for rows.Next() {
+		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.IsCompleted, &taskit.IsRecurring, &taskit.IsAllDay)
 	}
 	return taskit, err
 }
