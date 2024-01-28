@@ -92,10 +92,37 @@ func CreateTask(task Task) (bool, error) {
 		return false, err
 	}
 
-	err = tx.Commit() //commit transaction to database
+	tx.Commit() //commit transaction to database
+
+	return true, nil
+}
+
+func EditTask(task Task, id int) (bool, error) {
+
+	tx, err := DB.Beginx()
 	if err != nil {
 		return false, err
 	}
+
+	stmt, err := tx.Prepare(`
+		UPDATE TaskTable 
+		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, IsCompleted = ?, IsRecurring = ?, IsAllDay = ? 
+		WHERE TaskID = ?
+	`)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay, id)
+
+	if err != nil {
+		return false, err
+	}
+
+	tx.Commit()
 
 	return true, nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -59,7 +60,24 @@ func createTask(c *gin.Context) {
 }
 
 func editTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called editTask"})
+	var json Task //instance of Task struct defined in handler
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+	}
+
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	success, err := EditTask(json, id)
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to edit task", "details": err.Error()})
+	}
 }
 
 func deleteTask(c *gin.Context) {
