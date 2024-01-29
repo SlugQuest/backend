@@ -26,7 +26,15 @@ func main() {
 		fmt.Println("Error connecting to database:", err)
 		return
 	}
-
+	erro := loadDumbData()
+	if erro != nil{
+		fmt.Println("error loaduing dumb data", err)
+	}
+	utest := testmain()
+	if !utest{
+		fmt.Println("unit test failure")
+		return
+	}
 	//Router: takes incoming requests and routes them to functions to handle them
 	//Building a group of routes starting with this path
 	v1 := r.Group("/main/blah") //TODO: FIX the route and the uri's below
@@ -38,7 +46,6 @@ func main() {
 		v1.DELETE("tasks/:id", deleteTask)
 
 	}
-	loadDumbData()
 
 	fmt.Println("Running at http://localhost:8080")
 	r.Run() // listen and serve on 0.0.0.0:8080
@@ -57,8 +64,10 @@ func createTask(c *gin.Context) {
 
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})
+		return
 	}
 }
 
@@ -68,6 +77,7 @@ func editTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
 	}
 
 	if err := c.ShouldBindJSON(&json); err != nil {
@@ -79,13 +89,16 @@ func editTask(c *gin.Context) {
 
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to edit task", "details": err.Error()})
+		return
 	}
 }
 
 func deleteTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Called deleteTask"})
+	return
 }
 
 func getAllUserTasks(c *gin.Context) {
@@ -95,6 +108,7 @@ func getAllUserTasks(c *gin.Context) {
 	if err != nil {
 		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
@@ -104,11 +118,19 @@ func getTaskById(c *gin.Context) {
 	if(err1 != nil){
 		fmt.Println("ERROR LOG:  str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
 	}
-	task, err := GetTaskId(tid)
+	task, err, value := GetTaskId(tid)
+	if !value{
+		fmt.Println("ERROR LOG:  getting a non idd task")
+		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
+		return
+	}
 	if err != nil {
 		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"task": task})
+	return
 }

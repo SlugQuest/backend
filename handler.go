@@ -39,10 +39,11 @@ var DB *sqlx.DB
 
 func loadDumbData() error {
 	// No recur patterns since we aren't using them yet
-	for i:= 1000; i < 1500; i++ {
+	for i:= 0; i < 50; i++ {
 		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
 		lol, err := CreateTask(task)
-		if lol || (err != nil){
+		if !lol || (err != nil){
+			fmt.Println("loading EXPLODE", err)
 			return err
 		}
 	}
@@ -88,21 +89,23 @@ func connectToDB() error {
 func CreateTask(task Task) (bool, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
+		fmt.Println("breaky 1 ")
 		return false, err
 	}
 	defer tx.Rollback() //abort transaction if error
 
 	//preparing statement to prevent SQL injection issues
-	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO TaskTable (TaskID, UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
+		fmt.Println("breaky 2")
 		return false, err
 	}
 
-	defer stmt.Close() //defer the closing of SQL statement to ensure it closes once the function completes
-
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
+	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
+	_, err = stmt.Exec(task.TaskID, task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
 
 	if err != nil {
+		fmt.Println("breaky 3 ", err)
 		return false, err
 	}
 
@@ -143,22 +146,41 @@ func EditTask(task Task, id int) (bool, error) {
 
 
 // Need hardcode Uid for testing until we have auth0
-func GetUserTask(Uid int) ([]*TaskPreview, error) {
-	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable WHERE UserID=?;", Uid)
-	var utaskArr []*TaskPreview
+func GetUserTask(Uid int) ([]TaskPreview, error) {
+	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable;")
+	utaskArr := []TaskPreview{}
+	if (err != nil){
+		fmt.Println(err)
+		rows.Close()
+		return utaskArr, err
+	}
+	fmt.Println(Uid)
 	for rows.Next(){
-		taskprev := new(TaskPreview)
-		rows.Scan(&taskprev.TaskID, &taskprev.UserID,&taskprev.Category,&taskprev.TaskName,&taskprev.StartTime,&taskprev.EndTime,&taskprev.IsCompleted,&taskprev.IsRecurring,&taskprev.IsAllDay)
+		var taskprev TaskPreview
+		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID,&taskprev.Category,&taskprev.TaskName,&taskprev.StartTime,&taskprev.EndTime,&taskprev.IsCompleted,&taskprev.IsRecurring,&taskprev.IsAllDay)
+		if (erro != nil){
+			fmt.Println(erro)
+			rows.Close()
+		}
 		utaskArr = append(utaskArr, taskprev)
 	}
+	rows.Close()
 	return utaskArr, err
 }
 
-func GetTaskId(Tid int) (Task, error){
+func GetTaskId(Tid int) (Task, error, bool){
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
-	for rows.Next(){
-		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
+	if err != nil{
+		fmt.Println(err)
+		return taskit, err, false
 	}
-	return taskit, err
+	for rows.Next(){
+		
+		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
+		rows.Close()
+		return taskit, err, true
+	}
+	rows.Close()
+	return taskit, err, false
 }
