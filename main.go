@@ -13,7 +13,6 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	adapter "github.com/gwatts/gin-adapter"
 	envfuncs "github.com/joho/godotenv"
 )
 
@@ -22,9 +21,6 @@ func main() {
 	if err := envfuncs.Load(); err != nil {
 		log.Fatalf("Error loading the .env file: %v", err)
 	}
-
-	// Wrapper for using standard http functions with gin
-	nextHandler, wrapper := adapter.New()
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {
@@ -56,16 +52,16 @@ func main() {
 
 	//Router: takes incoming requests and routes them to functions to handle them
 	//Building a group of routes starting with this path
-
-	validateGinWrap := wrapper(middleware.EnsureValidToken()(nextHandler))
+	// TODO: test validation
+	r.Use(middleware.EnsureValidToken())
 
 	v1 := r.Group("/main/blah") //TODO: FIX the route and the uri's below
 	{
-		v1.GET("tasks", validateGinWrap, getAllUserTasks)
-		v1.GET("task/:id", validateGinWrap, getTaskById)
-		v1.POST("tasks", validateGinWrap, createTask)
-		v1.PUT("tasks/:id", validateGinWrap, editTask)
-		v1.DELETE("tasks/:id", validateGinWrap, deleteTask)
+		v1.GET("tasks", getAllUserTasks)
+		v1.GET("task/:id", getTaskById)
+		v1.POST("tasks", createTask)
+		v1.PUT("tasks/:id", editTask)
+		v1.DELETE("tasks/:id", deleteTask)
 
 	}
 
