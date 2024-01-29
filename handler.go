@@ -155,7 +155,7 @@ func DeleteTask(id int) (bool, error) {
 		return false, err
 	}
 
-	stmt2, err := DB.Preparex("DELETE FROM TASKTABLE where TaskId = ?")
+	stmt2, err := DB.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
 
 	if err != nil {
 		tx.Rollback()
