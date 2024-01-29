@@ -11,16 +11,19 @@ import (
 )
 
 type Task struct {
-	TaskID      int
-	UserID      string
-	Category    string
-	TaskName    string
-	Description string
-	StartTime   time.Time
-	EndTime     time.Time
-	IsCompleted bool
-	IsRecurring bool
-	IsAllDay    bool
+	TaskID        int
+	UserID        string
+	Category      string
+	TaskName      string
+	Description   string
+	StartTime     time.Time
+	EndTime       time.Time
+	IsCompleted   bool
+	IsRecurring   bool
+	IsAllDay      bool
+	RecurringType string
+	DayOfWeek     int
+	DayOfMonth    int
 }
 
 type TaskPreview struct {
@@ -136,6 +139,26 @@ func EditTask(task Task, id int) (bool, error) {
 		return false, err
 	}
 
+	// if the edit updated the recurrence of a task
+	if task.IsRecurring {
+		_, err = tx.Exec(
+			`UPDATE RecurrencePatterns 
+			SET RecurringType = ?, DayOfWeek = ?, DayOfMonth = ? 
+			WHERE TaskID = ?
+		`, task.RecurringType, task.DayOfWeek, task.DayOfMonth, id)
+
+		if err != nil {
+			tx.Rollback()
+			return false, err
+		}
+	} else { // if isRecurring was set to false
+		_, err = tx.Exec("DELETE FROM RecurrencePatterns WHERE TaskID = ?", id)
+		if err != nil {
+			tx.Rollback()
+			return false, err
+		}
+	}
+
 	tx.Commit()
 
 	return true, nil
@@ -148,7 +171,6 @@ func DeleteTask(id int) (bool, error) {
 		return false, err
 	}
 
-	// First, delete from RecurrencePatterns table
 	stmt1, err := DB.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
 	if err != nil {
 		tx.Rollback()
