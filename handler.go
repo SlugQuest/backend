@@ -45,7 +45,7 @@ func loadDumbData() error {
 	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
 		lol, err := CreateTask(task)
-		if lol || (err != nil) {
+		if !lol || (err != nil) {
 			return err
 		}
 	}
@@ -232,12 +232,15 @@ func GetTaskId(Tid int) (Task, error, bool){
 		fmt.Println(err)
 		return taskit, err, false
 	}
+	counter := 0
 	for rows.Next(){
-		
+		counter += 1
+		fmt.Println(counter)
 		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
-		rows.Close()
-		return taskit, err, true
+		fmt.Println("finding")
 	}
 	rows.Close()
-	return taskit, err, false
+	fmt.Println("done finding")
+	print(counter)
+	return taskit, err, counter == 1
 }

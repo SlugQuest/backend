@@ -22,15 +22,14 @@ func TestGetUserTask() bool {
 		fmt.Println(err)
 		return false
 	}
-	if len(taskl) != 50 {
-		print(len(taskl))
+	if len(taskl) != 500 {
 		print("error test get user task wrong count")
 		return false
 	}
 	return true
 }
 func TestGetTaskId() bool {
-	task, erro, found := GetTaskId(5)
+	task, erro, found := GetTaskId(1101)
 	if erro != nil{
 		fmt.Println(erro)
 		return false
@@ -40,15 +39,11 @@ func TestGetTaskId() bool {
 		fmt.Println("didn't find task")
 		return false
 	}
-	if task.TaskID != 5{
+	if task.TaskID != 1101{
 		fmt.Println("bad task find")
 		return false
 	}
 	task, erro, found = GetTaskId(-5)
-	if found == false {
-		fmt.Println("didn't find task")
-		return false
-	}
 	if found{
 		fmt.Println("found bad task")
 		return false
