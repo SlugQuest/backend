@@ -114,7 +114,7 @@ func TestGetUserTask() bool {
 	return true
 }
 func TestGetTaskId() bool {
-	task, erro, found := GetTaskId(1101)
+	task, erro, found := GetTaskId(50)
 	if erro != nil {
 		fmt.Println(erro)
 		return false
@@ -124,7 +124,7 @@ func TestGetTaskId() bool {
 		fmt.Println("didn't find task")
 		return false
 	}
-	if task.TaskID != 1101 {
+	if task.TaskID != 50 {
 		fmt.Println("bad task find")
 		return false
 	}

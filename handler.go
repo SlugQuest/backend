@@ -104,14 +104,14 @@ func CreateTask(task Task) (bool, error) {
 	defer tx.Rollback() //abort transaction if error
 
 	//preparing statement to prevent SQL injection issues
-	stmt, err := tx.Preparex("INSERT INTO TaskTable (TaskID, UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		fmt.Println("breaky 2")
 		return false, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
-	_, err = stmt.Exec(task.TaskID, task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
+	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
 
 	if err != nil {
 		fmt.Println("breaky 3 ", err)
