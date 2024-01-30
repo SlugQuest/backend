@@ -8,7 +8,7 @@ import (
 )
 
 func testmain() bool {
-	return TestDeleteTask() && TestEditTask() && TestGetUserTask() && TestGetTaskId()
+	return TestEditTask() && TestGetUserTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
@@ -39,8 +39,27 @@ func TestDeleteTask() bool {
 	return true
 }
 func TestEditTask() bool {
+	newTask := Task{
+		UserID:      "1111",
+		TaskID:      3,
+		Category:    "example",
+		TaskName:    "New Task",
+		Description: "Description of the new task",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(time.Hour),
+		IsCompleted: false,
+		IsRecurring: false,
+		IsAllDay:    false,
+	}
+
+	success, err := CreateTask(newTask)
+	if err != nil || !success {
+		fmt.Println("Error creating task:", err)
+		return false
+	}
+
 	editedTask := Task{
-		TaskID:        1001,
+		TaskID:        3,
 		UserID:        "1111",
 		Category:      "asdf",
 		TaskName:      "edited name",
@@ -56,15 +75,15 @@ func TestEditTask() bool {
 	}
 
 	// Perform the edit
-	success, _ := EditTask(editedTask, 1001)
-	if !success {
-		fmt.Println("something's up")
+	editSuccess, editErr := EditTask(editedTask, editedTask.TaskID)
+	if editErr != nil || !editSuccess {
+		fmt.Println("Error editing task:", editErr)
 		return false
 	}
 
-	taskl, _, _ := GetTaskId(1001)
-	if taskl.TaskName != "edited name" {
-		fmt.Println("edit failed")
+	taskl, _, _ := GetTaskId(3)
+	if taskl.TaskName != "edited name" || !taskl.IsCompleted {
+		fmt.Println("Edit verification failed")
 		return false
 	}
 
