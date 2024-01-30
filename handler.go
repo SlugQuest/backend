@@ -233,10 +233,10 @@ func GetTaskId(Tid int) (Task, error, bool) {
 		return taskit, err, false
 	}
 	counter := 0
-	for rows.Next(){
+	for rows.Next() {
 		counter += 1
 		fmt.Println(counter)
-		rows.Scan(&taskit.TaskID, &taskit.UserID,&taskit.Category,&taskit.TaskName, &taskit.Description, &taskit.StartTime,&taskit.EndTime,&taskit.IsCompleted,&taskit.IsRecurring,&taskit.IsAllDay)
+		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.IsCompleted, &taskit.IsRecurring, &taskit.IsAllDay)
 		fmt.Println("finding")
 	}
 	rows.Close()
