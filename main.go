@@ -25,14 +25,14 @@ func main() {
 		return
 	}
 	erro := loadDumbData()
-	if erro != nil{
+	if erro != nil {
 		fmt.Println("error loaduing dumb data", err)
 	}
-	// utest := testmain()
-	// if !utest{
-	// 	fmt.Println("unit test failure")
-	// 	return
-	// }
+	utest := testmain()
+	if !utest {
+		fmt.Println("unit test failure")
+		return
+	}
 	//Router: takes incoming requests and routes them to functions to handle them
 	//Building a group of routes starting with this path
 	v1 := r.Group("/main/blah") //TODO: FIX the route and the uri's below
@@ -128,7 +128,7 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 	task, err, value := GetTaskId(tid)
-	if !value{
+	if !value {
 		fmt.Println("ERROR LOG:  getting a non idd task")
 		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
 		return
