@@ -25,7 +25,7 @@ func main() {
 		return
 	}
 	erro := loadDumbData()
-	if erro != nil{
+	if erro != nil {
 		fmt.Println("error loaduing dumb data", err)
 	}
 	utest := testmain()
@@ -128,7 +128,7 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 	task, err, value := GetTaskId(tid)
-	if !value{
+	if !value {
 		fmt.Println("ERROR LOG:  getting a non idd task")
 		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
 		return

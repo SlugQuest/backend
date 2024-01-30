@@ -206,16 +206,16 @@ func DeleteTask(id int) (bool, error) {
 func GetUserTask(Uid int) ([]TaskPreview, error) {
 	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable;")
 	utaskArr := []TaskPreview{}
-	if (err != nil){
+	if err != nil {
 		fmt.Println(err)
 		rows.Close()
 		return utaskArr, err
 	}
 	fmt.Println(Uid)
-	for rows.Next(){
+	for rows.Next() {
 		var taskprev TaskPreview
-		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID,&taskprev.Category,&taskprev.TaskName,&taskprev.StartTime,&taskprev.EndTime,&taskprev.IsCompleted,&taskprev.IsRecurring,&taskprev.IsAllDay)
-		if (erro != nil){
+		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.IsCompleted, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		if erro != nil {
 			fmt.Println(erro)
 			rows.Close()
 		}
@@ -225,10 +225,10 @@ func GetUserTask(Uid int) ([]TaskPreview, error) {
 	return utaskArr, err
 }
 
-func GetTaskId(Tid int) (Task, error, bool){
+func GetTaskId(Tid int) (Task, error, bool) {
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		return taskit, err, false
 	}
