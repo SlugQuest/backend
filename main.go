@@ -29,7 +29,7 @@ func main() {
 		fmt.Println("error loaduing dumb data", err)
 	}
 	utest := testmain()
-	if !utest {
+	if !utest{
 		fmt.Println("unit test failure")
 		return
 	}
