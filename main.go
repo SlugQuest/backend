@@ -50,18 +50,20 @@ func main() {
 		fmt.Println("not breaky")
 	}
 
-	//Router: takes incoming requests and routes them to functions to handle them
-	//Building a group of routes starting with this path
-	// TODO: test validation
-	r.Use(middleware.EnsureValidToken())
+	// Router: takes incoming requests and routes them to functions to handle them
+	// Building a group of routes starting with this path
+
+	// This would make it a global handler to pass through each route, but I assume there will
+	// be public endpoints later, leaving it commented out for now
+	// r.Use(middleware.EnsureValidToken())
 
 	v1 := r.Group("/main/blah") //TODO: FIX the route and the uri's below
 	{
-		v1.GET("tasks", getAllUserTasks)
-		v1.GET("task/:id", getTaskById)
-		v1.POST("tasks", createTask)
-		v1.PUT("tasks/:id", editTask)
-		v1.DELETE("tasks/:id", deleteTask)
+		v1.GET("tasks", middleware.EnsureValidToken(), getAllUserTasks)
+		v1.GET("task/:id", middleware.EnsureValidToken(), getTaskById)
+		v1.POST("tasks", middleware.EnsureValidToken(), createTask)
+		v1.PUT("tasks/:id", middleware.EnsureValidToken(), editTask)
+		v1.DELETE("tasks/:id", middleware.EnsureValidToken(), deleteTask)
 
 	}
 
