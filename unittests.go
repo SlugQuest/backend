@@ -7,7 +7,7 @@ import (
 )
 
 func testmain() bool {
-	return TestDeleteTask() && TestEditTask() && TestGetUserTask() && TestGetTaskId()
+	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
@@ -108,7 +108,7 @@ func TestGetUserTask() bool {
 		return false
 	}
 	if len(taskl) != 500 {
-		print("error test get user task wrong count")
+		print("error test get user task wrong count, expected 500 got", len(taskl))
 		return false
 	}
 	return true
