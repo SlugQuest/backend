@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 
 	"fmt"
 
@@ -19,27 +18,21 @@ func main() {
 			"message": "pong",
 		})
 	})
-	// exactly the same as the built-in
-	schemacreate, erro := os.ReadFile("schema.sql")
-	if erro != nil {
-		fmt.Println("breaky")
-	}
-	fmt.Println(string(schemacreate))
-	db, err := sqlx.Open("sqlite3", ":memory:")
+
+	err := connectToDB()
 	if err != nil {
-		fmt.Println("breaky")
+		fmt.Println("Error connecting to database:", err)
+		return
 	}
-
-	// force a connection and test that it worked
-	swagmoney := db.Ping()
-
-	db.MustExec(string(schemacreate))
-	if swagmoney != nil {
-		fmt.Println("breaky")
-	} else {
-		fmt.Println("not breaky")
+	erro := loadDumbData()
+	if erro != nil {
+		fmt.Println("error loaduing dumb data", err)
 	}
-
+	utest := testmain()
+	if !utest{
+		fmt.Println("unit test failure")
+		return
+	}
 	//Router: takes incoming requests and routes them to functions to handle them
 	//Building a group of routes starting with this path
 	v1 := r.Group("/main/blah") //TODO: FIX the route and the uri's below
@@ -57,22 +50,94 @@ func main() {
 }
 
 func createTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called createTask"})
+
+	var json Task //instance of Task struct defined in handler
+
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+
+	success, err := CreateTask(json) //pass struct into function to add Task to db
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})
+		return
+	}
 }
 
 func editTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called editTask"})
+	var json Task //instance of Task struct defined in handler
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	success, err := EditTask(json, id)
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to edit task", "details": err.Error()})
+		return
+	}
 }
 
 func deleteTask(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called deleteTask"})
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+	}
+
+	success, err := DeleteTask(id)
+
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task", "details": err.Error()})
+	}
 }
 
 func getAllUserTasks(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Called getAllUserTasks"})
+
+	uid := 1111
+	arr, err := GetUserTask(uid)
+	if err != nil {
+		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
 func getTaskById(c *gin.Context) {
-	id := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{"message": "Called GetTaskById on Id:" + id})
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		fmt.Println("ERROR LOG:  str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	task, err, value := GetTaskId(tid)
+	if !value {
+		fmt.Println("ERROR LOG:  getting a non idd task")
+		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
+		return
+	}
+	if err != nil {
+		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"task": task})
+	return
 }
