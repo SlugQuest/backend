@@ -3,17 +3,35 @@ package main
 // When a new backend function is made, add a test function for it that returns a bool, and then put that func in testmain
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
 func testmain() bool {
-	return TestEditTask() && TestGetUserTask() && TestGetTaskId()
+	return TestDeleteTask() && TestEditTask() && TestGetUserTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
-	success, err := DeleteTask(1001)
-	if err != nil {
+	newTask := Task{
+		UserID:      "1111",
+		TaskID:      4,
+		Category:    "example",
+		TaskName:    "New Task",
+		Description: "Description of the new task",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(time.Hour),
+		IsCompleted: false,
+		IsRecurring: false,
+		IsAllDay:    false,
+	}
+
+	success, err := CreateTask(newTask)
+	if err != nil || !success {
+		fmt.Println("Error creating task:", err)
+		return false
+	}
+
+	success, deleteErr := DeleteTask(4)
+	if deleteErr != nil {
 		fmt.Println(err)
 		return false
 	}
@@ -23,16 +41,10 @@ func TestDeleteTask() bool {
 		return false
 	}
 
-	_, _, found := GetTaskId(1001)
+	_, _, found := GetTaskId(4)
 
-	if !found {
+	if found {
 		fmt.Println("Delete failed")
-		return true
-	}
-
-	task := Task{TaskID: 1001, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(1001), Description: "sumdesc" + strconv.Itoa(1001), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
-	lol, err := CreateTask(task)
-	if lol || (err != nil) {
 		return false
 	}
 
@@ -103,7 +115,7 @@ func TestGetUserTask() bool {
 }
 func TestGetTaskId() bool {
 	task, erro, found := GetTaskId(1101)
-	if erro != nil{
+	if erro != nil {
 		fmt.Println(erro)
 		return false
 	}
@@ -112,12 +124,12 @@ func TestGetTaskId() bool {
 		fmt.Println("didn't find task")
 		return false
 	}
-	if task.TaskID != 1101{
+	if task.TaskID != 1101 {
 		fmt.Println("bad task find")
 		return false
 	}
 	task, erro, found = GetTaskId(-5)
-	if found{
+	if found {
 		fmt.Println("found bad task")
 		return false
 	}

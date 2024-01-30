@@ -88,6 +88,13 @@ func connectToDB() error {
 	return nil
 }
 
+func isTableExists(tableName string) (bool, error) {
+	var count int
+	query := fmt.Sprintf("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='%s'", tableName)
+	err := DB.Get(&count, query)
+	return count > 0, err
+}
+
 func CreateTask(task Task) (bool, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -109,6 +116,21 @@ func CreateTask(task Task) (bool, error) {
 	if err != nil {
 		fmt.Println("breaky 3 ", err)
 		return false, err
+	}
+
+	if task.IsRecurring {
+		rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
+		if err != nil {
+			fmt.Println("breaky 4", err)
+			return false, err
+		}
+		defer rStmnt.Close()
+
+		_, err = rStmnt.Exec(task.TaskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
+		if err != nil {
+			fmt.Println("breaky 5", err)
+			return false, err
+		}
 	}
 
 	tx.Commit() //commit transaction to database
@@ -173,27 +195,45 @@ func DeleteTask(id int) (bool, error) {
 		return false, err
 	}
 
-	stmt1, err := DB.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
+	recurrenceTableExists, err := isTableExists("RecurrencePatterns")
 	if err != nil {
 		tx.Rollback()
+		fmt.Println("in here 1")
 		return false, err
 	}
 
-	stmt2, err := DB.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
+	if recurrenceTableExists {
+		stmt, err := tx.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
+		if err != nil {
+			tx.Rollback()
+			fmt.Println("in here 2", err)
+			return false, err
+		}
+		defer stmt.Close()
+
+		_, err = stmt.Exec(id)
+		if err != nil {
+			tx.Rollback()
+			fmt.Println("in here 3", err)
+			return false, err
+		}
+	}
+
+	stmt2, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Println("in here 4", err)
 		return false, err
 	}
 
-	defer stmt1.Close()
 	defer stmt2.Close()
 
-	_, err = stmt1.Exec(id)
 	_, err = stmt2.Exec(id)
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Println("in here 5", err)
 		return false, err
 	}
 
