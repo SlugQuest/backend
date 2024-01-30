@@ -97,7 +97,6 @@
     ```
   - **Response**:
     - **Status Code**: 200 OK
-    - **Body**: JSON
 
 ## Delete Task (DELETE)
 
