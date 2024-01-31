@@ -34,9 +34,15 @@ schema = 3
   [mod."github.com/goccy/go-json"]
     version = "v0.10.2"
     hash = "sha256-6fMD2/Rku8HT0zDdeA23pX0YxbohiIOC8OJNYbylJTQ="
+  [mod."github.com/gwatts/gin-adapter"]
+    version = "v1.0.0"
+    hash = "sha256-K7TsgYGZLMifz2xn/LNbLkxV2CwntJoYlvUeKYS2Ki4="
   [mod."github.com/jmoiron/sqlx"]
     version = "v1.3.5"
     hash = "sha256-JEg/DpnDOPPUWtFiHQFUwt7+0TWsybPiG1WP6N5oVic="
+  [mod."github.com/joho/godotenv"]
+    version = "v1.5.1"
+    hash = "sha256-kA0osKfsc6Kp+nuGTRJyXZZlJt1D/kuEazKMWYCWcQ8="
   [mod."github.com/json-iterator/go"]
     version = "v1.1.12"
     hash = "sha256-To8A0h+lbfZ/6zM+2PpRpY3+L6725OPC66lffq6fUoM="

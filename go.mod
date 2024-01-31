@@ -5,7 +5,9 @@ go 1.21.5
 require (
 	github.com/auth0/go-jwt-middleware/v2 v2.2.1
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gwatts/gin-adapter v1.0.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.20
 )
 
