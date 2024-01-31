@@ -10,6 +10,7 @@
     - **Body**: JSON Sample Response
       ```json
       {
+        "TaskID": 1,
         "UserID": "user123",
         "Category": "Personal",
         "TaskName": "Go to the Gym",
@@ -58,7 +59,6 @@
     ```json
     {
       "task": {
-        "TaskID": 1,
         "UserID": "user123",
         "Category": "Work",
         "TaskName": "Complete Project",
@@ -84,6 +84,7 @@
   - **Body**: JSON
     ```json
     {
+      "TaskID": 1,
       "UserID": "user123",
       "Category": "Personal",
       "TaskName": "Go to the Gym",

@@ -111,10 +111,16 @@ func CreateTask(task Task) (bool, error) {
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
+	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
 
 	if err != nil {
 		fmt.Println("breaky 3 ", err)
+		return false, err
+	}
+
+	taskID, err := res.LastInsertId()
+	if err != nil {
+		fmt.Println("breaky 4 ", err)
 		return false, err
 	}
 
@@ -126,7 +132,7 @@ func CreateTask(task Task) (bool, error) {
 		}
 		defer rStmnt.Close()
 
-		_, err = rStmnt.Exec(task.TaskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
+		_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
 		if err != nil {
 			fmt.Println("breaky 5", err)
 			return false, err
