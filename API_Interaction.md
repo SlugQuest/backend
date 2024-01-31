@@ -10,6 +10,7 @@
     - **Body**: JSON Sample Response
       ```json
       {
+        "TaskID": 1,
         "UserID": "user123",
         "Category": "Personal",
         "TaskName": "Go to the Gym",
@@ -58,7 +59,6 @@
     ```json
     {
       "task": {
-        "TaskID": 1,
         "UserID": "user123",
         "Category": "Work",
         "TaskName": "Complete Project",
@@ -73,6 +73,13 @@
     ```
   - **Response**:
     - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+    ```json
+    {
+      "message": "Success",
+      "taskID": 503
+    }
+    ```
 
 ## Edit Task (PUT)
 
@@ -84,6 +91,7 @@
   - **Body**: JSON
     ```json
     {
+      "TaskID": 1,
       "UserID": "user123",
       "Category": "Personal",
       "TaskName": "Go to the Gym",

@@ -73,10 +73,10 @@ func createTask(c *gin.Context) {
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 
-	success, err := CreateTask(json) //pass struct into function to add Task to db
+	success, err, taskID := CreateTask(json) //pass struct into function to add Task to db
 
 	if success {
-		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})
 		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})

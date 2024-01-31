@@ -13,7 +13,6 @@ func testmain() bool {
 func TestDeleteTask() bool {
 	newTask := Task{
 		UserID:      "1111",
-		TaskID:      4,
 		Category:    "example",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
@@ -24,13 +23,13 @@ func TestDeleteTask() bool {
 		IsAllDay:    false,
 	}
 
-	success, err := CreateTask(newTask)
+	success, err, taskID := CreateTask(newTask)
 	if err != nil || !success {
 		fmt.Println("Error creating task:", err)
 		return false
 	}
 
-	success, deleteErr := DeleteTask(4)
+	success, deleteErr := DeleteTask(int(taskID))
 	if deleteErr != nil {
 		fmt.Println(err)
 		return false
@@ -41,7 +40,7 @@ func TestDeleteTask() bool {
 		return false
 	}
 
-	_, _, found := GetTaskId(4)
+	_, _, found := GetTaskId(int(taskID))
 
 	if found {
 		fmt.Println("Delete failed")
@@ -64,14 +63,14 @@ func TestEditTask() bool {
 		IsAllDay:    false,
 	}
 
-	success, err := CreateTask(newTask)
+	success, err, taskID := CreateTask(newTask)
 	if err != nil || !success {
 		fmt.Println("Error creating task:", err)
 		return false
 	}
 
 	editedTask := Task{
-		TaskID:        3,
+		TaskID:        int(taskID),
 		UserID:        "1111",
 		Category:      "asdf",
 		TaskName:      "edited name",
@@ -93,7 +92,7 @@ func TestEditTask() bool {
 		return false
 	}
 
-	taskl, _, _ := GetTaskId(3)
+	taskl, _, _ := GetTaskId(int(taskID))
 	if taskl.TaskName != "edited name" || !taskl.IsCompleted {
 		fmt.Println("Edit verification failed")
 		return false
