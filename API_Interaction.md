@@ -73,6 +73,13 @@
     ```
   - **Response**:
     - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+    ```json
+    {
+      "message": "Success",
+      "taskID": 503
+    }
+    ```
 
 ## Edit Task (PUT)
 

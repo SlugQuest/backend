@@ -44,7 +44,7 @@ func loadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
-		lol, err := CreateTask(task)
+		lol, err, _ := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
 		}
@@ -95,11 +95,11 @@ func isTableExists(tableName string) (bool, error) {
 	return count > 0, err
 }
 
-func CreateTask(task Task) (bool, error) {
+func CreateTask(task Task) (bool, error, int64) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
 		fmt.Println("breaky 1 ")
-		return false, err
+		return false, err, -1
 	}
 	defer tx.Rollback() //abort transaction if error
 
@@ -107,7 +107,7 @@ func CreateTask(task Task) (bool, error) {
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		fmt.Println("breaky 2")
-		return false, err
+		return false, err, -1
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
@@ -115,33 +115,33 @@ func CreateTask(task Task) (bool, error) {
 
 	if err != nil {
 		fmt.Println("breaky 3 ", err)
-		return false, err
+		return false, err, -1
 	}
 
 	taskID, err := res.LastInsertId()
 	if err != nil {
 		fmt.Println("breaky 4 ", err)
-		return false, err
+		return false, err, -1
 	}
 
 	if task.IsRecurring {
 		rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
 		if err != nil {
 			fmt.Println("breaky 4", err)
-			return false, err
+			return false, err, -1
 		}
 		defer rStmnt.Close()
 
 		_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
 		if err != nil {
 			fmt.Println("breaky 5", err)
-			return false, err
+			return false, err, -1
 		}
 	}
 
 	tx.Commit() //commit transaction to database
 
-	return true, nil
+	return true, nil, taskID
 }
 
 func EditTask(task Task, id int) (bool, error) {
