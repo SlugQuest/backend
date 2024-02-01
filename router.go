@@ -122,11 +122,17 @@ func deleteTask(c *gin.Context) {
 
 // Returns a list of all tasks of the current user
 func getAllUserTasks(c *gin.Context) {
-	// Retrieve current session variables and cookies
-	session := sessions.Default(c)
-
+	// TODO: ill be fixing this
 	// user_id stored as a variable within the session
-	uid := session.Get("user_id").(string)
+	// uid := c.GetString("user_id")
+	// log.Printf("found userid = %v", uid)
+	// if uid == "" {
+	// 	log.Println("getAllUserTasks(): couldn't get user_id")
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
+	// 	return
+	// }
+	uid := authentication.Curr_user_id
+
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
 		log.Println("getAllUserTasks(): Problem probably DB related")

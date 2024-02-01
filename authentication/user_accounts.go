@@ -13,6 +13,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: make this more elegant with Gin sessions or something
+var Curr_user_id string = "hi"
+
 // Checks if user is authenticated before redirecting to next page
 func IsAuthenticated(c *gin.Context) {
 	// Auth token: for direct calls to this endpoint
@@ -120,9 +123,15 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		// Prefixed with "auth0"
+		// Extract Auth0's provided user vid
+		if profile["sub"] == nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
 		user_id := profile["sub"].(string)[len("auth0|"):]
 		session.Set("user_id", user_id)
+		c.Set("user_id", user_id)
+		Curr_user_id = user_id
 
 		// Redirect to logged in page.
 		c.Redirect(http.StatusTemporaryRedirect, "/main/blah/tasks")
