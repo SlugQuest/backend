@@ -17,9 +17,16 @@ import (
 )
 
 // New registers the routes and returns the router.
-func New(auth *authentication.Authenticator) *gin.Engine {
+func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router := gin.Default()
 
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
+	// Set up cookie store for the user session
 	store := cookie.NewStore([]byte("secret"))
 	router.Use(sessions.Sessions("auth-session", store))
 
@@ -32,7 +39,6 @@ func New(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("tasks", middleware.EnsureValidToken(), createTask)
 		v1.PUT("tasks/:id", middleware.EnsureValidToken(), editTask)
 		v1.DELETE("tasks/:id", middleware.EnsureValidToken(), deleteTask)
-
 	}
 
 	return router
