@@ -13,7 +13,6 @@ import (
 
 	"slugquest.com/backend/authentication"
 	"slugquest.com/backend/crud"
-	"slugquest.com/backend/middleware"
 )
 
 // New registers the routes and returns the router.
@@ -31,14 +30,23 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Router: takes incoming requests and routes them to functions to handle them
+	router.GET("/login", authentication.LoginHandler(auth))
+	router.POST("/login", authentication.LoginHandler(auth))
+	router.GET("/logout", authentication.LogoutHandler)
+	router.GET("/callback", authentication.CallbackHandler(auth))
+	router.GET("/user", authentication.UserProfileHandler)
+
 	// Building a group of routes starting with this path
 	v1 := router.Group("/main/blah") //TODO: FIX the route and the uri's below
 	{
-		v1.GET("tasks", middleware.EnsureValidToken(), getAllUserTasks)
-		v1.GET("task/:id", middleware.EnsureValidToken(), getTaskById)
-		v1.POST("tasks", middleware.EnsureValidToken(), createTask)
-		v1.PUT("tasks/:id", middleware.EnsureValidToken(), editTask)
-		v1.DELETE("tasks/:id", middleware.EnsureValidToken(), deleteTask)
+		// First middleware to use is verifying authentication
+		v1.Use(authentication.IsAuthenticated)
+
+		v1.GET("tasks", getAllUserTasks)
+		v1.GET("task/:id", getTaskById)
+		v1.POST("tasks", createTask)
+		v1.PUT("tasks/:id", editTask)
+		v1.DELETE("tasks/:id", deleteTask)
 	}
 
 	return router
@@ -137,3 +145,5 @@ func getTaskById(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"task": task})
 }
+
+// User goes to callback after authenticating w/ Auth0

@@ -271,6 +271,7 @@ func GetUserTask(Uid int) ([]TaskPreview, error) {
 	return utaskArr, err
 }
 
+// Find task by TaskID
 func GetTaskId(Tid int) (Task, error, bool) {
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task

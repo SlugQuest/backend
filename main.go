@@ -42,5 +42,8 @@ func main() {
 	}
 
 	log.Print("Running at http://localhost:8080")
-	router.Run() // listen and serve on 0.0.0.0:8080
+	router_err := router.Run() // listen and serve on 0.0.0.0:8080
+	if router_err != nil {
+		log.Fatalf("couldn't run server gg: %v", router_err)
+	}
 }
