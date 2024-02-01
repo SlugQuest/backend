@@ -20,7 +20,8 @@ vendor/
 # Go workspace file
 go.work
 
-
+# Avoid environment leaks
+.env
 
 
 result
