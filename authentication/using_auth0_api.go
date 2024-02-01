@@ -3,7 +3,7 @@
 
 // middleware/jwt.go
 
-package middleware
+package authentication
 
 import (
 	"context"
