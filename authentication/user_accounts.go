@@ -120,15 +120,24 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
+		// Prefixed with "auth0"
+		user_id := profile["sub"].(string)[len("auth0|"):]
+		session.Set("user_id", user_id)
+
 		// Redirect to logged in page.
-		c.Redirect(http.StatusTemporaryRedirect, "/user")
+		c.Redirect(http.StatusTemporaryRedirect, "/main/blah/tasks")
 	}
 }
 
 // Displays user profile from the current session
-func UserProfileHandler(c *gin.Context) {
-	session := sessions.Default(c)
-	profile := session.Get("profile")
+// func UserProfileHandler(c *gin.Context) {
+// 	session := sessions.Default(c)
+// 	profile := session.Get("profile")
 
-	c.HTML(http.StatusOK, "user.html", profile)
-}
+// 	if profile == nil {
+// 		c.String(http.StatusInternalServerError, "Failed to retrieve user information.")
+// 		return
+// 	}
+
+// 	c.HTML(http.StatusOK, "/template/user.html", profile)
+// }

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -25,16 +26,19 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		})
 	})
 
+	// To store custom types in our cookies,
+	// we must first register them using gob.Register
+	gob.Register(map[string]interface{}{})
+
 	// Set up cookie store for the user session
 	store := cookie.NewStore([]byte("secret"))
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Router: takes incoming requests and routes them to functions to handle them
 	router.GET("/login", authentication.LoginHandler(auth))
-	router.POST("/login", authentication.LoginHandler(auth))
 	router.GET("/logout", authentication.LogoutHandler)
 	router.GET("/callback", authentication.CallbackHandler(auth))
-	router.GET("/user", authentication.UserProfileHandler)
+	// router.GET("/user", authentication.UserProfileHandler)
 
 	// Building a group of routes starting with this path
 	v1 := router.Group("/main/blah") //TODO: FIX the route and the uri's below
