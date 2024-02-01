@@ -44,13 +44,12 @@ func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
-		lol, err, _ := CreateTask(task)
+		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
 		}
 	}
 	return nil
-
 }
 
 func ConnectToDB() error {
@@ -95,53 +94,53 @@ func isTableExists(tableName string) (bool, error) {
 	return count > 0, err
 }
 
-func CreateTask(task Task) (bool, error, int64) {
+func CreateTask(task Task) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
-		fmt.Println("breaky 1 ")
-		return false, err, -1
+		fmt.Println("CreateTask(): breaky 1")
+		return false, -1, err
 	}
 	defer tx.Rollback() //abort transaction if error
 
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println("breaky 2")
-		return false, err, -1
+		fmt.Println("CreateTask(): breaky 2")
+		return false, -1, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
 
 	if err != nil {
-		fmt.Println("breaky 3 ", err)
-		return false, err, -1
+		fmt.Println("CreateTask(): breaky 3 ", err)
+		return false, -1, err
 	}
 
 	taskID, err := res.LastInsertId()
 	if err != nil {
-		fmt.Println("breaky 4 ", err)
-		return false, err, -1
+		fmt.Println("CreateTask(): breaky 4 ", err)
+		return false, -1, err
 	}
 
 	if task.IsRecurring {
 		rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
 		if err != nil {
-			fmt.Println("breaky 4", err)
-			return false, err, -1
+			fmt.Println("CreateTask(): breaky 4", err)
+			return false, -1, err
 		}
 		defer rStmnt.Close()
 
 		_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
 		if err != nil {
-			fmt.Println("breaky 5", err)
-			return false, err, -1
+			fmt.Println("CreateTask(): breaky 5", err)
+			return false, -1, err
 		}
 	}
 
 	tx.Commit() //commit transaction to database
 
-	return true, nil, taskID
+	return true, taskID, nil
 }
 
 func EditTask(task Task, id int) (bool, error) {
@@ -248,8 +247,8 @@ func DeleteTask(id int) (bool, error) {
 	return true, nil
 }
 
-// Need hardcode Uid for testing until we have auth0
-func GetUserTask(Uid int) ([]TaskPreview, error) {
+// Uid is provided in a router context (session cookies)
+func GetUserTask(Uid string) ([]TaskPreview, error) {
 	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable;")
 	utaskArr := []TaskPreview{}
 	if err != nil {
@@ -257,7 +256,7 @@ func GetUserTask(Uid int) ([]TaskPreview, error) {
 		rows.Close()
 		return utaskArr, err
 	}
-	fmt.Println(Uid)
+
 	for rows.Next() {
 		var taskprev TaskPreview
 		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.IsCompleted, &taskprev.IsRecurring, &taskprev.IsAllDay)
@@ -272,12 +271,12 @@ func GetUserTask(Uid int) ([]TaskPreview, error) {
 }
 
 // Find task by TaskID
-func GetTaskId(Tid int) (Task, error, bool) {
+func GetTaskId(Tid int) (Task, bool, error) {
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
 	if err != nil {
 		fmt.Println(err)
-		return taskit, err, false
+		return taskit, false, err
 	}
 	counter := 0
 	for rows.Next() {
@@ -289,5 +288,5 @@ func GetTaskId(Tid int) (Task, error, bool) {
 	rows.Close()
 	fmt.Println("done finding")
 	print(counter)
-	return taskit, err, counter == 1
+	return taskit, counter == 1, err
 }
