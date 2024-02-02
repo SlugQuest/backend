@@ -41,16 +41,16 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// router.GET("/user", authentication.UserProfileHandler)
 
 	// Building a group of routes starting with this path
-	v1 := router.Group("/main/blah") //TODO: FIX the route and the uri's below
+	v1 := router.Group("/api/v1") //TODO: FIX the route and the uri's below
 	{
 		// First middleware to use is verifying authentication
 		v1.Use(authentication.IsAuthenticated)
 
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
-		v1.POST("tasks", createTask)
-		v1.PUT("tasks/:id", editTask)
-		v1.DELETE("tasks/:id", deleteTask)
+		v1.POST("task", createTask)
+		v1.PUT("task/:id", editTask)
+		v1.DELETE("task/:id", deleteTask)
 	}
 
 	return router
