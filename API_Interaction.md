@@ -2,7 +2,7 @@
 
 ## Getting All User Tasks (GET)
 
-- **Endpoint**: `/main/blah/tasks`
+- **Endpoint**: `/api/v1/tasks`
 - **Description**: Get all tasks for a specific user.
   - **Request Method**: GET
   - **Response**:
@@ -25,7 +25,7 @@
 
 ## Get Task by ID (GET)
 
-- **Endpoint**: `/main/blah/task/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Get a task by ID.
   - **Request Method**: GET
   - **Parameters**: 
@@ -52,7 +52,7 @@
 
 ## Create Task (POST)
 
-- **Endpoint**: `/main/blah/tasks`
+- **Endpoint**: `/api/v1/task`
 - **Description**: Create a new task.
   - **Request Method**: POST
   - **Body**: JSON Sample Request Body
@@ -83,7 +83,7 @@
 
 ## Edit Task (PUT)
 
-- **Endpoint**: `/main/blah/tasks/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Edit an existing task.
   - **Request Method**: PUT
   - **URL Parameters**: 
@@ -108,7 +108,7 @@
 
 ## Delete Task (DELETE)
 
-- **Endpoint**: `/main/blah/tasks/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Delete a task by ID.
   - **Request Method**: DELETE
   - **URL Parameters**: 
