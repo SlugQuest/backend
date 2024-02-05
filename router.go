@@ -4,7 +4,7 @@ package main
 
 import (
 	"encoding/gob"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -41,32 +41,31 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// router.GET("/user", authentication.UserProfileHandler)
 
 	// Building a group of routes starting with this path
-	v1 := router.Group("/main/blah") //TODO: FIX the route and the uri's below
+	v1 := router.Group("/api/v1") //TODO: FIX the route and the uri's below
 	{
 		// First middleware to use is verifying authentication
 		v1.Use(authentication.IsAuthenticated)
 
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
-		v1.POST("tasks", createTask)
-		v1.PUT("tasks/:id", editTask)
-		v1.DELETE("tasks/:id", deleteTask)
+		v1.POST("task", createTask)
+		v1.PUT("task/:id", editTask)
+		v1.DELETE("task/:id", deleteTask)
 	}
 
 	return router
 }
 
+// Create a new task
 func createTask(c *gin.Context) {
-
-	var json crud.Task //instance of Task struct defined in handler
+	var json crud.Task //instance of Task struct defined in db_handler.go
 
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 
-	success, err, taskID := crud.CreateTask(json) //pass struct into function to add Task to db
-
+	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})
 		return
@@ -76,11 +75,13 @@ func createTask(c *gin.Context) {
 	}
 }
 
+// Edit a task by its ID
 func editTask(c *gin.Context) {
 	var json crud.Task //instance of Task struct defined in handler
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		log.Println("editTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
@@ -101,10 +102,13 @@ func editTask(c *gin.Context) {
 	}
 }
 
+// Deletes a task by its ID
 func deleteTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		log.Println("deleteTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
 	}
 
 	success, err := crud.DeleteTask(id)
@@ -116,38 +120,48 @@ func deleteTask(c *gin.Context) {
 	}
 }
 
+// Returns a list of all tasks of the current user
 func getAllUserTasks(c *gin.Context) {
+	// TODO: ill be fixing this
+	// user_id stored as a variable within the session
+	// uid := c.GetString("user_id")
+	// log.Printf("found userid = %v", uid)
+	// if uid == "" {
+	// 	log.Println("getAllUserTasks(): couldn't get user_id")
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
+	// 	return
+	// }
+	uid := authentication.Curr_user_id
 
-	uid := 1111
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
-		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		log.Println("getAllUserTasks(): Problem probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
+// Retrieve task by ID
 func getTaskById(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
-		fmt.Println("ERROR LOG:  str2int error")
+		log.Println("getTaskById(): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
 
-	task, err, value := crud.GetTaskId(tid)
+	task, value, err := crud.GetTaskId(tid)
 	if !value {
-		fmt.Println("ERROR LOG:  getting a non idd task")
+		log.Printf("getTaskById(): Did not find task with ID %v", tid)
 		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
 		return
 	}
 	if err != nil {
-		fmt.Println("ERROR LOG:  Problem in getAllUserTasks, probably DB related")
+		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"task": task})
 }
-
-// User goes to callback after authenticating w/ Auth0

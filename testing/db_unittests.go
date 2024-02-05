@@ -2,11 +2,13 @@ package testing
 
 // When a new backend function is made, add a test function for it that returns a bool, and then put that func in testmain
 import (
-	"fmt"
+	"log"
 	"time"
 
 	. "slugquest.com/backend/crud"
 )
+
+var testUserId string = "1111"
 
 func RunAllTests() bool {
 	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
@@ -14,7 +16,7 @@ func RunAllTests() bool {
 
 func TestDeleteTask() bool {
 	newTask := Task{
-		UserID:      "1111",
+		UserID:      testUserId,
 		Category:    "example",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
@@ -25,27 +27,27 @@ func TestDeleteTask() bool {
 		IsAllDay:    false,
 	}
 
-	success, err, taskID := CreateTask(newTask)
+	success, taskID, err := CreateTask(newTask)
 	if err != nil || !success {
-		fmt.Println("Error creating task:", err)
+		log.Printf("TestDeleteTask(): error creating task: %v", err)
 		return false
 	}
 
 	success, deleteErr := DeleteTask(int(taskID))
 	if deleteErr != nil {
-		fmt.Println(err)
+		log.Printf("TestDeleteTask(): %v", err)
 		return false
 	}
 
 	if !success {
-		fmt.Println("something's up")
+		log.Println("TestDeleteTask(): something's up")
 		return false
 	}
 
-	_, _, found := GetTaskId(int(taskID))
+	_, found, _ := GetTaskId(int(taskID))
 
 	if found {
-		fmt.Println("Delete failed")
+		log.Println("TestDeleteTask(): delete failed")
 		return false
 	}
 
@@ -53,7 +55,7 @@ func TestDeleteTask() bool {
 }
 func TestEditTask() bool {
 	newTask := Task{
-		UserID:      "1111",
+		UserID:      testUserId,
 		TaskID:      3,
 		Category:    "example",
 		TaskName:    "New Task",
@@ -65,15 +67,15 @@ func TestEditTask() bool {
 		IsAllDay:    false,
 	}
 
-	success, err, taskID := CreateTask(newTask)
+	success, taskID, err := CreateTask(newTask)
 	if err != nil || !success {
-		fmt.Println("Error creating task:", err)
+		log.Printf("TestEditTask(): error creating task: %v", err)
 		return false
 	}
 
 	editedTask := Task{
 		TaskID:        int(taskID),
-		UserID:        "1111",
+		UserID:        testUserId,
 		Category:      "asdf",
 		TaskName:      "edited name",
 		Description:   "edited description",
@@ -90,53 +92,54 @@ func TestEditTask() bool {
 	// Perform the edit
 	editSuccess, editErr := EditTask(editedTask, editedTask.TaskID)
 	if editErr != nil || !editSuccess {
-		fmt.Println("Error editing task:", editErr)
+		log.Printf("TestEditTask(): error editing task: %v", editErr)
 		return false
 	}
 
 	taskl, _, _ := GetTaskId(int(taskID))
 	if taskl.TaskName != "edited name" || !taskl.IsCompleted {
-		fmt.Println("Edit verification failed")
+		log.Println("TestEditTask(): edit verfication failed")
 		return false
 	}
 
 	return true
 }
 func TestGetUserTask() bool {
-	taskl, err := GetUserTask(1111)
+	taskl, err := GetUserTask(testUserId)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("TestGetUserTask(): %v", err)
 		return false
 	}
 	if len(taskl) != 500 {
-		print("error test get user task wrong count, expected 500 got", len(taskl))
+		log.Printf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
 		return false
 	}
 	return true
 }
+
 func TestGetTaskId() bool {
-	task, erro, found := GetTaskId(50)
+	task, found, erro := GetTaskId(50)
 	if erro != nil {
-		fmt.Println(erro)
+		log.Printf("TestGetTaskid(): %v", erro)
 		return false
 	}
 
 	if !found {
-		fmt.Println("didn't find task")
+		log.Println("TestGetTaskId(): didn't find task")
 		return false
 	}
 	if task.TaskID != 50 {
-		fmt.Println("bad task find")
+		log.Println("TestGetTaskId(): found wrong task")
 		return false
 	}
 
-	task, erro, found = GetTaskId(-5)
+	task, found, erro = GetTaskId(-5)
 	if erro != nil {
-		fmt.Println(erro)
+		log.Printf("TestGetTaskid(): %v", erro)
 		return false
 	}
 	if found {
-		fmt.Println("found bad task")
+		log.Println("TestGetTaskId(): found task by invalid id")
 		return false
 	}
 	return true
