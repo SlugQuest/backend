@@ -52,38 +52,59 @@ func LoadDumbData() error {
 	return nil
 }
 
-func ConnectToDB() error {
-	// Read schema from file
-	schemaCreate, err := os.ReadFile("schema.sql")
-	if err != nil {
-		return err
+func ConnectToDB(isunittest bool) error {
+	if(isunittest){
+		// Read schema from file
+		schemaCreate, err := os.ReadFile("schema.sql")
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(schemaCreate))
+
+		// Connect to an in-memory SQLite database
+		db, err := sqlx.Open("sqlite3", ":memory:")
+		if err != nil {
+			return err
+		}
+
+		// Force a connection and test that it worked
+		err = db.Ping()
+		if err != nil {
+			fmt.Println("breaky")
+			return err
+		} else {
+			fmt.Println("not breaky")
+		}
+
+		//Execute the schema creation SQL
+		_, err = db.Exec(string(schemaCreate))
+		if err != nil {
+			fmt.Println("Error executing schema creation SQL:", err)
+			return err
+		}
+
+		DB = db
+	} else{
+
+		// Connect to the real database
+		db, err := sqlx.Open("sqlite3", "slugquest.db")
+		if err != nil {
+			return err
+		}
+
+		// Force a connection and test that it worked
+		err = db.Ping()
+		if err != nil {
+			fmt.Println("breaky")
+			return err
+		} else {
+			fmt.Println("not breaky")
+		}
+
+
+		DB = db
 	}
-
-	fmt.Println(string(schemaCreate))
-
-	// Connect to an in-memory SQLite database
-	db, err := sqlx.Open("sqlite3", ":memory:")
-	if err != nil {
-		return err
-	}
-
-	// Force a connection and test that it worked
-	err = db.Ping()
-	if err != nil {
-		fmt.Println("breaky")
-		return err
-	} else {
-		fmt.Println("not breaky")
-	}
-
-	// Execute the schema creation SQL
-	_, err = db.Exec(string(schemaCreate))
-	if err != nil {
-		fmt.Println("Error executing schema creation SQL:", err)
-		return err
-	}
-
-	DB = db
 	return nil
 }
 

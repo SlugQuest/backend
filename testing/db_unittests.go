@@ -11,6 +11,11 @@ import (
 var testUserId string = "1111"
 
 func RunAllTests() bool {
+	ConnectToDB(true)
+	dummy_err := LoadDumbData()
+	if dummy_err != nil {
+		log.Fatalf("error loaduing dumb data: %v", dummy_err)
+	}
 	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
 }
 
