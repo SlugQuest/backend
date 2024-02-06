@@ -1,5 +1,8 @@
-CREATE TABLE UserTable (
-    UserID VARCHAR(255) PRIMARY KEY NOT NULL-- Assuming Auth0 provides a string-based user ID
+CREATE TABLE IF NOT EXISTS UserTable (
+    UserID VARCHAR(255) PRIMARY KEY,
+    Points INTEGER,
+    BossId INTEGER,
+    FOREIGN KEY (BossId) REFERENCES BossTable(BossID)
 );
 
 CREATE TABLE TaskTable (
@@ -23,4 +26,11 @@ CREATE TABLE RecurrencePatterns (
     DayOfMonth INT check(DayOfMonth >= 0 and DayOfMonth <= 31),
     PRIMARY KEY (TaskID, RecurringType, DayOfWeek, DayOfMonth),
     FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
+);
+
+CREATE TABLE BossTable (
+    BossID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BossName VARCHAR(255) NOT NULL,
+    HEALTH INTEGER
+    BossImage VARCHAR(255) --FileName
 );
