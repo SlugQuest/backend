@@ -25,7 +25,6 @@ func main() {
 	}
 	router := CreateRouter(auth)
 
-	// DB loading shenanigans
 	conn_err := crud.ConnectToDB(false)
 	if conn_err != nil {
 		log.Fatalf("Error connecting to database: %v", conn_err)

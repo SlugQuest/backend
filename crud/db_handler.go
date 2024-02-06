@@ -13,27 +13,29 @@ import (
 type Task struct {
 	TaskID        int
 	UserID        string
-	Category      string
+	Category      int
 	TaskName      string
 	Description   string
 	StartTime     time.Time
 	EndTime       time.Time
-	IsCompleted   bool
+	Status   string
 	IsRecurring   bool
 	IsAllDay      bool
 	RecurringType string
 	DayOfWeek     int
 	DayOfMonth    int
+	Points int
+	CronExpression string
 }
 
 type TaskPreview struct {
 	TaskID      int
 	UserID      string
-	Category    string
+	Category    int 
 	TaskName    string
 	StartTime   time.Time
 	EndTime     time.Time
-	IsCompleted bool
+	Status string
 	IsRecurring bool
 	IsAllDay    bool
 }
@@ -43,7 +45,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "1111", Category: "asdf", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), IsCompleted: false, IsRecurring: false, IsAllDay: false}
+		task := Task{TaskID: i, UserID: "1111", Category: 1234, TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Points: 0}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -124,14 +126,14 @@ func CreateTask(task Task) (bool, int64, error) {
 	defer tx.Rollback() //abort transaction if error
 
 	//preparing statement to prevent SQL injection issues
-	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Points, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		fmt.Println("CreateTask(): breaky 2")
 		return false, -1, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
-	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay)
+	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Points, task.CronExpression)
 
 	if err != nil {
 		fmt.Println("CreateTask(): breaky 3 ", err)
@@ -173,7 +175,7 @@ func EditTask(task Task, id int) (bool, error) {
 
 	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
-		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, IsCompleted = ?, IsRecurring = ?, IsAllDay = ? 
+		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ? 
 		WHERE TaskID = ?
 	`)
 
@@ -183,31 +185,13 @@ func EditTask(task Task, id int) (bool, error) {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.IsCompleted, task.IsRecurring, task.IsAllDay, id)
+	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, id)
 
 	if err != nil {
 		return false, err
 	}
 
-	// if the edit updated the recurrence of a task
-	if task.IsRecurring {
-		_, err = tx.Exec(
-			`UPDATE RecurrencePatterns 
-			SET RecurringType = ?, DayOfWeek = ?, DayOfMonth = ? 
-			WHERE TaskID = ?
-		`, task.RecurringType, task.DayOfWeek, task.DayOfMonth, id)
 
-		if err != nil {
-			tx.Rollback()
-			return false, err
-		}
-	} else { // if isRecurring was set to false
-		_, err = tx.Exec("DELETE FROM RecurrencePatterns WHERE TaskID = ?", id)
-		if err != nil {
-			tx.Rollback()
-			return false, err
-		}
-	}
 
 	tx.Commit()
 
@@ -270,7 +254,7 @@ func DeleteTask(id int) (bool, error) {
 
 // Uid is provided in a router context (session cookies)
 func GetUserTask(Uid string) ([]TaskPreview, error) {
-	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, IsCompleted, IsRecurring, IsAllDay FROM TaskTable;")
+	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable;")
 	utaskArr := []TaskPreview{}
 	if err != nil {
 		fmt.Println(err)
@@ -280,7 +264,7 @@ func GetUserTask(Uid string) ([]TaskPreview, error) {
 
 	for rows.Next() {
 		var taskprev TaskPreview
-		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.IsCompleted, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		if erro != nil {
 			fmt.Println(erro)
 			rows.Close()
@@ -303,11 +287,12 @@ func GetTaskId(Tid int) (Task, bool, error) {
 	for rows.Next() {
 		counter += 1
 		fmt.Println(counter)
-		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.IsCompleted, &taskit.IsRecurring, &taskit.IsAllDay)
+		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Points, &taskit.CronExpression)
 		fmt.Println("finding")
 	}
 	rows.Close()
 	fmt.Println("done finding")
-	print(counter)
+	fmt.Println(counter)
+	fmt.Println(taskit.Status)
 	return taskit, counter == 1, err
 }

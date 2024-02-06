@@ -6,14 +6,14 @@ CREATE TABLE IF NOT EXISTS UserTable (
 );
 
 CREATE TABLE TaskTable (
-    TaskID INT PRIMARY KEY AUTOINCREMENT,
+    TaskID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID VARCHAR(255) NOT NULL,
     Category INT NOT NULL,
     TaskName VARCHAR(255) NOT NULL,
     Description TEXT NOT NULL,
     StartTime DATETIME, -- optional
     EndTime DATETIME, --optional 
-    Status VARCHAR(15) CHECK(Status IN ('completed','failed')),
+    Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
     IsRecurring BOOLEAN NOT NULL,
     IsAllDay BOOLEAN NOT NULL,
     Points INTEGER NOT NULL, -- Backend does conversion of easy/medium/hard to points
@@ -32,7 +32,7 @@ CREATE TABLE BossTable (
 
 CREATE TABLE Category (
 	CatID INTEGER PRIMARY KEY AUTOINCREMENT,
-	Color INT NOT NULL -- hexcode? Ask frontend	
+	Color INT NOT NULL -- hexcode? Ask frontend
 );
 
 CREATE TABLE TrophyTable (

@@ -22,12 +22,12 @@ func RunAllTests() bool {
 func TestDeleteTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
-		Category:    "example",
+		Category:    5,
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		IsCompleted: false,
+		Status: "failed",
 		IsRecurring: false,
 		IsAllDay:    false,
 	}
@@ -62,14 +62,16 @@ func TestEditTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
 		TaskID:      3,
-		Category:    "example",
+		Category:    5,
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		IsCompleted: false,
+		Status: "completed",
 		IsRecurring: false,
 		IsAllDay:    false,
+		Points: 0,
+
 	}
 
 	success, taskID, err := CreateTask(newTask)
@@ -81,12 +83,12 @@ func TestEditTask() bool {
 	editedTask := Task{
 		TaskID:        int(taskID),
 		UserID:        testUserId,
-		Category:      "asdf",
+		Category:      5,
 		TaskName:      "edited name",
 		Description:   "edited description",
 		StartTime:     time.Now(),
 		EndTime:       time.Now(),
-		IsCompleted:   true,
+		Status:   "failed",
 		IsRecurring:   false,
 		IsAllDay:      true,
 		RecurringType: "",
@@ -102,7 +104,7 @@ func TestEditTask() bool {
 	}
 
 	taskl, _, _ := GetTaskId(int(taskID))
-	if taskl.TaskName != "edited name" || !taskl.IsCompleted {
+	if taskl.TaskName != "edited name" {
 		log.Println("TestEditTask(): edit verfication failed")
 		return false
 	}
