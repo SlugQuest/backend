@@ -116,6 +116,19 @@ func isTableExists(tableName string) (bool, error) {
 	return count > 0, err
 }
 
+func calculatePoints(difficulty string) int {
+	switch difficulty {
+	case "easy":
+		return 1
+	case "medium":
+		return 2
+	case "hard":
+		return 3
+	default:
+		return 0
+	}
+}
+
 func CreateTask(task Task) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -131,7 +144,7 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
+	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
@@ -145,20 +158,27 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	if task.IsRecurring {
-		rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 4", err)
-			return false, -1, err
-		}
-		defer rStmnt.Close()
-
-		_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 5", err)
-			return false, -1, err
-		}
+	points := calculatePoints(task.Difficulty)
+	_, err = tx.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
+	if err != nil {
+		fmt.Println("CreateTask(): breaky 5 ", err)
+		return false, -1, err
 	}
+
+	// if task.IsRecurring {
+	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 4", err)
+	// 		return false, -1, err
+	// 	}
+	// 	defer rStmnt.Close()
+
+	// 	_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 5", err)
+	// 		return false, -1, err
+	// 	}
+	// }
 
 	tx.Commit() //commit transaction to database
 
