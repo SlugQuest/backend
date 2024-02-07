@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	envfuncs "github.com/joho/godotenv"
@@ -8,6 +9,7 @@ import (
 
 	"slugquest.com/backend/authentication"
 	"slugquest.com/backend/crud"
+	"slugquest.com/backend/testing"
 )
 
 func main() {
@@ -23,20 +25,21 @@ func main() {
 	}
 	router := CreateRouter(auth)
 
-	conn_err := crud.ConnectToDB(false)
+	// DB loading shenanigans
+	conn_err := crud.ConnectToDB()
 	if conn_err != nil {
 		log.Fatalf("Error connecting to database: %v", conn_err)
 		return
 	}
-	// dummy_err := crud.LoadDumbData()
-	// if dummy_err != nil {
-	// 	log.Fatalf("error loaduing dumb data: %v", dummy_err)
-	// }
-	// utest := testing.RunAllTests()
-	// if !utest {
-	// 	fmt.Println("unit test failure")
-	// 	return
-	// }
+	dummy_err := crud.LoadDumbData()
+	if dummy_err != nil {
+		log.Fatalf("error loaduing dumb data: %v", dummy_err)
+	}
+	utest := testing.RunAllTests()
+	if !utest {
+		fmt.Println("unit test failure")
+		return
+	}
 
 	log.Print("Running at http://localhost:8080")
 	router_err := router.Run() // listen and serve on 0.0.0.0:8080

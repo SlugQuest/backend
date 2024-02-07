@@ -11,23 +11,18 @@ import (
 var testUserId string = "1111"
 
 func RunAllTests() bool {
-	ConnectToDB(true)
-	dummy_err := LoadDumbData()
-	if dummy_err != nil {
-		log.Fatalf("error loaduing dumb data: %v", dummy_err)
-	}
 	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
-		Category:    "yo",
+		Category:    "example",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		Status:      "failed",
+		IsCompleted: false,
 		IsRecurring: false,
 		IsAllDay:    false,
 	}
@@ -62,15 +57,14 @@ func TestEditTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
 		TaskID:      3,
-		Category:    "yo",
+		Category:    "example",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		Status:      "completed",
+		IsCompleted: false,
 		IsRecurring: false,
 		IsAllDay:    false,
-		Difficulty:  "easy",
 	}
 
 	success, taskID, err := CreateTask(newTask)
@@ -82,12 +76,12 @@ func TestEditTask() bool {
 	editedTask := Task{
 		TaskID:        int(taskID),
 		UserID:        testUserId,
-		Category:      "yo",
+		Category:      "asdf",
 		TaskName:      "edited name",
 		Description:   "edited description",
 		StartTime:     time.Now(),
 		EndTime:       time.Now(),
-		Status:        "failed",
+		IsCompleted:   true,
 		IsRecurring:   false,
 		IsAllDay:      true,
 		RecurringType: "",
@@ -103,7 +97,7 @@ func TestEditTask() bool {
 	}
 
 	taskl, _, _ := GetTaskId(int(taskID))
-	if taskl.TaskName != "edited name" {
+	if taskl.TaskName != "edited name" || !taskl.IsCompleted {
 		log.Println("TestEditTask(): edit verfication failed")
 		return false
 	}
