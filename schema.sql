@@ -16,7 +16,7 @@ CREATE TABLE TaskTable (
     Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
     IsRecurring BOOLEAN NOT NULL,
     IsAllDay BOOLEAN NOT NULL,
-    Points INTEGER NOT NULL, -- Backend does conversion of easy/medium/hard to points
+    Difficulty VARCHAR(15) CHECK(Status IN ('easy','medium', 'hard')), -- Backend does conversion of easy/medium/hard to points
     CronExpression VARCHAR(255) NOT NULL,
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID),
     FOREIGN KEY (Category) REFERENCES Category(CatID)

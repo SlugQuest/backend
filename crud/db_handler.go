@@ -24,7 +24,7 @@ type Task struct {
 	RecurringType  string
 	DayOfWeek      int
 	DayOfMonth     int
-	Points         int
+	Difficulty     string
 	CronExpression string
 }
 
@@ -45,7 +45,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "1111", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Points: 0}
+		task := Task{TaskID: i, UserID: "1111", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -125,14 +125,14 @@ func CreateTask(task Task) (bool, int64, error) {
 	defer tx.Rollback() //abort transaction if error
 
 	//preparing statement to prevent SQL injection issues
-	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Points, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		fmt.Println("CreateTask(): breaky 2")
 		return false, -1, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
-	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Points, task.CronExpression)
+	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
 		fmt.Println("CreateTask(): breaky 3 ", err)
@@ -284,7 +284,7 @@ func GetTaskId(Tid int) (Task, bool, error) {
 	for rows.Next() {
 		counter += 1
 		fmt.Println(counter)
-		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Points, &taskit.CronExpression)
+		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
 		fmt.Println("finding")
 	}
 	rows.Close()

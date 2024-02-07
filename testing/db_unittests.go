@@ -70,7 +70,7 @@ func TestEditTask() bool {
 		Status:      "completed",
 		IsRecurring: false,
 		IsAllDay:    false,
-		Points:      0,
+		Difficulty:  "easy",
 	}
 
 	success, taskID, err := CreateTask(newTask)
