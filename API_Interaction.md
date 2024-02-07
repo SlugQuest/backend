@@ -52,7 +52,7 @@
 
 ## Create Task (POST)
 
-- **Endpoint**: `/api/v1/tasks`
+- **Endpoint**: `/api/v1/task`
 - **Description**: Create a new task.
   - **Request Method**: POST
   - **Body**: JSON Sample Request Body
@@ -83,7 +83,7 @@
 
 ## Edit Task (PUT)
 
-- **Endpoint**: `/api/v1/tasks/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Edit an existing task.
   - **Request Method**: PUT
   - **URL Parameters**: 
@@ -108,7 +108,7 @@
 
 ## Delete Task (DELETE)
 
-- **Endpoint**: `/api/v1/tasks/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Delete a task by ID.
   - **Request Method**: DELETE
   - **URL Parameters**: 
