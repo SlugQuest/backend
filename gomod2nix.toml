@@ -70,6 +70,9 @@ schema = 3
   [mod."github.com/klauspost/cpuid/v2"]
     version = "v2.2.6"
     hash = "sha256-SlMBrOvotgIvGI7GsUmNxs++KpgzNCk1jOBAl8Oq8c8="
+  [mod."github.com/kr/pretty"]
+    version = "v0.3.0"
+    hash = "sha256-5KfVas96NAU7pmN2ZOwQFFpUeagiJTqYKBLxq5aM5W4="
   [mod."github.com/leodido/go-urn"]
     version = "v1.3.0"
     hash = "sha256-AZTF26dTarC58fADEOfJAjM6YBOYw38ZSPU64Hu68MU="
@@ -88,6 +91,9 @@ schema = 3
   [mod."github.com/pelletier/go-toml/v2"]
     version = "v2.1.1"
     hash = "sha256-BQtflYQ8Dt7FL/yFI9OnxwvsRk0oEO37ZXuGXFveVpo="
+  [mod."github.com/rogpeppe/go-internal"]
+    version = "v1.8.0"
+    hash = "sha256-ze+/FkW3z3b+frAksjWPjDolP1UtSf6z0By6PGXTirM="
   [mod."github.com/twitchyliquid64/golang-asm"]
     version = "v0.15.1"
     hash = "sha256-HLk6oUe7EoITrNvP0y8D6BtIgIcmDZYtb/xl/dufIoY="
@@ -121,6 +127,9 @@ schema = 3
   [mod."google.golang.org/protobuf"]
     version = "v1.32.0"
     hash = "sha256-GJuTkMGHCzHbyK4yD5kY4oMn8wQWqgkeBK//yVDqHJk="
+  [mod."gopkg.in/check.v1"]
+    version = "v1.0.0-20201130134442-10cb98267c6c"
+    hash = "sha256-VlIpM2r/OD+kkyItn6vW35dyc0rtkJufA93rjFyzncs="
   [mod."gopkg.in/go-jose/go-jose.v2"]
     version = "v2.6.2"
     hash = "sha256-ZQalDV1vgfajnuHxjffCIi83GCHoJvqNgSICpFdqaPM="
