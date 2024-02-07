@@ -2,6 +2,7 @@ package testing
 
 // When a new backend function is made, add a test function for it that returns a bool, and then put that func in testmain
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -59,18 +60,34 @@ func TestDeleteTask() bool {
 	return true
 }
 func TestEditTask() bool {
+	tx, err := DB.Beginx()
 	newTask := Task{
-		UserID:      testUserId,
-		TaskID:      3,
-		Category:    "yo",
-		TaskName:    "New Task",
-		Description: "Description of the new task",
-		StartTime:   time.Now(),
-		EndTime:     time.Now().Add(time.Hour),
-		Status:      "completed",
-		IsRecurring: false,
-		IsAllDay:    false,
-		Difficulty:  "easy",
+		UserID:         testUserId,
+		Category:       "yo",
+		TaskName:       "New Task",
+		Description:    "Description of the new task",
+		StartTime:      time.Now(),
+		EndTime:        time.Now().Add(time.Hour),
+		Status:         "completed",
+		IsRecurring:    false,
+		IsAllDay:       false,
+		Difficulty:     "easy",
+		CronExpression: "",
+	}
+
+	var userExists bool
+	err = tx.Get(&userExists, "SELECT EXISTS (SELECT 1 FROM UserTable WHERE UserID = ?)", newTask.UserID)
+	if err != nil {
+		fmt.Println("CreateTask(): breaky 2", err)
+		return false
+	}
+
+	if !userExists {
+		_, err = tx.Exec("INSERT INTO UserTable (UserID, Points) VALUES (?, 0)", newTask.UserID)
+		if err != nil {
+			fmt.Println("CreateTask(): breaky 3", err)
+			return false
+		}
 	}
 
 	success, taskID, err := CreateTask(newTask)
@@ -80,19 +97,19 @@ func TestEditTask() bool {
 	}
 
 	editedTask := Task{
-		TaskID:        int(taskID),
-		UserID:        testUserId,
-		Category:      "yo",
-		TaskName:      "edited name",
-		Description:   "edited description",
-		StartTime:     time.Now(),
-		EndTime:       time.Now(),
-		Status:        "failed",
-		IsRecurring:   false,
-		IsAllDay:      true,
-		RecurringType: "",
-		DayOfWeek:     -1,
-		DayOfMonth:    -1,
+		TaskID:         int(taskID),
+		UserID:         testUserId,
+		Category:       "yo",
+		TaskName:       "edited name",
+		Description:    "edited description",
+		StartTime:      time.Now(),
+		EndTime:        time.Now(),
+		Status:         "failed",
+		IsRecurring:    false,
+		IsAllDay:       true,
+		RecurringType:  "",
+		Difficulty:     "medium",
+		CronExpression: "",
 	}
 
 	// Perform the edit
@@ -102,14 +119,33 @@ func TestEditTask() bool {
 		return false
 	}
 
-	taskl, _, _ := GetTaskId(int(taskID))
-	if taskl.TaskName != "edited name" {
-		log.Println("TestEditTask(): edit verfication failed")
+	taskResult, found, _ := GetTaskId(int(taskID))
+	if !found {
+		log.Println("TestEditTask(): edited task not found")
 		return false
 	}
 
+	if taskResult.TaskName != "edited name" ||
+		taskResult.Description != "edited description" ||
+		taskResult.Status != "failed" ||
+		taskResult.IsAllDay != true ||
+		taskResult.Difficulty != "medium" ||
+		taskResult.CronExpression != "newcron" {
+		log.Println("TestEditTask(): edit verification failed")
+		return false
+	}
+
+	//newPoints := CalculatePoints("medium")
+
+	// // user, _, _ := GetUserById(testUserId)
+	// if user.Points != newPoints {
+	// 	log.Println("TestEditTask(): user points verification failed")
+	// 	return false
+	// }
+
 	return true
 }
+
 func TestGetUserTask() bool {
 	taskl, err := GetUserTask(testUserId)
 	if err != nil {

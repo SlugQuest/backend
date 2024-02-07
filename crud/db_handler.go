@@ -22,8 +22,6 @@ type Task struct {
 	IsRecurring    bool
 	IsAllDay       bool
 	RecurringType  string
-	DayOfWeek      int
-	DayOfMonth     int
 	Difficulty     string
 	CronExpression string
 }
@@ -116,7 +114,7 @@ func isTableExists(tableName string) (bool, error) {
 	return count > 0, err
 }
 
-func calculatePoints(difficulty string) int {
+func CalculatePoints(difficulty string) int {
 	switch difficulty {
 	case "easy":
 		return 1
@@ -158,7 +156,7 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	points := calculatePoints(task.Difficulty)
+	points := CalculatePoints(task.Difficulty)
 	_, err = tx.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
 		fmt.Println("CreateTask(): breaky 5 ", err)
@@ -218,8 +216,8 @@ func EditTask(task Task, id int) (bool, error) {
 		return false, err
 	}
 
-	oldPoints := calculatePoints(currentDifficulty)
-	newPoints := calculatePoints(task.Difficulty)
+	oldPoints := CalculatePoints(currentDifficulty)
+	newPoints := CalculatePoints(task.Difficulty)
 	_, err = tx.Exec("UPDATE UserTable SET Points = Points - ? + ? WHERE UserID = ?", oldPoints, newPoints, task.UserID)
 	if err != nil {
 		fmt.Println("EditTask(): breaky 2", err)
@@ -238,29 +236,29 @@ func DeleteTask(id int) (bool, error) {
 		return false, err
 	}
 
-	recurrenceTableExists, err := isTableExists("RecurrencePatterns")
-	if err != nil {
-		tx.Rollback()
-		fmt.Println("in here 1")
-		return false, err
-	}
+	// recurrenceTableExists, err := isTableExists("RecurrencePatterns")
+	// if err != nil {
+	// 	tx.Rollback()
+	// 	fmt.Println("in here 1")
+	// 	return false, err
+	// }
 
-	if recurrenceTableExists {
-		stmt, err := tx.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
-		if err != nil {
-			tx.Rollback()
-			fmt.Println("in here 2", err)
-			return false, err
-		}
-		defer stmt.Close()
+	// if recurrenceTableExists {
+	// 	stmt, err := tx.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 		fmt.Println("in here 2", err)
+	// 		return false, err
+	// 	}
+	// 	defer stmt.Close()
 
-		_, err = stmt.Exec(id)
-		if err != nil {
-			tx.Rollback()
-			fmt.Println("in here 3", err)
-			return false, err
-		}
-	}
+	// 	_, err = stmt.Exec(id)
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 		fmt.Println("in here 3", err)
+	// 		return false, err
+	// 	}
+	// }
 
 	stmt2, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
 
