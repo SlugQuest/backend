@@ -192,9 +192,17 @@ func EditTask(task Task, id int) (bool, error) {
 		return false, err
 	}
 
+	var currentDifficulty string
+	err = tx.Get(&currentDifficulty, "SELECT Difficulty FROM TaskTable WHERE TaskID = ?", id)
+	if err != nil {
+		tx.Rollback()
+		fmt.Println("EditTask(): breaky 1", err)
+		return false, err
+	}
+
 	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
-		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ? 
+		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ? 
 		WHERE TaskID = ?
 	`)
 
@@ -204,9 +212,17 @@ func EditTask(task Task, id int) (bool, error) {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, id)
+	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, id)
 
 	if err != nil {
+		return false, err
+	}
+
+	oldPoints := calculatePoints(currentDifficulty)
+	newPoints := calculatePoints(task.Difficulty)
+	_, err = tx.Exec("UPDATE UserTable SET Points = Points - ? + ? WHERE UserID = ?", oldPoints, newPoints, task.UserID)
+	if err != nil {
+		fmt.Println("EditTask(): breaky 2", err)
 		return false, err
 	}
 
