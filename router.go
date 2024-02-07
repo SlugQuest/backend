@@ -20,12 +20,6 @@ import (
 func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router := gin.Default()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
 	// To store custom types in our cookies,
 	// we must first register them using gob.Register
 	gob.Register(map[string]interface{}{})
@@ -35,13 +29,19 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Router: takes incoming requests and routes them to functions to handle them
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
 	router.GET("/login", authentication.LoginHandler(auth))
 	router.GET("/logout", authentication.LogoutHandler)
 	router.GET("/callback", authentication.CallbackHandler(auth))
 	// router.GET("/user", authentication.UserProfileHandler)
 
 	// Building a group of routes starting with this path
-	v1 := router.Group("/api/v1") //TODO: FIX the route and the uri's below
+	v1 := router.Group("/api/v1")
 	{
 		// First middleware to use is verifying authentication
 		v1.Use(authentication.IsAuthenticated)

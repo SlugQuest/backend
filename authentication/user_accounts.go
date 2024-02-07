@@ -134,7 +134,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 		Curr_user_id = user_id
 
 		// Redirect to logged in page.
-		c.Redirect(http.StatusTemporaryRedirect, "/api/v1/tasks")
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5185")
 	}
 }
 
