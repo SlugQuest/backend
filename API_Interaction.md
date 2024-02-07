@@ -90,18 +90,21 @@
     - `id` (integer): The ID of the task to be edited.
   - **Body**: JSON
     ```json
-    {
-      "TaskID": 1,
-      "UserID": "user123",
-      "Category": "Personal",
-      "TaskName": "Go to the Gym",
-      "Description": "Exercise for an hour.",
-      "StartTime": "2024-01-02T18:00:00Z",
-      "EndTime": "2024-01-02T19:00:00Z",
-      "IsCompleted": true,
-      "IsRecurring": false,
-      "IsAllDay": false
-    }
+      {
+        "task": {
+          "TaskID": 1,
+          "UserID": "user123",
+          "Category": "Personal",
+          "Status": "todo",
+          "TaskName": "Go to the Gym",
+          "Description": "Exercise for an hour.",
+          "StartTime": "2024-01-02T18:00:00Z",
+          "EndTime": "2024-01-02T19:00:00Z",
+          "IsCompleted": true,
+          "IsRecurring": false,
+          "IsAllDay": false
+        } 
+      }
     ```
   - **Response**:
     - **Status Code**: 200 OK
