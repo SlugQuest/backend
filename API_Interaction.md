@@ -2,7 +2,7 @@
 
 ## Getting All User Tasks (GET)
 
-- **Endpoint**: `/main/blah/tasks`
+- **Endpoint**: `/api/v1/tasks`
 - **Description**: Get all tasks for a specific user.
   - **Request Method**: GET
   - **Response**:
@@ -25,7 +25,7 @@
 
 ## Get Task by ID (GET)
 
-- **Endpoint**: `/main/blah/task/:id`
+- **Endpoint**: `/api/v1/task/:id`
 - **Description**: Get a task by ID.
   - **Request Method**: GET
   - **Parameters**: 
@@ -52,7 +52,7 @@
 
 ## Create Task (POST)
 
-- **Endpoint**: `/main/blah/tasks`
+- **Endpoint**: `/api/v1/tasks`
 - **Description**: Create a new task.
   - **Request Method**: POST
   - **Body**: JSON Sample Request Body
@@ -83,7 +83,7 @@
 
 ## Edit Task (PUT)
 
-- **Endpoint**: `/main/blah/tasks/:id`
+- **Endpoint**: `/api/v1/tasks/:id`
 - **Description**: Edit an existing task.
   - **Request Method**: PUT
   - **URL Parameters**: 
@@ -108,7 +108,7 @@
 
 ## Delete Task (DELETE)
 
-- **Endpoint**: `/main/blah/tasks/:id`
+- **Endpoint**: `/api/v1/tasks/:id`
 - **Description**: Delete a task by ID.
   - **Request Method**: DELETE
   - **URL Parameters**: 
@@ -116,21 +116,13 @@
   - **Response**:
     - **Status Code**: 200 OK
 
-## User login (GET)
+## User login
 - **Endpoint**: `/login`
-- **Description**: Redirects to Auth0's universal login page, then to the `/main/blah/tasks` endpoint after successful login.
-  - **Request Method**: GET
-- **Body**: None, this redirects to the Auth0 Universal Login page.
+- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. Do not send a GET to /login or these headers get lost.
+- **Response**:
+  - **Status Code**: 307
+    - Redirects to Auth0 and comes back with another redirect to /callback (to confirm logged in token)
 
-## User logout (GET)
+## User logout
 - **Endpoint**: `/logout`
-- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run)
-  - **Request Method**: GET
-- **Body**: None
-
-<!-- ## TBA: User info (GET)
-In progress, not entirely setup
-- **Endpoint**: `/user`
-- **Description**: Returns an html page with user information
-  - **Request Method**: GET
-- **Must be done AFTER a successful login since it depends on user cookies** -->
+- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run). Go **directly** to {backend_url}/logout so the backend performs this logic.
