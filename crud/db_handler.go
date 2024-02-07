@@ -11,31 +11,31 @@ import (
 )
 
 type Task struct {
-	TaskID        int
-	UserID        string
-	Category      int
-	TaskName      string
-	Description   string
-	StartTime     time.Time
-	EndTime       time.Time
-	Status   string
-	IsRecurring   bool
-	IsAllDay      bool
-	RecurringType string
-	DayOfWeek     int
-	DayOfMonth    int
-	Points int
+	TaskID         int
+	UserID         string
+	Category       string
+	TaskName       string
+	Description    string
+	StartTime      time.Time
+	EndTime        time.Time
+	Status         string
+	IsRecurring    bool
+	IsAllDay       bool
+	RecurringType  string
+	DayOfWeek      int
+	DayOfMonth     int
+	Points         int
 	CronExpression string
 }
 
 type TaskPreview struct {
 	TaskID      int
 	UserID      string
-	Category    int 
+	Category    string
 	TaskName    string
 	StartTime   time.Time
 	EndTime     time.Time
-	Status string
+	Status      string
 	IsRecurring bool
 	IsAllDay    bool
 }
@@ -45,7 +45,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "1111", Category: 1234, TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Points: 0}
+		task := Task{TaskID: i, UserID: "1111", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Points: 0}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -55,7 +55,7 @@ func LoadDumbData() error {
 }
 
 func ConnectToDB(isunittest bool) error {
-	if(isunittest){
+	if isunittest {
 		// Read schema from file
 		schemaCreate, err := os.ReadFile("schema.sql")
 		if err != nil {
@@ -87,7 +87,7 @@ func ConnectToDB(isunittest bool) error {
 		}
 
 		DB = db
-	} else{
+	} else {
 
 		// Connect to the real database
 		db, err := sqlx.Open("sqlite3", "slugquest.db")
@@ -103,7 +103,6 @@ func ConnectToDB(isunittest bool) error {
 		} else {
 			fmt.Println("not breaky")
 		}
-
 
 		DB = db
 	}
@@ -190,8 +189,6 @@ func EditTask(task Task, id int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-
 
 	tx.Commit()
 

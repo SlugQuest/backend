@@ -22,12 +22,12 @@ func RunAllTests() bool {
 func TestDeleteTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
-		Category:    5,
+		Category:    "yo",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		Status: "failed",
+		Status:      "failed",
 		IsRecurring: false,
 		IsAllDay:    false,
 	}
@@ -62,16 +62,15 @@ func TestEditTask() bool {
 	newTask := Task{
 		UserID:      testUserId,
 		TaskID:      3,
-		Category:    5,
+		Category:    "yo",
 		TaskName:    "New Task",
 		Description: "Description of the new task",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(time.Hour),
-		Status: "completed",
+		Status:      "completed",
 		IsRecurring: false,
 		IsAllDay:    false,
-		Points: 0,
-
+		Points:      0,
 	}
 
 	success, taskID, err := CreateTask(newTask)
@@ -83,12 +82,12 @@ func TestEditTask() bool {
 	editedTask := Task{
 		TaskID:        int(taskID),
 		UserID:        testUserId,
-		Category:      5,
+		Category:      "yo",
 		TaskName:      "edited name",
 		Description:   "edited description",
 		StartTime:     time.Now(),
 		EndTime:       time.Now(),
-		Status:   "failed",
+		Status:        "failed",
 		IsRecurring:   false,
 		IsAllDay:      true,
 		RecurringType: "",

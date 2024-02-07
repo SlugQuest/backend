@@ -32,7 +32,10 @@ CREATE TABLE BossTable (
 
 CREATE TABLE Category (
 	CatID INTEGER PRIMARY KEY AUTOINCREMENT,
-	Color INT NOT NULL -- hexcode? Ask frontend
+    UserID VARCHAR(255) NOT NULL,
+    Name VARCHAR(255) NOT NULL,
+	Color INT NOT NULL, -- hexcode? Ask frontend,
+    FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
 );
 
 CREATE TABLE TrophyTable (
