@@ -17,7 +17,53 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestDeleteTask() &&/* TestEditTask()&& */ TestGetTaskId()
+	return TestGetUserTask() && TestDeleteTask() && TestPassFailTask() &&/* TestEditTask()&& */ TestGetTaskId()
+}
+
+func TestPassFailTask() bool{
+	newTask := Task{
+		UserID:      testUserId,
+		Category:    "yo",
+		TaskName:    "New Task",
+		Description: "Description of the new task",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(time.Hour),
+		Status:      "completed",
+		Difficulty: "hard",
+		CronExpression: "asdf",
+		IsRecurring: false,
+		IsAllDay:    false,
+	}
+
+	success, taskID, err := CreateTask(newTask)
+	if err != nil || !success {
+		log.Printf("TestPassFailTask(): error creating task: %v", err)
+		return false
+	}
+
+	passsucc := Passtask(int(taskID))
+	if !passsucc {
+		log.Printf("TestPassFailTask(): 1 %v")
+		return false
+	}
+	task2, _, _:= GetTaskId(int(taskID))
+	if task2.Status != "completed" {
+		log.Printf("TestPassFailTask(): bad value on true fal%v", task2.Status)
+		return false
+	}
+	failsucc := Failtask(int(taskID))
+	if !failsucc{
+		log.Printf("TestPassFailTask(): 2 %v")
+		return false
+	}
+	task3, _, _:= GetTaskId(int(taskID))
+	if task3.Status != "failed" {
+		log.Printf("TestPassFailTask(): bad value on true fal%v", task3.Status)
+		return false
+	}
+	return true
+
+
 }
 
 func TestDeleteTask() bool {

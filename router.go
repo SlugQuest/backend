@@ -156,13 +156,13 @@ func passTheTask(c *gin.Context){
 	}
 	erro := crud.Passtask(id)
 
-	if erro == nil{
+	if !erro{
 
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
 		log.Println(erro)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task", "details": erro.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task"})
 		return
 	}
 }
@@ -179,12 +179,12 @@ func failTheTask(c *gin.Context){
 
 	erro := crud.Failtask(id)
 
-	if erro ==nil {
+	if !erro {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
 		log.Println(erro)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task", "details": erro.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task"})
 		return
 	}
 }

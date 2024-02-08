@@ -106,35 +106,50 @@ func ConnectToDB(isunittest bool) error {
 	}
 	return nil
 }
-func Passtask(Tid int) error {
+func Passtask(Tid int) bool{
 	stmt, err := DB.Preparex(`
 	UPDATE TaskTable 
 	SET Status = ?
 	WHERE TaskID = ?
 	`)
 	if err != nil {
+		print("bricked lol1 %v", err)
 		stmt.Close()
-		return err
+		return false
 	}
-	_, erro := stmt.Exec("completed")
+	swag, erro := stmt.Exec("completed",Tid)
 	stmt.Close()
-	return erro
+	if erro != nil{
+		print(erro.Error())
+		print("bricked lol2 ")
+		fmt.Println(erro)
+		fmt.Println(swag)
+		return false
+	}
+	return true
 
 }
 
-func Failtask(Tid int) error {
+func Failtask(Tid int) bool {
 	stmt, err := DB.Preparex(`
 	UPDATE TaskTable 
 	SET Status = ?
 	WHERE TaskID = ?
 	`)
 	if err != nil {
-		stmt.Close()
-		return err
+		return false
 	}
-	_, erro := stmt.Exec("failed")
+	swag, erro := stmt.Exec("failed",Tid)
 	stmt.Close()
-	return erro
+	if erro != nil{
+		print(erro.Error())
+		print("bricked lol2 ")
+		fmt.Println(erro)
+		fmt.Println(swag)
+		return false
+	}
+
+	return true
 
 }
 func isTableExists(tableName string) (bool, error) {
