@@ -13,8 +13,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// TODO: make this more elegant with Gin sessions or something
-var Curr_user_id string = "hi"
+type User struct {
+	User_id  string
+	Username string
+	Picture  string // A0 stores as URLs
+	Points   int
+	Boss_id  int
+}
 
 // Checks if user is authenticated before redirecting to next page
 func IsAuthenticated(c *gin.Context) {
@@ -41,6 +46,8 @@ func LoginHandler(auth *Authenticator) gin.HandlerFunc {
 
 		// Save the state inside the session.
 		session := sessions.Default(c)
+		session.Clear()
+
 		session.Set("state", state)
 		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
@@ -123,19 +130,52 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		// Extract Auth0's provided user vid
-		if profile["sub"] == nil {
+		var userInfoStruct *User = getUserInfoStruct(c)
+		if userInfoStruct == nil {
+			c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+			return
+		}
+
+		session.Set("user_profile", userInfoStruct)
+		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		user_id := profile["sub"].(string)[len("auth0|"):]
-		session.Set("user_id", user_id)
-		c.Set("user_id", user_id)
-		Curr_user_id = user_id
 
 		// Redirect to logged in page.
 		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5185")
 	}
+}
+
+func getUserInfoStruct(c *gin.Context) *User {
+	session := sessions.Default(c)
+
+	profile, ok := session.Get("profile").(map[string]interface{})
+	if !ok || profile == nil {
+		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+		return nil
+	}
+
+	// No user id? No SlugQuest.
+	foundUID, ok := profile["sub"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve user id.")
+		return nil
+	}
+
+	foundUsername, ok := profile["name"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve username.")
+		return nil
+	}
+
+	foundPFP, ok := profile["picture"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve profile picture URL.")
+		return nil
+	}
+
+	return &User{User_id: foundUID, Username: foundUsername, Picture: foundPFP}
 }
 
 // Displays user profile from the current session
