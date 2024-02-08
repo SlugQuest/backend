@@ -121,9 +121,6 @@ func Passtask(Tid int) error {
 	return erro
 
 }
-func lol () bool {
-	return true
-}
 
 func Failtask(Tid int) error {
 	stmt, err := DB.Preparex(`
@@ -171,7 +168,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println("CreateTask(): breaky 2")
+		fmt.Println("CreateTask(): breaky 2", err)
 		return false, -1, err
 	}
 
@@ -343,12 +340,14 @@ func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPr
 	utaskArr := []TaskPreview{}
 	if err != nil {
 		fmt.Println(err)
+		prep.Close()
 		return utaskArr, err
 	}
 	rows, erro := prep.Query(startq, endq)
 	if erro != nil {
 		fmt.Println(err)
 		rows.Close()
+		prep.Close()
 		return utaskArr, err
 	}
 	for rows.Next() {
@@ -357,21 +356,35 @@ func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPr
 		if erro != nil {
 			fmt.Println(erro)
 			rows.Close()
+			prep.Close()
+			return utaskArr, erro
 		}
 		utaskArr = append(utaskArr, taskprev)
 	}
+	prep.Close()
 	rows.Close()
 	return utaskArr, err
 }
 
 
 // Find task by TaskID
-func GetTaskId(Tid int) (Task, error) {
-	rows  := DB.QueryRow("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
+func GetTaskId(Tid int) (Task, bool, error) {
+	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
-	err := rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
-	fmt.Println("finding")
+	if err != nil {
+		fmt.Println(err)
+		return taskit, false, err
+	}
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		fmt.Println(counter)
+		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
+		fmt.Println("finding")
+	}
+	rows.Close()
 	fmt.Println("done finding")
+	fmt.Println(counter)
 	fmt.Println(taskit.Status)
-	return taskit, err
+	return taskit, counter == 1, err
 }

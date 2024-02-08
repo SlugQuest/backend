@@ -199,9 +199,9 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 
-	task, err := crud.GetTaskId(tid)
-	if err != nil {
-		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related")
+	task, bol, err := crud.GetTaskId(tid)
+	if !bol {
+		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
