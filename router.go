@@ -50,6 +50,8 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
 		v1.POST("task", createTask)
+		v1.POST("passtask/:id", passTheTask)
+		v1.POST("failtask/:id", failTheTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
 		v1.GET("userPoints/:id/:start/:end", getuserTaskSpan)
@@ -143,6 +145,48 @@ func getAllUserTasks(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"list": arr})
+}
+
+func passTheTask(c *gin.Context){
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+	erro := crud.passtask( id)
+
+	if erro == nil{
+
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Println(erro)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task", "details": erro.Error()})
+		return
+	}
+}
+
+func failTheTask(c *gin.Context){
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+
+
+	erro := crud.failtask(id)
+
+	if erro ==nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Println(erro)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task", "details": erro.Error()})
+		return
+	}
 }
 
 // Retrieve task by ID

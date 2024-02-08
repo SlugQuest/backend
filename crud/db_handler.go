@@ -108,7 +108,37 @@ func ConnectToDB(isunittest bool) error {
 	}
 	return nil
 }
+func passtask(Tid int)(error){
+	stmt, err := DB.Preparex(`
+	UPDATE TaskTable 
+	SET Status = ?
+	WHERE TaskID = ?
+	`)
+	if err != nil {
+		stmt.Close()
+		return err
+	}
+	_, erro := stmt.Exec("completed")
+	stmt.Close()
+	return erro;
 
+}
+
+func failtask(Tid int)(error){
+	stmt, err := DB.Preparex(`
+	UPDATE TaskTable 
+	SET Status = ?
+	WHERE TaskID = ?
+	`)
+	if err != nil {
+		stmt.Close()
+		return err
+	}
+	_, erro := stmt.Exec("failed")
+	stmt.Close()
+	return erro;
+
+}
 func isTableExists(tableName string) (bool, error) {
 	var count int
 	query := fmt.Sprintf("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='%s'", tableName)
