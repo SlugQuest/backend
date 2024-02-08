@@ -119,11 +119,8 @@ func TestEditTask() bool {
 		return false
 	}
 
-	taskl, _:= GetTaskId(int(taskID))
-	if taskl.TaskName != "edited name" {
-		log.Println("TestEditTask(): edit verfication failed")
-		return false
-	}
+	taskResult, _:= GetTaskId(int(taskID))
+
 
 	if taskResult.TaskName != "edited name" ||
 		taskResult.Description != "edited description" ||
