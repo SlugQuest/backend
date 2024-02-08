@@ -11,10 +11,10 @@ import (
 )
 
 type Category struct {
-	CatID int
+	CatID  int
 	UserID string
-	Name string
-	Color int
+	Name   string
+	Color  int
 }
 
 type Task struct {
@@ -57,7 +57,7 @@ func LoadDumbData() error {
 		}
 	}
 	for i := 1000; i < 1500; i++ {
-		cat := Category{CatID: i, UserID:"1111", Name: "lolcat", Color:255}
+		cat := Category{CatID: i, UserID: "1111", Name: "lolcat", Color: 255}
 		lol2, _, err2 := CreateCategory(cat)
 		if !lol2 || (err2 != nil) {
 			return err2
@@ -120,28 +120,56 @@ func ConnectToDB(isunittest bool) error {
 	}
 	return nil
 }
-func Passtask(Tid int) bool{
-	stmt, err := DB.Preparex(`
-	UPDATE TaskTable 
-	SET Status = ?
-	WHERE TaskID = ?
+func Passtask(Tid int) bool {
+	tx, err := DB.Beginx() // start transaction
+	if err != nil {
+		fmt.Printf("Passtask(): breaky 1 %v\n", err)
+		return false
+	}
+
+	stmt, err := tx.Preparex(`
+		UPDATE TaskTable 
+		SET Status = ?
+		WHERE TaskID = ?
 	`)
 	if err != nil {
-		print("bricked lol1 %v", err)
-		stmt.Close()
+		fmt.Printf("Passtask(): breaky 2 %v\n", err)
+		tx.Rollback()
 		return false
 	}
-	swag, erro := stmt.Exec("completed",Tid)
-	stmt.Close()
-	if erro != nil{
-		print(erro.Error())
-		print("bricked lol2 ")
-		fmt.Println(erro)
-		fmt.Println(swag)
-		return false
-	}
-	return true
 
+	_, err = stmt.Exec("completed", Tid)
+	if err != nil {
+		fmt.Printf("Passtask(): breaky 3 %v\n", err)
+		stmt.Close()
+		tx.Rollback()
+		return false
+	}
+
+	task, ok, err := GetTaskId(Tid)
+	if err != nil {
+		fmt.Printf("Passtask(): breaky 4 %v\n", err)
+		tx.Rollback()
+		return false
+	}
+
+	if !ok {
+		fmt.Println("Passtask(): Task not found")
+		tx.Rollback()
+		return false
+	}
+
+	points := CalculatePoints(task.Difficulty)
+	_, err = tx.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
+	if err != nil {
+		fmt.Printf("Passtask(): breaky 5 %v\n", err)
+		tx.Rollback()
+		return false
+	}
+
+	stmt.Close()
+	tx.Commit()
+	return true
 }
 
 func GetUserPoints(Uid int) (int, bool, error) {
@@ -165,7 +193,8 @@ func GetUserPoints(Uid int) (int, bool, error) {
 }
 
 func Failtask(Tid int) bool {
-	stmt, err := DB.Preparex(`
+	tx, err := DB.Beginx() //start transaction
+	stmt, err := tx.Preparex(`
 	UPDATE TaskTable 
 	SET Status = ?
 	WHERE TaskID = ?
@@ -173,11 +202,11 @@ func Failtask(Tid int) bool {
 	if err != nil {
 		return false
 	}
-	swag, erro := stmt.Exec("failed",Tid)
+	swag, erro := stmt.Exec("failed", Tid)
 	stmt.Close()
-	if erro != nil{
+	if erro != nil {
 		print(erro.Error())
-		print("bricked lol2 ")
+		print("FailtTask(): breaky 1 ")
 		fmt.Println(erro)
 		fmt.Println(swag)
 		return false
@@ -235,13 +264,6 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	points := CalculatePoints(task.Difficulty)
-	_, err = tx.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
-	if err != nil {
-		fmt.Println("CreateTask(): breaky 5 ", err)
-		return false, -1, err
-	}
-
 	// if task.IsRecurring {
 	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
 	// 	if err != nil {
@@ -269,14 +291,6 @@ func EditTask(task Task, id int) (bool, error) {
 		return false, err
 	}
 
-	var currentDifficulty string
-	err = tx.Get(&currentDifficulty, "SELECT Difficulty FROM TaskTable WHERE TaskID = ?", id)
-	if err != nil {
-		tx.Rollback()
-		fmt.Println("EditTask(): breaky 1", err)
-		return false, err
-	}
-
 	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
 		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ? 
@@ -294,15 +308,6 @@ func EditTask(task Task, id int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	oldPoints := CalculatePoints(currentDifficulty)
-	newPoints := CalculatePoints(task.Difficulty)
-	_, err = tx.Exec("UPDATE UserTable SET Points = Points - ? + ? WHERE UserID = ?", oldPoints, newPoints, task.UserID)
-	if err != nil {
-		fmt.Println("EditTask(): breaky 2", err)
-		return false, err
-	}
-
 	tx.Commit()
 
 	return true, nil
@@ -415,7 +420,6 @@ func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPr
 	return utaskArr, err
 }
 
-
 // Find task by TaskID
 func GetTaskId(Tid int) (Task, bool, error) {
 	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
@@ -449,7 +453,7 @@ func GetCatId(Cid int) (Category, bool, error) {
 	for rows.Next() {
 		counter += 1
 		fmt.Println(counter)
-		rows.Scan(&cat.CatID,&cat.UserID, &cat.Name, &cat.Color)
+		rows.Scan(&cat.CatID, &cat.UserID, &cat.Name, &cat.Color)
 		fmt.Println("finding")
 	}
 	rows.Close()
