@@ -145,34 +145,35 @@ func Passtask(Tid int) bool {
 		tx.Rollback()
 		return false
 	}
+	stmt.Close()
+	tx.Commit()
 
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
 		fmt.Printf("Passtask(): breaky 4 %v\n", err)
-		tx.Rollback()
 		return false
 	}
 
 	if !ok {
 		fmt.Println("Passtask(): Task not found")
-		tx.Rollback()
 		return false
 	}
 
+	//tx, err = DB.Beginx() // start transaction
+
 	points := CalculatePoints(task.Difficulty)
-	_, err = tx.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
+	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
 		fmt.Printf("Passtask(): breaky 5 %v\n", err)
 		tx.Rollback()
 		return false
 	}
 
-	stmt.Close()
-	tx.Commit()
+	//tx.Commit()
 	return true
 }
 
-func GetUserPoints(Uid int) (int, bool, error) {
+func GetUserPoints(Uid string) (int, bool, error) {
 	rows, err := DB.Query("SELECT Points FROM UserTable WHERE UserID = ?", Uid)
 	thevalue := 0
 	if err != nil {
@@ -211,6 +212,7 @@ func Failtask(Tid int) bool {
 		fmt.Println(swag)
 		return false
 	}
+	tx.Commit()
 
 	return true
 
@@ -422,7 +424,7 @@ func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPr
 
 // Find task by TaskID
 func GetTaskId(Tid int) (Task, bool, error) {
-	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
+	rows, err := DB.Queryx("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
 	var taskit Task
 	if err != nil {
 		fmt.Println(err)

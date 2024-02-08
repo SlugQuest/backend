@@ -63,9 +63,8 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	return router
 }
 
+func getCategory(c *gin.Context) {
 
-func getCategory(c *gin.Context){
-		
 	cid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getCategory): str2int error")
@@ -83,7 +82,7 @@ func getCategory(c *gin.Context){
 }
 
 func putCat(c *gin.Context) {
-	var json crud.Category//instance of Task struct defined in db_handler.go
+	var json crud.Category //instance of Task struct defined in db_handler.go
 
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -101,8 +100,8 @@ func putCat(c *gin.Context) {
 }
 func getUserPoints(c *gin.Context) {
 	//PLACEHOLDER VALUE
-	uid := 111
-	ret, fnd, err :=crud.GetUserPoints(uid);
+	uid := "1111"
+	ret, fnd, err := crud.GetUserPoints(uid)
 
 	if !fnd {
 		log.Println("getTaskById(): Problem in getUserPoints, probably DB related", err)
@@ -111,6 +110,7 @@ func getUserPoints(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"points": ret})
 }
+
 // Create a new task
 func createTask(c *gin.Context) {
 	var json crud.Task //instance of Task struct defined in db_handler.go
@@ -198,7 +198,7 @@ func getAllUserTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
-func passTheTask(c *gin.Context){
+func passTheTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
@@ -207,7 +207,7 @@ func passTheTask(c *gin.Context){
 	}
 	erro := crud.Passtask(id)
 
-	if !erro{
+	if !erro {
 
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
@@ -218,15 +218,14 @@ func passTheTask(c *gin.Context){
 	}
 }
 
-func failTheTask(c *gin.Context){
+func failTheTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		
+
 		log.Println("editTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
-
 
 	erro := crud.Failtask(id)
 
@@ -242,7 +241,7 @@ func failTheTask(c *gin.Context){
 
 // Retrieve task by ID
 func getTaskById(c *gin.Context) {
-	
+
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getTaskById(): str2int error")
@@ -258,6 +257,7 @@ func getTaskById(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"task": task})
 }
+
 // Returns a list of all tasks of the current user
 func getuserTaskSpan(c *gin.Context) {
 	// TODO: ill be fixing this
