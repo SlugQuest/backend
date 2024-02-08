@@ -154,7 +154,7 @@ func passTheTask(c *gin.Context){
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
-	erro := crud.passtask( id)
+	erro := crud.Passtask(id)
 
 	if erro == nil{
 
@@ -177,7 +177,7 @@ func failTheTask(c *gin.Context){
 	}
 
 
-	erro := crud.failtask(id)
+	erro := crud.Failtask(id)
 
 	if erro ==nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})

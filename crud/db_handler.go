@@ -106,7 +106,7 @@ func ConnectToDB(isunittest bool) error {
 	}
 	return nil
 }
-func passtask(Tid int) error {
+func Passtask(Tid int) error {
 	stmt, err := DB.Preparex(`
 	UPDATE TaskTable 
 	SET Status = ?
@@ -125,7 +125,7 @@ func lol () bool {
 	return true
 }
 
-func failtask(Tid int) error {
+func Failtask(Tid int) error {
 	stmt, err := DB.Preparex(`
 	UPDATE TaskTable 
 	SET Status = ?
