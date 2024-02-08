@@ -16,7 +16,35 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestDeleteTask() && TestPassFailTask() &&/TestEditTask()&&  TestGetTaskId()
+	return TestGetUserTask() && TestGetCategory() && TestDeleteTask() && TestPassFailTask() && TestEditTask()&&  TestGetTaskId()
+}
+
+func TestUPoints() bool{
+	// NEEDS TO BE DONE
+	return false
+}
+
+func TestGetCategory()  bool {
+	cat, bol, erro := GetCatId(50)
+	if !bol {
+		log.Printf("not found")
+	}
+	if erro != nil {
+		log.Printf("Get Cat ID(): %v", erro)
+		return false
+	}
+
+	if cat.CatID != 50 {
+		log.Println("TestGcat(): found wrong cat")
+		return false
+	}
+
+	cat, bol, erro = GetCatId(-5)
+	if bol {
+		log.Printf("getcatid(): find catad")
+		return false
+	}
+	return true
 }
 
 func TestPassFailTask() bool{

@@ -10,6 +10,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Category struct {
+	CatID int
+	UserID string
+	Name string
+	Color int
+}
+
 type Task struct {
 	TaskID         int
 	UserID         string
@@ -47,6 +54,13 @@ func LoadDumbData() error {
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
+		}
+	}
+	for i := 1000; i < 1500; i++ {
+		cat := Category{CatID: i, UserID:"1111", Name: "lolcat", Color:255}
+		lol2, _, err2 := CreateCategory(cat)
+		if !lol2 || (err2 != nil) {
+			return err2
 		}
 	}
 	return nil
@@ -127,6 +141,26 @@ func Passtask(Tid int) bool{
 		return false
 	}
 	return true
+
+}
+
+func GetUserPoints(Uid int) (int, bool, error) {
+	rows, err := DB.Query("SELECT Points FROM UserTable WHERE UserID = ?", Uid)
+	thevalue := 0
+	if err != nil {
+		fmt.Println(err)
+		return thevalue, false, err
+	}
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		fmt.Println(counter)
+		rows.Scan(&thevalue)
+		fmt.Println("finding")
+	}
+	rows.Close()
+
+	return thevalue, counter == 1, err
 
 }
 
@@ -402,4 +436,57 @@ func GetTaskId(Tid int) (Task, bool, error) {
 	fmt.Println(counter)
 	fmt.Println(taskit.Status)
 	return taskit, counter == 1, err
+}
+
+func GetCatId(Cid int) (Category, bool, error) {
+	rows, err := DB.Query("SELECT * FROM Category WHERE CatID=?;", Cid)
+	var cat Category
+	if err != nil {
+		fmt.Println(err)
+		return cat, false, err
+	}
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		fmt.Println(counter)
+		rows.Scan(&cat.CatID,&cat.UserID, &cat.Name, &cat.Color)
+		fmt.Println("finding")
+	}
+	rows.Close()
+	fmt.Println("done finding")
+	fmt.Println(counter)
+	return cat, counter == 1, err
+}
+
+func CreateCategory(cat Category) (bool, int64, error) {
+	tx, err := DB.Beginx() //start transaction
+	if err != nil {
+		fmt.Println("CreateCat(): breaky 1")
+		return false, -1, err
+	}
+	defer tx.Rollback() //abort transaction if error
+
+	//preparing statement to prevent SQL injection issues
+	stmt, err := tx.Preparex("INSERT INTO Category ( UserID, Name, Color) VALUES (?, ?, ?)")
+	if err != nil {
+		fmt.Println("cat(): breaky 2", err)
+		return false, -1, err
+	}
+
+	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
+	res, err := stmt.Exec(cat.UserID, cat.Name, cat.Color)
+
+	if err != nil {
+		fmt.Println("Createcat(): breaky 3 ", err)
+		return false, -1, err
+	}
+
+	catID, err := res.LastInsertId()
+	if err != nil {
+		fmt.Println("Createcat(): breaky 4 ", err)
+		return false, -1, err
+	}
+	tx.Commit() //commit transaction to database
+
+	return true, catID, nil
 }

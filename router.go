@@ -54,12 +54,63 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("failtask/:id", failTheTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
-		v1.GET("userPoints/:id/:start/:end", getuserTaskSpan)
+		v1.GET("userTasks/:id/:start/:end", getuserTaskSpan)
+		v1.GET("userPoints", getUserPoints)
+		v1.GET("getCat/:id", getCategory)
+		v1.PUT("makeCat", putCat)
 	}
 
 	return router
 }
 
+
+func getCategory(c *gin.Context){
+		
+	cid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getCategory): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	Cat, bol, err := crud.GetCatId(cid)
+	if !bol {
+		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"Category": Cat})
+}
+
+func putCat(c *gin.Context) {
+	var json crud.Category//instance of Task struct defined in db_handler.go
+
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+
+	success, catID, err := crud.CreateCategory(json) //pass struct into function to add Task to db
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success", "catID": catID})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cat", "details": err.Error()})
+		return
+	}
+}
+func getUserPoints(c *gin.Context) {
+	//PLACEHOLDER VALUE
+	uid := 111
+	ret, fnd, err :=crud.GetUserPoints(uid);
+
+	if !fnd {
+		log.Println("getTaskById(): Problem in getUserPoints, probably DB related", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"points": ret})
+}
 // Create a new task
 func createTask(c *gin.Context) {
 	var json crud.Task //instance of Task struct defined in db_handler.go
