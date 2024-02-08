@@ -16,7 +16,7 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
+	return TestGetUserTask() && TestGetUserTaskTime() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
@@ -49,9 +49,9 @@ func TestDeleteTask() bool {
 		return false
 	}
 
-	_, found, _ := GetTaskId(int(taskID))
+	_, erro:= GetTaskId(int(taskID))
 
-	if found {
+	if erro == nil{
 		log.Println("TestDeleteTask(): delete failed")
 		return false
 	}
@@ -102,7 +102,7 @@ func TestEditTask() bool {
 		return false
 	}
 
-	taskl, _, _ := GetTaskId(int(taskID))
+	taskl, _:= GetTaskId(int(taskID))
 	if taskl.TaskName != "edited name" {
 		log.Println("TestEditTask(): edit verfication failed")
 		return false
@@ -123,29 +123,38 @@ func TestGetUserTask() bool {
 	return true
 }
 
+func TestGetUserTaskTime() bool {
+
+
+	starttime := time.Now().Add( -1 * time.Hour)
+	endTime :=time.Now().Add(time.Hour)
+	taskl, err := GetUserTaskDateTime(testUserId, starttime, endTime)
+	if err != nil {
+		log.Printf("TestGetUserTask(): %v", err)
+		return false
+	}
+	if len(taskl) != 500 {
+		log.Printf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
+		return false
+	}
+	return true
+}
+
 func TestGetTaskId() bool {
-	task, found, erro := GetTaskId(50)
+	task, erro := GetTaskId(50)
 	if erro != nil {
 		log.Printf("TestGetTaskid(): %v", erro)
 		return false
 	}
 
-	if !found {
-		log.Println("TestGetTaskId(): didn't find task")
-		return false
-	}
 	if task.TaskID != 50 {
 		log.Println("TestGetTaskId(): found wrong task")
 		return false
 	}
 
-	task, found, erro = GetTaskId(-5)
-	if erro != nil {
-		log.Printf("TestGetTaskid(): %v", erro)
-		return false
-	}
-	if found {
-		log.Println("TestGetTaskId(): found task by invalid id")
+	task, erro = GetTaskId(-5)
+	if erro == nil {
+		log.Printf("TestGetTaskid(): find task bad")
 		return false
 	}
 	return true

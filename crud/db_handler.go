@@ -307,25 +307,40 @@ func GetUserTask(Uid string) ([]TaskPreview, error) {
 	rows.Close()
 	return utaskArr, err
 }
-
-// Find task by TaskID
-func GetTaskId(Tid int) (Task, bool, error) {
-	rows, err := DB.Query("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
-	var taskit Task
+func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPreview, error) {
+	prep, err := DB.Preparex("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable t WHERE t.StartTime > ? AND t.EndTime < ?;")
+	utaskArr := []TaskPreview{}
 	if err != nil {
 		fmt.Println(err)
-		return taskit, false, err
+		return utaskArr, err
 	}
-	counter := 0
+	rows, erro := prep.Query(startq, endq)
+	if erro != nil {
+		fmt.Println(err)
+		rows.Close()
+		return utaskArr, err
+	}
 	for rows.Next() {
-		counter += 1
-		fmt.Println(counter)
-		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
-		fmt.Println("finding")
+		var taskprev TaskPreview
+		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		if erro != nil {
+			fmt.Println(erro)
+			rows.Close()
+		}
+		utaskArr = append(utaskArr, taskprev)
 	}
 	rows.Close()
+	return utaskArr, err
+}
+
+
+// Find task by TaskID
+func GetTaskId(Tid int) (Task, error) {
+	rows  := DB.QueryRow("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
+	var taskit Task
+	err := rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
+	fmt.Println("finding")
 	fmt.Println("done finding")
-	fmt.Println(counter)
 	fmt.Println(taskit.Status)
-	return taskit, counter == 1, err
+	return taskit, err
 }

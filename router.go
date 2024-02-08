@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -51,6 +52,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("task", createTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
+		v1.GET("userPoints/:id/:start/:end", getuserTaskSpan)
 	}
 
 	return router
@@ -145,6 +147,7 @@ func getAllUserTasks(c *gin.Context) {
 
 // Retrieve task by ID
 func getTaskById(c *gin.Context) {
+	
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getTaskById(): str2int error")
@@ -152,16 +155,44 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 
-	task, value, err := crud.GetTaskId(tid)
-	if !value {
-		log.Printf("getTaskById(): Did not find task with ID %v", tid)
-		c.JSON(http.StatusBadRequest, gin.H{"not found": "no task"})
-		return
-	}
+	task, err := crud.GetTaskId(tid)
 	if err != nil {
 		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"task": task})
+}
+// Returns a list of all tasks of the current user
+func getuserTaskSpan(c *gin.Context) {
+	// TODO: ill be fixing this
+	// user_id stored as a variable within the session
+	// uid := c.GetString("user_id")
+	// log.Printf("found userid = %v", uid)
+	// if uid == "" {
+	// 	log.Println("getAllUserTasks(): couldn't get user_id")
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
+	// 	return
+	// }
+	uid := authentication.Curr_user_id
+	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
+	if err1 != nil {
+		log.Println("Please pass in a well formatted time. This is a frontend issue.")
+		return
+	}
+
+	endtime, err2 := time.Parse(time.RFC3339, c.GetString("end"))
+	if err2 != nil {
+		log.Println("Please pass in a well formatted time. This is a frontend issue.")
+		return
+	}
+
+	arr, err := crud.GetUserTaskDateTime(uid, starttime, endtime)
+	if err != nil {
+		log.Println("getAllUserTasks(): Problem probably DB related")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
