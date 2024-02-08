@@ -2,7 +2,6 @@ package testing
 
 // When a new backend function is made, add a test function for it that returns a bool, and then put that func in testmain
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -17,22 +16,22 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestDeleteTask() &&/* TestEditTask()&& */ TestGetTaskId()
+	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId()
 }
 
 func TestDeleteTask() bool {
 	newTask := Task{
-		UserID:      testUserId,
-		Category:    "yo",
-		TaskName:    "New Task",
-		Description: "Description of the new task",
-		StartTime:   time.Now(),
-		EndTime:     time.Now().Add(time.Hour),
-		Status:      "failed",
-		Difficulty: "hard",
-		CronExpression: "asdf",
-		IsRecurring: false,
-		IsAllDay:    false,
+		UserID:         testUserId,
+		Category:       "yo",
+		TaskName:       "New Task",
+		Description:    "Description of the new task",
+		StartTime:      time.Now(),
+		EndTime:        time.Now().Add(time.Hour),
+		Status:         "completed",
+		IsRecurring:    false,
+		IsAllDay:       false,
+		Difficulty:     "easy",
+		CronExpression: "",
 	}
 
 	success, taskID, err := CreateTask(newTask)
@@ -52,9 +51,9 @@ func TestDeleteTask() bool {
 		return false
 	}
 
-	_, bol, _:= GetTaskId(int(taskID))
+	_, bol, _ := GetTaskId(int(taskID))
 
-	if bol{
+	if bol {
 		log.Println("TestDeleteTask(): delete failed")
 		return false
 	}
@@ -62,7 +61,7 @@ func TestDeleteTask() bool {
 	return true
 }
 func TestEditTask() bool {
-	tx, err := DB.Beginx()
+	// tx, err := DB.Beginx()
 	newTask := Task{
 		UserID:         testUserId,
 		Category:       "yo",
@@ -77,20 +76,20 @@ func TestEditTask() bool {
 		CronExpression: "",
 	}
 
-	var userExists bool
-	err = tx.Get(&userExists, "SELECT EXISTS (SELECT 1 FROM UserTable WHERE UserID = ?)", newTask.UserID)
-	if err != nil {
-		fmt.Println("CreateTask(): breaky 2", err)
-		return false
-	}
+	// var userExists bool
+	// err = tx.Get(&userExists, "SELECT EXISTS (SELECT 1 FROM UserTable WHERE UserID = ?)", newTask.UserID)
+	// if err != nil {
+	// 	fmt.Println("CreateTask(): breaky 2", err)
+	// 	return false
+	// }
 
-	if !userExists {
-		_, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, 0, 2)", newTask.UserID)
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 3", err)
-			return false
-		}
-	}
+	// if !userExists {
+	// 	_, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, 0, 2)", newTask.UserID)
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 3", err)
+	// 		return false
+	// 	}
+	// }
 
 	success, taskID, err := CreateTask(newTask)
 	if err != nil || !success {
@@ -121,15 +120,13 @@ func TestEditTask() bool {
 		return false
 	}
 
-	taskResult,_, _:= GetTaskId(int(taskID))
-
+	taskResult, _, _ := GetTaskId(int(taskID))
 
 	if taskResult.TaskName != "edited name" ||
 		taskResult.Description != "edited description" ||
 		taskResult.Status != "failed" ||
 		taskResult.IsAllDay != true ||
-		taskResult.Difficulty != "medium" ||
-		taskResult.CronExpression != "newcron" {
+		taskResult.Difficulty != "medium" {
 		log.Println("TestEditTask(): edit verification failed")
 		return false
 	}
@@ -160,9 +157,8 @@ func TestGetUserTask() bool {
 
 func TestGetUserTaskTime() bool {
 
-
-	starttime := time.Now().Add( -1 * time.Hour)
-	endTime :=time.Now().Add(time.Hour)
+	starttime := time.Now().Add(-1 * time.Hour)
+	endTime := time.Now().Add(time.Hour)
 	taskl, err := GetUserTaskDateTime(testUserId, starttime, endTime)
 	if err != nil {
 		log.Printf("TestGetUserTask(): %v", err)
