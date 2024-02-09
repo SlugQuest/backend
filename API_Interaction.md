@@ -76,8 +76,8 @@
           {
             "TaskID": 123,
             "UserID": "user123",
-            "Category": "Work",
-            "TaskName": "Complete Project",
+            "Category": "Party time",
+            "TaskName": "Party",
             "StartTime": "2024-02-09T08:00:00Z",
             "EndTime": "2024-02-09T17:00:00Z",
             "Status": "todo",
