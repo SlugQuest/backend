@@ -118,6 +118,25 @@
   - **Response**:
     - **Status Code**: 200 OK
 
+
+### Pass/Fail Task (POST)
+
+- **Endpoint**: `/api/v1/passtask/:id` and `/api/v1/failtask/:id`
+  - **NOTE**: Replace `:id` with the actual TaskID.
+  - Ex.: `/api/v1/passtask/123` or `/api/v1/failtask/456`
+- **Description**: Mark a task as completed (pass) or uncompleted (fail).
+  - **Request Method**: POST
+  - **URL Parameters**:
+    - `id` (integer): The ID of the task to be marked as completed or uncompleted.
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "message": "Success"
+      }
+      ```
+
 ## Delete Task (DELETE)
 
 - **Endpoint**: `/api/v1/task/:id`
