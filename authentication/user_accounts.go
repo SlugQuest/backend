@@ -23,7 +23,10 @@ func IsAuthenticated(c *gin.Context) {
 	// Auth token: for direct calls to this endpoint
 	auth_token := c.GetHeader("Authorization")
 
-	if auth_token == "" && sessions.Default(c).Get("profile") == nil {
+	// Should have user profile saved to session
+	user_profile := sessions.Default(c).Get("profile")
+
+	if auth_token == "" && user_profile == nil {
 		// c.Redirect(http.StatusSeeOther, "/") // TODO: maybe make an "Oops, wrong page"
 		c.String(http.StatusUnauthorized, "Forbidden")
 		c.Abort()
@@ -134,6 +137,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 		}
 		user_id := profile["sub"].(string)[len("auth0|"):]
 		session.Set("user_id", user_id)
+		session.Save()
 		c.Set("user_id", user_id)
 		Curr_user_id = user_id
 
