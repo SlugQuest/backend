@@ -136,9 +136,6 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 		user_id := profile["sub"].(string)[len("auth0|"):]
-		session.Set("user_id", user_id)
-		session.Save()
-		c.Set("user_id", user_id)
 		Curr_user_id = user_id
 
 		// Redirect to logged in page.
