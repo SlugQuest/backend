@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const FRONTEND_HOST string = "localhost:5185"
+
 // TODO: make this more elegant with Gin sessions or something
 var Curr_user_id string = "hi"
 
@@ -75,7 +77,9 @@ func LogoutHandler(c *gin.Context) {
 		scheme = "https"
 	}
 
-	returnTo, err := url.Parse(scheme + "://" + c.Request.Host)
+	// Return to the not logged in page
+	// returnTo, err := url.Parse(scheme + "://" + c.Request.Host)
+	returnTo, err := url.Parse(scheme + "://" + FRONTEND_HOST)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -134,7 +138,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 		Curr_user_id = user_id
 
 		// Redirect to logged in page.
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5185/loggedin")
+		c.Redirect(http.StatusTemporaryRedirect, "http://"+FRONTEND_HOST+"/loggedin")
 	}
 }
 
