@@ -1,6 +1,18 @@
 # Backend API Interactions
 
-## Getting All User Tasks (GET)
+## Protected endpoints
+
+All the endpoints below are protected by authenticating the user's session cookies before allowing requests or redirects to happen.
+
+In your requests, make sure to include credentials with the `credentials: 'include'` parameter so these are passed on appropriately:
+```js
+const response = await fetch(backend/protected, {
+  method: 'GET',
+  credentials: 'include',
+});
+```
+
+### Getting All User Tasks (GET)
 
 - **Endpoint**: `/api/v1/tasks`
 - **Description**: Get all tasks for a specific user.
@@ -27,9 +39,11 @@
       }
       ```
 
-## Get Task by ID (GET)
+### Get Task by ID (GET)
 
 - **Endpoint**: `/api/v1/task/:id`
+  - **NOTE**: do not include the `:` in your own requests
+  - Ex.: `/api/v1/task/1`
 - **Description**: Get a task by ID.
   - **Request Method**: GET
   - **Parameters**: 
@@ -56,7 +70,7 @@
       }
       ```
 
-## Create Task (POST)
+### Create Task (POST)
 
 - **Endpoint**: `/api/v1/task`
 - **Description**: Create a new task.
@@ -89,9 +103,11 @@
     }
     ```
 
-## Edit Task (PUT)
+### Edit Task (PUT)
 
 - **Endpoint**: `/api/v1/task/:id`
+  - **NOTE**: do not include the `:` in your own requests
+  - Ex.: `/api/v1/task/1`
 - **Description**: Edit an existing task.
   - **Request Method**: PUT
   - **URL Parameters**: 
@@ -118,7 +134,7 @@
   - **Response**:
     - **Status Code**: 200 OK
 
-## Delete Task (DELETE)
+### Delete Task (DELETE)
 
 - **Endpoint**: `/api/v1/task/:id`
 - **Description**: Delete a task by ID.
@@ -130,10 +146,11 @@
 
 ## User login
 - **Endpoint**: `/login`
-- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. Do not send a GET to /login or these headers get lost.
+- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. **Do not send a GET** to /login or these headers get lost.
 - **Response**:
   - **Status Code**: 307
     - Redirects to Auth0 and comes back with another redirect to `backend/callback` (to confirm logged in token)
+    - You do not need to route to `/callback`
 
 ## User logout
 - **Endpoint**: `/logout`
