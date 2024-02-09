@@ -56,6 +56,54 @@
       }
       ```
 
+### Get User Tasks within a Time Range (GET)
+
+- **Endpoint**: `/api/v1/userTasks/:id/:start/:end`
+  - **NOTE**: Replace `:id`, `:start`, and `:end` with the actual user ID, start time, and end time respectively.
+  - Ex.: `/api/v1/userTasks/123/2024-02-09T00:00:00Z/2024-02-10T00:00:00Z`
+- **Description**: Get tasks for the user within a specified time range.
+  - **Request Method**: GET
+  - **URL Parameters**:
+    - `id` (string): The ID of the authenticated user.
+    - `start` The start time of the time range.
+    - `end` The end time of the time range.
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "list": [
+          {
+            "TaskID": 123,
+            "UserID": "user123",
+            "Category": "Work",
+            "TaskName": "Complete Project",
+            "StartTime": "2024-02-09T08:00:00Z",
+            "EndTime": "2024-02-09T17:00:00Z",
+            "Status": "todo",
+            "IsRecurring": false,
+            "IsAllDay": false
+          },
+          // ... more task previews
+        ]
+      }
+      ```
+
+
+### Get User Points (GET)
+
+- **Endpoint**: `/api/v1/userPoints`
+- **Description**: Retrieve the points associated with the authenticated user.
+  - **Request Method**: GET
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "points": 42
+      }
+      ```
+
 ## Create Task (POST)
 
 - **Endpoint**: `/api/v1/task`
@@ -88,6 +136,31 @@
       "taskID": 503
     }
     ```
+
+### Create Category (PUT)
+
+- **Endpoint**: `/api/v1/makeCat`
+- **Description**: Create a new category for the authenticated user.
+  - **Request Method**: PUT
+  - **Request Headers**:
+    - `Content-Type: application/json`
+  - **Request Body**: JSON Sample Request Body
+    ```json
+    {
+      "UserID": "user123",
+      "Name": "Personal",
+      "Color": 128
+    }
+    ```
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "message": "Success",
+        "catID": 789
+      }
+      ```
 
 ## Edit Task (PUT)
 
