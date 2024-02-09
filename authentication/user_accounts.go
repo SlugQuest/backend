@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const FRONTEND_HOST string = "localhost:5185"
+
 // TODO: make this more elegant with Gin sessions or something
 var Curr_user_id string = "hi"
 
@@ -21,7 +23,10 @@ func IsAuthenticated(c *gin.Context) {
 	// Auth token: for direct calls to this endpoint
 	auth_token := c.GetHeader("Authorization")
 
-	if auth_token == "" && sessions.Default(c).Get("profile") == nil {
+	// Should have user profile saved to session
+	user_profile := sessions.Default(c).Get("profile")
+
+	if auth_token == "" && user_profile == nil {
 		// c.Redirect(http.StatusSeeOther, "/") // TODO: maybe make an "Oops, wrong page"
 		c.String(http.StatusUnauthorized, "Forbidden")
 		c.Abort()
@@ -75,7 +80,9 @@ func LogoutHandler(c *gin.Context) {
 		scheme = "https"
 	}
 
-	returnTo, err := url.Parse(scheme + "://" + c.Request.Host)
+	// Return to the not logged in page
+	// returnTo, err := url.Parse(scheme + "://" + c.Request.Host)
+	returnTo, err := url.Parse(scheme + "://" + FRONTEND_HOST)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -129,12 +136,10 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 		user_id := profile["sub"].(string)[len("auth0|"):]
-		session.Set("user_id", user_id)
-		c.Set("user_id", user_id)
 		Curr_user_id = user_id
 
 		// Redirect to logged in page.
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5185/loggedin")
+		c.Redirect(http.StatusTemporaryRedirect, "http://"+FRONTEND_HOST+"/loggedin")
 	}
 }
 
