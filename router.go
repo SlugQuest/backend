@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -19,6 +21,16 @@ import (
 // New registers the routes and returns the router.
 func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router := gin.Default()
+
+	// Allowing the frontend URL to get through CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://" + authentication.FRONTEND_HOST},
+		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// To store custom types in our cookies,
 	// we must first register them using gob.Register

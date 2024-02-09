@@ -1,6 +1,18 @@
 # Backend API Interactions
 
-## Getting All User Tasks (GET)
+## Protected endpoints
+
+All the endpoints below are protected by authenticating the user's session cookies before allowing requests or redirects to happen.
+
+In your requests, make sure to include credentials with the `credentials: 'include'` parameter so these are passed on appropriately:
+```js
+const response = await fetch(backend/protected, {
+  method: 'GET',
+  credentials: 'include',
+});
+```
+
+### Getting All User Tasks (GET)
 
 - **Endpoint**: `/api/v1/tasks`
 - **Description**: Get all tasks for a specific user.
@@ -10,22 +22,28 @@
     - **Body**: JSON Sample Response
       ```json
       {
-        "TaskID": 1,
-        "UserID": "user123",
-        "Category": "Personal",
-        "TaskName": "Go to the Gym",
-        "Description": "Exercise for an hour.",
-        "StartTime": "2024-01-02T18:00:00Z",
-        "EndTime": "2024-01-02T19:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
       ```
 
-## Get Task by ID (GET)
+### Get Task by ID (GET)
 
 - **Endpoint**: `/api/v1/task/:id`
+  - **NOTE**: do not include the `:` in your own requests
+  - Ex.: `/api/v1/task/1`
 - **Description**: Get a task by ID.
   - **Request Method**: GET
   - **Parameters**: 
@@ -35,22 +53,24 @@
     - **Body**: JSON
       ```json
       {
-        "task": {
-          "TaskID": 1,
-          "UserID": "user123",
-          "Category": "Work",
-          "TaskName": "Complete Project",
-          "Description": "Finish the project by the deadline.",
-          "StartTime": "2024-01-01T08:00:00Z",
-          "EndTime": "2024-01-01T17:00:00Z",
-          "IsCompleted": false,
-          "IsRecurring": false,
-          "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
         }
       }
       ```
 
-## Create Task (POST)
+### Create Task (POST)
 
 - **Endpoint**: `/api/v1/task`
 - **Description**: Create a new task.
@@ -58,18 +78,20 @@
   - **Body**: JSON Sample Request Body
     ```json
     {
-      "task": {
-        "UserID": "user123",
-        "Category": "Work",
-        "TaskName": "Complete Project",
-        "Description": "Finish the project by the deadline.",
-        "StartTime": "2024-01-01T08:00:00Z",
-        "EndTime": "2024-01-01T17:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
-    }
     ```
   - **Response**:
     - **Status Code**: 200 OK
@@ -81,32 +103,38 @@
     }
     ```
 
-## Edit Task (PUT)
+### Edit Task (PUT)
 
 - **Endpoint**: `/api/v1/task/:id`
+  - **NOTE**: do not include the `:` in your own requests
+  - Ex.: `/api/v1/task/1`
 - **Description**: Edit an existing task.
   - **Request Method**: PUT
   - **URL Parameters**: 
     - `id` (integer): The ID of the task to be edited.
   - **Body**: JSON
     ```json
-    {
-      "TaskID": 1,
-      "UserID": "user123",
-      "Category": "Personal",
-      "TaskName": "Go to the Gym",
-      "Description": "Exercise for an hour.",
-      "StartTime": "2024-01-02T18:00:00Z",
-      "EndTime": "2024-01-02T19:00:00Z",
-      "IsCompleted": true,
-      "IsRecurring": false,
-      "IsAllDay": false
-    }
+      {
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
+      }
     ```
   - **Response**:
     - **Status Code**: 200 OK
 
-## Delete Task (DELETE)
+### Delete Task (DELETE)
 
 - **Endpoint**: `/api/v1/task/:id`
 - **Description**: Delete a task by ID.
@@ -118,10 +146,11 @@
 
 ## User login
 - **Endpoint**: `/login`
-- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. Do not send a GET to /login or these headers get lost.
+- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. **Do not send a GET** to /login or these headers get lost.
 - **Response**:
   - **Status Code**: 307
-    - Redirects to Auth0 and comes back with another redirect to /callback (to confirm logged in token)
+    - Redirects to Auth0 and comes back with another redirect to `backend/callback` (to confirm logged in token)
+    - You do not need to route to `/callback`
 
 ## User logout
 - **Endpoint**: `/logout`
