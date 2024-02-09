@@ -10,16 +10,20 @@
     - **Body**: JSON Sample Response
       ```json
       {
-        "TaskID": 1,
-        "UserID": "user123",
-        "Category": "Personal",
-        "TaskName": "Go to the Gym",
-        "Description": "Exercise for an hour.",
-        "StartTime": "2024-01-02T18:00:00Z",
-        "EndTime": "2024-01-02T19:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
       ```
 
@@ -35,17 +39,19 @@
     - **Body**: JSON
       ```json
       {
-        "task": {
-          "TaskID": 1,
-          "UserID": "user123",
-          "Category": "Work",
-          "TaskName": "Complete Project",
-          "Description": "Finish the project by the deadline.",
-          "StartTime": "2024-01-01T08:00:00Z",
-          "EndTime": "2024-01-01T17:00:00Z",
-          "IsCompleted": false,
-          "IsRecurring": false,
-          "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
         }
       }
       ```
@@ -58,18 +64,20 @@
   - **Body**: JSON Sample Request Body
     ```json
     {
-      "task": {
-        "UserID": "user123",
-        "Category": "Work",
-        "TaskName": "Complete Project",
-        "Description": "Finish the project by the deadline.",
-        "StartTime": "2024-01-01T08:00:00Z",
-        "EndTime": "2024-01-01T17:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
-    }
     ```
   - **Response**:
     - **Status Code**: 200 OK
@@ -90,18 +98,22 @@
     - `id` (integer): The ID of the task to be edited.
   - **Body**: JSON
     ```json
-    {
-      "TaskID": 1,
-      "UserID": "user123",
-      "Category": "Personal",
-      "TaskName": "Go to the Gym",
-      "Description": "Exercise for an hour.",
-      "StartTime": "2024-01-02T18:00:00Z",
-      "EndTime": "2024-01-02T19:00:00Z",
-      "IsCompleted": true,
-      "IsRecurring": false,
-      "IsAllDay": false
-    }
+      {
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
+      }
     ```
   - **Response**:
     - **Status Code**: 200 OK
@@ -116,13 +128,21 @@
   - **Response**:
     - **Status Code**: 200 OK
 
-## User login
+## User login (GET)
 - **Endpoint**: `/login`
-- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. Do not send a GET to /login or these headers get lost.
-- **Response**:
-  - **Status Code**: 307
-    - Redirects to Auth0 and comes back with another redirect to /callback (to confirm logged in token)
+- **Description**: Redirects to Auth0's universal login page, then to the `/main/blah/tasks` endpoint after successful login.
+  - **Request Method**: GET
+- **Body**: None, this redirects to the Auth0 Universal Login page.
 
-## User logout
+## User logout (GET)
 - **Endpoint**: `/logout`
-- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run). Go **directly** to {backend_url}/logout so the backend performs this logic.
+- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run)
+  - **Request Method**: GET
+- **Body**: None
+
+<!-- ## TBA: User info (GET)
+In progress, not entirely setup
+- **Endpoint**: `/user`
+- **Description**: Returns an html page with user information
+  - **Request Method**: GET
+- **Must be done AFTER a successful login since it depends on user cookies** -->
