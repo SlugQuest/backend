@@ -10,16 +10,20 @@
     - **Body**: JSON Sample Response
       ```json
       {
-        "TaskID": 1,
-        "UserID": "user123",
-        "Category": "Personal",
-        "TaskName": "Go to the Gym",
-        "Description": "Exercise for an hour.",
-        "StartTime": "2024-01-02T18:00:00Z",
-        "EndTime": "2024-01-02T19:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
       ```
 
@@ -35,17 +39,19 @@
     - **Body**: JSON
       ```json
       {
-        "task": {
-          "TaskID": 1,
-          "UserID": "user123",
-          "Category": "Work",
-          "TaskName": "Complete Project",
-          "Description": "Finish the project by the deadline.",
-          "StartTime": "2024-01-01T08:00:00Z",
-          "EndTime": "2024-01-01T17:00:00Z",
-          "IsCompleted": false,
-          "IsRecurring": false,
-          "IsAllDay": false
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
         }
       }
       ```
@@ -58,18 +64,20 @@
   - **Body**: JSON Sample Request Body
     ```json
     {
-      "task": {
-        "UserID": "user123",
-        "Category": "Work",
-        "TaskName": "Complete Project",
-        "Description": "Finish the project by the deadline.",
-        "StartTime": "2024-01-01T08:00:00Z",
-        "EndTime": "2024-01-01T17:00:00Z",
-        "IsCompleted": false,
-        "IsRecurring": false,
-        "IsAllDay": false
+         "task": {
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
-    }
     ```
   - **Response**:
     - **Status Code**: 200 OK
@@ -91,19 +99,20 @@
   - **Body**: JSON
     ```json
       {
-        "task": {
-          "TaskID": 1,
-          "UserID": "user123",
-          "Category": "Personal",
-          "Status": "todo",
-          "TaskName": "Go to the Gym",
-          "Description": "Exercise for an hour.",
-          "StartTime": "2024-01-02T18:00:00Z",
-          "EndTime": "2024-01-02T19:00:00Z",
-          "IsCompleted": true,
-          "IsRecurring": false,
-          "IsAllDay": false
-        } 
+         "task": {
+            "TaskID":         1,
+            "UserID":         "testUserId",
+            "Category":       "yo",
+            "TaskName":       "New Task",
+            "Description":    "Description of the new task",
+            "StartTime":      "2024-01-01T08:00:00Z",
+            "EndTime":        "2024-01-01T17:00:00Z",
+            "Status":         "completed",
+            "IsRecurring":    false,
+            "IsAllDay":       false,
+            "Difficulty":     "easy",
+            "CronExpression": "" //for now, recurring functions are not supported
+        }
       }
     ```
   - **Response**:
