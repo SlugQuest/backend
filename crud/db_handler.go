@@ -300,8 +300,8 @@ func GetTaskId(Tid int) (Task, bool, error) {
 }
 
 // Find user by UserID
-func GetUser(Uid string) (User, bool, error) {
-	rows, err := DB.Query("SELECT * FROM UserTable WHERE UserID=?;", Uid)
+func GetUser(uid string) (User, bool, error) {
+	rows, err := DB.Query("SELECT * FROM UserTable WHERE UserID=?;", uid)
 	var user User
 	if err != nil {
 		fmt.Println(err)
@@ -351,6 +351,7 @@ func EditUser(u User, uid string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer tx.Rollback() // aborrt transaction if error
 
 	stmt, err := tx.Preparex(`
 		UPDATE UserTable 
@@ -365,6 +366,31 @@ func EditUser(u User, uid string) (bool, error) {
 
 	_, err = stmt.Exec(u.UserID, u.Points, u.BossId, uid)
 	if err != nil {
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
+
+func DeleteUser(uid string) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	stmt, err := tx.Preparex("DELETE FROM UserTable WHERE UserID = ?")
+	if err != nil {
+		fmt.Println("DeleteUser: breaky 1")
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(uid)
+	if err != nil {
+		fmt.Println("DeleteUser: breaky 2")
 		return false, err
 	}
 
