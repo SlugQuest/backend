@@ -35,6 +35,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// To store custom types in our cookies,
 	// we must first register them using gob.Register
 	gob.Register(map[string]interface{}{})
+	gob.Register(crud.User{})
 
 	// Set up cookie store for the user session
 	store := cookie.NewStore([]byte("secret"))
@@ -134,16 +135,14 @@ func deleteTask(c *gin.Context) {
 
 // Returns a list of all tasks of the current user
 func getAllUserTasks(c *gin.Context) {
-	// TODO: ill be fixing this
-	// user_id stored as a variable within the session
-	// uid := c.GetString("user_id")
-	// log.Printf("found userid = %v", uid)
-	// if uid == "" {
-	// 	log.Println("getAllUserTasks(): couldn't get user_id")
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
-	// 	return
-	// }
-	uid := authentication.Curr_user_id
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		return
+	}
+	uid := userProfile.UserID
 
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {

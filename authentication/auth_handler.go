@@ -11,12 +11,10 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"slugquest.com/backend/crud"
 )
 
 const FRONTEND_HOST string = "localhost:5185"
-
-// TODO: make this more elegant with Gin sessions or something
-var Curr_user_id string = "hi"
 
 // Checks if user is authenticated before redirecting to next page
 func IsAuthenticated(c *gin.Context) {
@@ -46,6 +44,8 @@ func LoginHandler(auth *Authenticator) gin.HandlerFunc {
 
 		// Save the state inside the session.
 		session := sessions.Default(c)
+		session.Clear()
+
 		session.Set("state", state)
 		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
@@ -130,20 +130,79 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		// Extract Auth0's provided user vid
-		if profile["sub"] == nil {
+		var userInfoStruct *crud.User = getUserInfo(c)
+		if userInfoStruct == nil {
+			c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+			return
+		}
+
+		session.Set("user_profile", userInfoStruct)
+		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		user_id := profile["sub"].(string)[len("auth0|"):]
-		Curr_user_id = user_id
 
 		// Redirect to logged in page.
 		c.Redirect(http.StatusTemporaryRedirect, "http://"+FRONTEND_HOST+"/loggedin")
 	}
 }
 
-// Displays user profile from the current session
+func getUserInfo(c *gin.Context) *crud.User {
+	session := sessions.Default(c)
+
+	profile, ok := session.Get("profile").(map[string]interface{})
+	if !ok || profile == nil {
+		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+		return nil
+	}
+
+	// No user id? No SlugQuest.
+	sesUID, ok := profile["sub"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve user id.")
+		return nil
+	}
+
+	sesUsername, ok := profile["name"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve username.")
+		return nil
+	}
+
+	sesPFP, ok := profile["picture"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve profile picture URL.")
+		return nil
+	}
+
+	// Check if user exists in our DB
+	user, found, err := crud.GetUser(sesUID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Couldn't fetch user.")
+		return nil
+	}
+
+	if !found {
+		// Need to populate and add a new user
+		user = crud.User{
+			UserID:   sesUID,
+			Username: sesUsername,
+			Picture:  sesPFP,
+			Points:   0,
+			BossId:   0,
+		}
+
+		added, err := crud.AddUser(user)
+		if err != nil || !added {
+			c.String(http.StatusInternalServerError, "Couldn't register user into our records.")
+			return nil
+		}
+	}
+
+	return &user
+}
+
+// Sends user profile from the current session as JSON
 // func UserProfileHandler(c *gin.Context) {
 // 	session := sessions.Default(c)
 // 	profile := session.Get("profile")
