@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	envfuncs "github.com/joho/godotenv"
@@ -16,12 +15,14 @@ func main() {
 	// Load .env
 	if env_err := envfuncs.Load(); env_err != nil {
 		log.Fatalf("Error loading the .env file: %v", env_err)
+		return
 	}
 
 	// Create new authenticator to pass to the router
-	auth, auth_err := authentication.New()
+	auth, auth_err := authentication.NewAuthenticator()
 	if auth_err != nil {
 		log.Fatalf("Failed to initialize the authenticator: %v", auth_err)
+		return
 	}
 	router := CreateRouter(auth)
 
@@ -34,10 +35,11 @@ func main() {
 	dummy_err := crud.LoadDumbData()
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
+		return
 	}
 	utest := testing.RunAllTests()
 	if !utest {
-		fmt.Println("unit test failure")
+		log.Fatal("unit test failure")
 		return
 	}
 

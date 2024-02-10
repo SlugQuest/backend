@@ -17,8 +17,8 @@ type Authenticator struct {
 	oauth2.Config
 }
 
-// New instantiates the *Authenticator.
-func New() (*Authenticator, error) {
+// NewAuthenticator instantiates the *Authenticator.
+func NewAuthenticator() (*Authenticator, error) {
 	provider, err := oidc.NewProvider(
 		context.Background(),
 		"https://"+os.Getenv("AUTH0_DOMAIN")+"/",

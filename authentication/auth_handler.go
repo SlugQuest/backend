@@ -189,7 +189,7 @@ func getUserInfo(c *gin.Context) *crud.User {
 			Username: sesUsername,
 			Picture:  sesPFP,
 			Points:   0,
-			BossId:   1,
+			BossId:   0,
 		}
 
 		added, err := crud.AddUser(user)
