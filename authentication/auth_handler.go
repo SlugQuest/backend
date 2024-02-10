@@ -182,19 +182,7 @@ func getUserInfo(c *gin.Context) *crud.User {
 		return nil
 	}
 
-	if found {
-		// Check if any edits need to be made
-		if user.Username != sesUsername || user.Picture != sesPFP {
-			user.Username = sesUsername
-			user.Picture = sesPFP
-
-			edited, err := crud.EditUser(user, sesUID)
-			if err != nil || !edited {
-				c.String(http.StatusInternalServerError, "Couldn't update user.")
-				return nil
-			}
-		}
-	} else {
+	if !found {
 		// Need to populate and add a new user
 		user = crud.User{
 			UserID:   sesUID,

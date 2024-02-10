@@ -12,7 +12,7 @@ var dummyUserID string = "1111" // testing task functions
 var testUserID string = "2222"  // testing user functions
 
 func RunAllTests() bool {
-	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId() && TestAddUser() && TestDeleteUser()
+	return TestGetUserTask() && TestDeleteTask() && TestEditTask() && TestGetTaskId() && TestAddUser() && TestEditUser() && TestDeleteUser()
 }
 
 func TestDeleteTask() bool {
@@ -157,13 +157,13 @@ func TestAddUser() bool {
 
 	addSuccess, addErr := AddUser(newUser)
 	if addErr != nil || !addSuccess {
-		log.Printf("TestDeleteUser(): couldn't add user")
+		log.Printf("TestAddUser(): couldn't add user")
 		return false
 	}
 
 	_, found, _ := GetUser(newUser.UserID)
 	if !found {
-		log.Println("TestDeleteUser(): add failed")
+		log.Println("TestAddUser(): add failed")
 		return false
 	}
 
@@ -174,8 +174,8 @@ func TestEditUser() bool {
 	// Original is one inserted in TestAddUser()
 	editedUser := User{
 		UserID:   testUserID,
-		Username: "edited name",
-		Picture:  "different.jpg",
+		Username: "not in DB, not tested",
+		Picture:  "not in DB, not tested",
 		Points:   5,
 		BossId:   10,
 	}
@@ -187,7 +187,7 @@ func TestEditUser() bool {
 	}
 
 	checkE, _, _ := GetUser(editedUser.UserID)
-	if checkE.Username != editedUser.Username || checkE.Picture != editedUser.Picture || !(checkE.Points == 5) || !(checkE.BossId == 10) {
+	if checkE.Points != 5 || checkE.BossId != 10 {
 		log.Println("TestEditUser(): edit verfication failed")
 		return false
 	}
