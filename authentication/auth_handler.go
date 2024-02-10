@@ -11,17 +11,10 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"slugquest.com/backend/crud"
 )
 
 const FRONTEND_HOST string = "localhost:5185"
-
-type User struct {
-	User_id  string
-	Username string
-	Picture  string // A0 stores as URLs
-	Points   int
-	Boss_id  int
-}
 
 // Checks if user is authenticated before redirecting to next page
 func IsAuthenticated(c *gin.Context) {
@@ -137,7 +130,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		var userInfoStruct *User = getUserInfoStruct(c)
+		var userInfoStruct *crud.User = getUserInfoStruct(c)
 		if userInfoStruct == nil {
 			c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 			return
@@ -154,7 +147,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 	}
 }
 
-func getUserInfoStruct(c *gin.Context) *User {
+func getUserInfoStruct(c *gin.Context) *crud.User {
 	session := sessions.Default(c)
 
 	profile, ok := session.Get("profile").(map[string]interface{})
@@ -182,10 +175,10 @@ func getUserInfoStruct(c *gin.Context) *User {
 		return nil
 	}
 
-	return &User{User_id: foundUID, Username: foundUsername, Picture: foundPFP}
+	return &crud.User{UserID: foundUID, Username: foundUsername, Picture: foundPFP}
 }
 
-// Displays user profile from the current session
+// Sends user profile from the current session as JSON
 // func UserProfileHandler(c *gin.Context) {
 // 	session := sessions.Default(c)
 // 	profile := session.Get("profile")
