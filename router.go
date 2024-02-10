@@ -35,7 +35,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// To store custom types in our cookies,
 	// we must first register them using gob.Register
 	gob.Register(map[string]interface{}{})
-	gob.Register(authentication.User{})
+	gob.Register(crud.User{})
 
 	// Set up cookie store for the user session
 	store := cookie.NewStore([]byte("secret"))
@@ -137,12 +137,12 @@ func deleteTask(c *gin.Context) {
 func getAllUserTasks(c *gin.Context) {
 	// Retrieve the user_id through the struct stored in the session
 	session := sessions.Default(c)
-	userProfile, ok := session.Get("user_profile").(authentication.User)
+	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
 		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
 		return
 	}
-	uid := userProfile.User_id
+	uid := userProfile.UserID
 
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
