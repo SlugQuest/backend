@@ -130,7 +130,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		var userInfoStruct *crud.User = getUserInfoStruct(c)
+		var userInfoStruct *crud.User = getUserInfo(c)
 		if userInfoStruct == nil {
 			c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 			return
@@ -147,7 +147,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 	}
 }
 
-func getUserInfoStruct(c *gin.Context) *crud.User {
+func getUserInfo(c *gin.Context) *crud.User {
 	session := sessions.Default(c)
 
 	profile, ok := session.Get("profile").(map[string]interface{})
@@ -157,25 +157,61 @@ func getUserInfoStruct(c *gin.Context) *crud.User {
 	}
 
 	// No user id? No SlugQuest.
-	foundUID, ok := profile["sub"].(string)
+	sesUID, ok := profile["sub"].(string)
 	if !ok {
 		c.String(http.StatusInternalServerError, "Couldn't resolve user id.")
 		return nil
 	}
 
-	foundUsername, ok := profile["name"].(string)
+	sesUsername, ok := profile["name"].(string)
 	if !ok {
 		c.String(http.StatusInternalServerError, "Couldn't resolve username.")
 		return nil
 	}
 
-	foundPFP, ok := profile["picture"].(string)
+	sesPFP, ok := profile["picture"].(string)
 	if !ok {
 		c.String(http.StatusInternalServerError, "Couldn't resolve profile picture URL.")
 		return nil
 	}
 
-	return &crud.User{UserID: foundUID, Username: foundUsername, Picture: foundPFP}
+	// Check if user exists in our DB
+	user, found, err := crud.GetUser(sesUID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Couldn't fetch user.")
+		return nil
+	}
+
+	if found {
+		// Check if any edits need to be made
+		if user.Username != sesUsername || user.Picture != sesPFP {
+			user.Username = sesUsername
+			user.Picture = sesPFP
+
+			edited, err := crud.EditUser(user, sesUID)
+			if err != nil || !edited {
+				c.String(http.StatusInternalServerError, "Couldn't update user.")
+				return nil
+			}
+		}
+	} else {
+		// Need to populate and add a new user
+		user = crud.User{
+			UserID:   sesUID,
+			Username: sesUsername,
+			Picture:  sesPFP,
+			Points:   0,
+			BossId:   1,
+		}
+
+		added, err := crud.AddUser(user)
+		if err != nil || !added {
+			c.String(http.StatusInternalServerError, "Couldn't register user into our records.")
+			return nil
+		}
+	}
+
+	return &user
 }
 
 // Sends user profile from the current session as JSON

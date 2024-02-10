@@ -1,5 +1,8 @@
-CREATE TABLE UserTable (
-    UserID VARCHAR(255) PRIMARY KEY NOT NULL-- Assuming Auth0 provides a string-based user ID
+CREATE TABLE IF NOT EXISTS UserTable (
+    UserID VARCHAR(255) PRIMARY KEY NOT NULL,
+    Points INTEGER NOT NULL,
+    BossId INTEGER NOT NULL,
+    FOREIGN KEY (BossId) REFERENCES BossTable(BossID)
 );
 
 CREATE TABLE TaskTable (

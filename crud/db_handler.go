@@ -322,21 +322,21 @@ func GetUser(uid string) (User, bool, error) {
 func AddUser(u User) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
-		fmt.Println("AddUser(): breaky 1")
+		fmt.Printf("AddUser(): breaky 1: %v", err)
 		return false, err
 	}
 	defer tx.Rollback() // aborrt transaction if error
 
 	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid) VALUES (?, ?, ?)")
 	if err != nil {
-		fmt.Println("AddUser(): breaky 2")
+		fmt.Printf("AddUser(): breaky 2: %v", err)
 		return false, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
 	_, err = stmt.Exec(u.UserID, u.Points, u.BossId)
 	if err != nil {
-		fmt.Println("AddUser(): breaky 3")
+		fmt.Printf("AddUser(): breaky 3: %v", err)
 		return false, err
 	}
 
