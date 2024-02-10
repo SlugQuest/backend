@@ -1,3 +1,4 @@
+
 package crud
 
 import (
@@ -44,6 +45,15 @@ type TaskPreview struct {
 	IsRecurring bool
 	IsAllDay    bool
 }
+
+type User struct {
+	UserID   string // Not known to user, do not expose
+	Username string // Set by user, can be exposed
+	Picture  string // A0 stores their profile pics as URLs
+	Points   int
+	BossId   int
+}
+
 
 var DB *sqlx.DB
 
@@ -496,3 +506,103 @@ func CreateCategory(cat Category) (bool, int64, error) {
 
 	return true, catID, nil
 }
+// Find user by UserID
+func GetUser(uid string) (User, bool, error) {
+	rows, err := DB.Query("SELECT * FROM UserTable WHERE UserID=?;", uid)
+	var user User
+	if err != nil {
+		fmt.Println(err)
+		return user, false, err
+	}
+
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		rows.Scan(&user.UserID, &user.Points, &user.BossId)
+	}
+	rows.Close()
+
+	return user, counter == 1, err
+}
+
+// Add user into DB
+func AddUser(u User) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		fmt.Printf("AddUser(): breaky 1: %v", err)
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid) VALUES (?, ?, ?)")
+	if err != nil {
+		fmt.Printf("AddUser(): breaky 2: %v", err)
+		return false, err
+	}
+
+	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
+	_, err = stmt.Exec(u.UserID, u.Points, u.BossId)
+	if err != nil {
+		fmt.Printf("AddUser(): breaky 3: %v", err)
+		return false, err
+	}
+
+	tx.Commit() //commit transaction to database
+
+	return true, nil
+}
+
+// Edit a user by supplying new values
+func EditUser(u User, uid string) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	stmt, err := tx.Preparex(`
+		UPDATE UserTable 
+		SET UserID = ?, Points = ?, Bossid = ?
+		WHERE UserID = ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(u.UserID, u.Points, u.BossId, uid)
+	if err != nil {
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
+
+func DeleteUser(uid string) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	stmt, err := tx.Preparex("DELETE FROM UserTable WHERE UserID = ?")
+	if err != nil {
+		fmt.Println("DeleteUser: breaky 1")
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(uid)
+	if err != nil {
+		fmt.Println("DeleteUser: breaky 2")
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
+

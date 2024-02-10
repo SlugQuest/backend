@@ -19,6 +19,9 @@ schema = 3
   [mod."github.com/gabriel-vasile/mimetype"]
     version = "v1.4.3"
     hash = "sha256-EDmlRi3av27dq/ISVTglv08z4yZzMQ/SxL1c46EJro0="
+  [mod."github.com/gin-contrib/cors"]
+    version = "v1.5.0"
+    hash = "sha256-NtdS8POOnyF+28ZZ3hFk4lt02jTz1BJL5Y73oCK2rII="
   [mod."github.com/gin-contrib/sessions"]
     version = "v0.0.5"
     hash = "sha256-pqw/taGJ+E0wkeKC8zcg/8rxP+ihMJJoW42X+O6IDOk="
@@ -70,6 +73,9 @@ schema = 3
   [mod."github.com/klauspost/cpuid/v2"]
     version = "v2.2.6"
     hash = "sha256-SlMBrOvotgIvGI7GsUmNxs++KpgzNCk1jOBAl8Oq8c8="
+  [mod."github.com/kr/text"]
+    version = "v0.2.0"
+    hash = "sha256-fadcWxZOORv44oak3jTxm6YcITcFxdGt4bpn869HxUE="
   [mod."github.com/leodido/go-urn"]
     version = "v1.3.0"
     hash = "sha256-AZTF26dTarC58fADEOfJAjM6YBOYw38ZSPU64Hu68MU="

@@ -9,7 +9,8 @@ import (
 	. "slugquest.com/backend/crud"
 )
 
-var testUserId string = "1111"
+var dummyUserID string = "1111"
+var testUserID string = "2222"  // testing user functions
 
 func RunAllTests() bool {
 	ConnectToDB(true)
@@ -17,7 +18,7 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestGetCategory() && TestDeleteTask() && TestPassFailTask() && TestEditTask() && TestGetTaskId()
+	return TestGetUserTask() && TestGetCategory() && TestDeleteTask() && TestPassFailTask() && TestEditTask() && TestGetTaskId() && TestAddUser() && TestEditUser() && TestDeleteUser()
 }
 
 func TestUPoints() bool {
@@ -52,7 +53,7 @@ func TestPassFailTask() bool {
 	// tx, err := DB.Beginx()
 
 	// // Insert the user into UserTable
-	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", testUserId, 0, 1)
+	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", dummyUserID, 0, 1)
 	// if err != nil {
 	// 	log.Printf("TestPassFailTask(): error inserting user into UserTable: %v", err)
 	// 	return false
@@ -61,7 +62,7 @@ func TestPassFailTask() bool {
 	// tx.Commit()
 
 	newTask := Task{
-		UserID:         testUserId,
+		UserID:         dummyUserID,
 		Category:       "yo",
 		TaskName:       "New Task",
 		Description:    "Description of the new task",
@@ -91,7 +92,7 @@ func TestPassFailTask() bool {
 		return false
 	}
 
-	//points, _, err := GetUserPoints(testUserId)
+	//points, _, err := GetUserPoints(dummyUserID)
 	failsucc := Failtask(int(taskID))
 	if !failsucc {
 		log.Printf("TestPassFailTask(): 2 %v", err)
@@ -113,7 +114,7 @@ func TestPassFailTask() bool {
 
 func TestDeleteTask() bool {
 	newTask := Task{
-		UserID:         testUserId,
+		UserID:         dummyUserID,
 		Category:       "yo",
 		TaskName:       "New Task",
 		Description:    "Description of the new task",
@@ -154,7 +155,7 @@ func TestDeleteTask() bool {
 }
 func TestEditTask() bool {
 	newTask := Task{
-		UserID:         testUserId,
+		UserID:         dummyUserID,
 		Category:       "yo",
 		TaskName:       "New Task",
 		Description:    "Description of the new task",
@@ -175,7 +176,7 @@ func TestEditTask() bool {
 
 	editedTask := Task{
 		TaskID:         int(taskID),
-		UserID:         testUserId,
+		UserID:         dummyUserID,
 		Category:       "yo",
 		TaskName:       "edited name",
 		Description:    "edited description",
@@ -211,7 +212,7 @@ func TestEditTask() bool {
 }
 
 func TestGetUserTask() bool {
-	taskl, err := GetUserTask(testUserId)
+	taskl, err := GetUserTask(dummyUserID)
 	if err != nil {
 		log.Printf("TestGetUserTask(): %v", err)
 		return false
@@ -227,7 +228,7 @@ func TestGetUserTaskTime() bool {
 
 	starttime := time.Now().Add(-1 * time.Hour)
 	endTime := time.Now().Add(time.Hour)
-	taskl, err := GetUserTaskDateTime(testUserId, starttime, endTime)
+	taskl, err := GetUserTaskDateTime(dummyUserID, starttime, endTime)
 	if err != nil {
 		log.Printf("TestGetUserTask(): %v", err)
 		return false
@@ -261,3 +262,68 @@ func TestGetTaskId() bool {
 	}
 	return true
 }
+func TestAddUser() bool {
+	newUser := User{
+		UserID:   testUserID,
+		Username: "sluggo",
+		Picture:  "lol.jpg",
+		Points:   1,
+		BossId:   1,
+	}
+
+	addSuccess, addErr := AddUser(newUser)
+	if addErr != nil || !addSuccess {
+		log.Printf("TestAddUser(): couldn't add user")
+		return false
+	}
+
+	_, found, _ := GetUser(newUser.UserID)
+	if !found {
+		log.Println("TestAddUser(): add failed")
+		return false
+	}
+
+	return true
+}
+
+func TestEditUser() bool {
+	// Original is one inserted in TestAddUser()
+	editedUser := User{
+		UserID:   testUserID,
+		Username: "not in DB, not tested",
+		Picture:  "not in DB, not tested",
+		Points:   5,
+		BossId:   10,
+	}
+
+	editSuccess, editErr := EditUser(editedUser, editedUser.UserID)
+	if editErr != nil || !editSuccess {
+		log.Printf("TestEditUser(): error editing user: %v", editErr)
+		return false
+	}
+
+	checkE, _, _ := GetUser(editedUser.UserID)
+	if checkE.Points != 5 || checkE.BossId != 10 {
+		log.Println("TestEditUser(): edit verfication failed")
+		return false
+	}
+
+	return true
+}
+
+func TestDeleteUser() bool {
+	deleteSuccess, deleteErr := DeleteUser(testUserID)
+	if deleteErr != nil || !deleteSuccess {
+		log.Printf("TestDeleteUser(): couldn't delete user")
+		return false
+	}
+
+	_, found, _ := GetUser(testUserID)
+	if found {
+		log.Println("TestDeleteUser(): delete failed")
+		return false
+	}
+
+	return true
+}
+
