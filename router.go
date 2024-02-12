@@ -41,16 +41,19 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Router: takes incoming requests and routes them to functions to handle them
-	router.GET("/login", authentication.LoginHandler(auth))
+	router.GET("/login", authentication.LoginHandler(auth, false))
 	router.GET("/logout", authentication.LogoutHandler)
 	router.GET("/callback", authentication.CallbackHandler(auth))
-	// router.GET("/user", authentication.UserProfileHandler)
+	router.GET("/signup", authentication.LoginHandler(auth, true))
+	//
 
 	// Building a group of routes starting with this path
-	v1 := router.Group("/api/v1") //TODO: FIX the route and the uri's below
+	v1 := router.Group("/api/v1")
 	{
-		// First middleware to use is verifying authentication
+		// Verifying authenticated before any of the endpoints for this group
 		v1.Use(authentication.IsAuthenticated)
+
+		v1.GET("user", authentication.UserProfileHandler)
 
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
