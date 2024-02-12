@@ -213,14 +213,20 @@ func getUserInfo(c *gin.Context) *crud.User {
 }
 
 // Sends public user profile from the current session as JSON
-// func UserProfileHandler(c *gin.Context) {
-// 	session := sessions.Default(c)
+func UserProfileHandler(c *gin.Context) {
+	session := sessions.Default(c)
 
-// 	allUserData, ok := session.Get("user_profile").(crud.User)
-// 	if !ok {
-// 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
-// 		return
-// 	}
+	allUserData, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+		return
+	}
 
-// 	c.JSON(http.StatusOK, publicUser)
-// }
+	publicUser := map[string]interface{}{
+		"picture":  allUserData.Picture,
+		"points":   allUserData.Points,
+		"username": allUserData.Username,
+	}
+
+	c.JSON(http.StatusOK, publicUser)
+}

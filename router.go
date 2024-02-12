@@ -50,11 +50,10 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// Building a group of routes starting with this path
 	v1 := router.Group("/api/v1")
 	{
-		// First middleware to use is verifying authentication
+		// Verifying authenticated before any of the endpoints for this group
 		v1.Use(authentication.IsAuthenticated)
 
-		// TODO: user data endpoint (minus userID)
-		// v1.GET("user", authentication.UserProfileHandler)
+		v1.GET("user", authentication.UserProfileHandler)
 
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
