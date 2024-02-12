@@ -183,6 +183,25 @@ func Passtask(Tid int) bool {
 		return false
 	}
 
+	currBossHealth, _ := GetCurrBossHealth(task.UserID)
+
+	// Check if the current boss health is zero
+	if currBossHealth <= 0 {
+		// Switch to the next boss ID (currBossId + 1)
+		_, err := DB.Exec("UPDATE UserTable SET BossId = BossId + 1 WHERE UserID = ?", task.UserID)
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 6 %v\n", err)
+			return false
+		}
+
+		// Reset user points to 0
+		_, err = DB.Exec("UPDATE UserTable SET Points = ? WHERE UserID = ?", 0, task.UserID)
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 7 %v\n", err)
+			return false
+		}
+	}
+
 	//tx.Commit()
 	return true
 }
