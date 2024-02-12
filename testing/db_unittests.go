@@ -10,7 +10,7 @@ import (
 )
 
 var dummyUserID string = "1111"
-var testUserID string = "2222"  // testing user functions
+var testUserID string = "2222" // testing user functions
 
 func RunAllTests() bool {
 	ConnectToDB(true)
@@ -29,10 +29,10 @@ func TestUPoints() bool {
 func TestGetCategory() bool {
 	cat, bol, erro := GetCatId(50)
 	if !bol {
-		log.Printf("not found")
+		log.Println("TestGetCat(): Get Cat ID(): cat id not found")
 	}
 	if erro != nil {
-		log.Printf("Get Cat ID(): %v", erro)
+		log.Printf("TestGetCat(): Get Cat ID() #1: %v", erro)
 		return false
 	}
 
@@ -43,9 +43,14 @@ func TestGetCategory() bool {
 
 	cat, bol, erro = GetCatId(-5)
 	if bol {
-		log.Printf("getcatid(): find catad")
+		log.Printf("TestGetCat(): Get Cat ID():  find catad")
 		return false
 	}
+	if erro != nil {
+		log.Printf("TestGetCat(): Get Cat ID() #2: %v", erro)
+		return false
+	}
+
 	return true
 }
 
@@ -326,4 +331,3 @@ func TestDeleteUser() bool {
 
 	return true
 }
-

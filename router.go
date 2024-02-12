@@ -78,7 +78,12 @@ func getCurrBossHealth(c *gin.Context) {
 		return
 	}
 	uid := userProfile.UserID
-	_, _, _ := crud.GetCurrBossHealth(uid)
+	currBossHealth, err := crud.GetCurrBossHealth(uid)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Can't find boss health")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"curr_boss_health": currBossHealth})
 }
 
 func getCategory(c *gin.Context) {
@@ -278,15 +283,6 @@ func getTaskById(c *gin.Context) {
 
 // Returns a list of all tasks of the current user
 func getuserTaskSpan(c *gin.Context) {
-	// TODO: ill be fixing this
-	// user_id stored as a variable within the session
-	// uid := c.GetString("user_id")
-	// log.Printf("found userid = %v", uid)
-	// if uid == "" {
-	// 	log.Println("getAllUserTasks(): couldn't get user_id")
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
-	// 	return
-	// }
 	// Retrieve the user_id through the struct stored in the session
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
@@ -295,6 +291,7 @@ func getuserTaskSpan(c *gin.Context) {
 		return
 	}
 	uid := userProfile.UserID
+
 	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
 	if err1 != nil {
 		log.Println("Please pass in a well formatted time. This is a frontend issue.")

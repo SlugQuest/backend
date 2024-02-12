@@ -53,6 +53,12 @@ type User struct {
 	BossId   int
 }
 
+type Boss struct {
+	BossID int
+	Name   string
+	Health int
+}
+
 var DB *sqlx.DB
 
 func LoadDumbData() error {
@@ -201,6 +207,27 @@ func GetUserPoints(Uid string) (int, bool, error) {
 
 }
 
+// GetBossById retrieves boss information by BossID.
+func GetBossById(bossID int) (Boss, bool, error) {
+	var boss Boss
+	rows, err := DB.Query("SELECT * FROM BossTable WHERE BossID = ?", bossID)
+	if err != nil {
+		return boss, false, err
+	}
+
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		if err := rows.Scan(&boss.BossID, &boss.Name, &boss.Health); err != nil {
+			return boss, false, err
+		}
+	}
+
+	rows.Close()
+
+	return boss, counter == 1, nil
+}
+
 func Failtask(Tid int) bool {
 	tx, err := DB.Beginx() //start transaction
 	stmt, err := tx.Preparex(`
@@ -226,8 +253,32 @@ func Failtask(Tid int) bool {
 
 }
 
-func GetCurrBossHealth(uid string) {
+func GetCurrBossHealth(uid string) (int, error) {
+	user, exists, err := GetUser(uid)
+	if err != nil {
+		return 0, err
+	}
 
+	if !exists {
+		return 0, fmt.Errorf("User not found")
+	}
+
+	boss, exists, err := GetBossById(user.BossId)
+	if err != nil {
+		return 0, err
+	}
+
+	if !exists {
+		return 0, fmt.Errorf("No boss found")
+	}
+
+	currBossHealth := user.Points - boss.Health
+
+	if currBossHealth < 0 { //PLACEHOLDER FOR NOW
+		currBossHealth = 0
+	}
+
+	return currBossHealth, nil
 }
 
 func isTableExists(tableName string) (bool, error) {
