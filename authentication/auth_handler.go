@@ -34,7 +34,7 @@ func IsAuthenticated(c *gin.Context) {
 }
 
 // Handler for our login.
-func LoginHandler(auth *Authenticator) gin.HandlerFunc {
+func LoginHandler(auth *Authenticator, goToSignup bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		state, err := generateRandomState()
 		if err != nil {
@@ -44,15 +44,25 @@ func LoginHandler(auth *Authenticator) gin.HandlerFunc {
 
 		// Save the state inside the session.
 		session := sessions.Default(c)
-		session.Clear()
-
 		session.Set("state", state)
 		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		c.Redirect(http.StatusTemporaryRedirect, auth.AuthCodeURL(state))
+		// URL to head to Auth0's universal login
+		authURL := auth.AuthCodeURL(state)
+
+		// Add an extra parameter if going directly to signup
+		if goToSignup {
+			// "prompt=login": Do not skip even if a user session is active
+			// i.e, if logged in, backs up, clicks signup, should act like a new user
+			authURL += "&prompt=login"
+
+			authURL += "&screen_hint=signup"
+		}
+
+		c.Redirect(http.StatusTemporaryRedirect, authURL)
 	}
 }
 
@@ -202,15 +212,15 @@ func getUserInfo(c *gin.Context) *crud.User {
 	return &user
 }
 
-// Sends user profile from the current session as JSON
+// Sends public user profile from the current session as JSON
 // func UserProfileHandler(c *gin.Context) {
 // 	session := sessions.Default(c)
-// 	profile := session.Get("profile")
 
-// 	if profile == nil {
-// 		c.String(http.StatusInternalServerError, "Failed to retrieve user information.")
+// 	allUserData, ok := session.Get("user_profile").(crud.User)
+// 	if !ok {
+// 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 // 		return
 // 	}
 
-// 	c.HTML(http.StatusOK, "/template/user.html", profile)
+// 	c.JSON(http.StatusOK, publicUser)
 // }

@@ -386,7 +386,7 @@ const response = await fetch(backend/protected, {
 
 ## User login
 - **Endpoint**: `/login`
-- **Description**: Go **directly** to {backend_url}/login to access this endpoint as it loads request headers to send to Auth0. **Do not send a GET** to /login or these headers get lost.
+- **Description**: Go **directly** to `{backend_url}/login` to access this endpoint as it loads request headers to send to Auth0. **Do not send a GET** to `/login` or these headers get lost.
 - **Response**:
   - **Status Code**: 307
     - Redirects to Auth0 and comes back with another redirect to `backend/callback` (to confirm logged in token)
@@ -394,4 +394,11 @@ const response = await fetch(backend/protected, {
 
 ## User logout
 - **Endpoint**: `/logout`
-- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run). Go **directly** to {backend_url}/logout so the backend performs this logic.
+- **Description**: Should return back to the host url (i.e `localhost:8080` on manual run). Go **directly** to `{backend_url}/logout` so the backend performs this logic.
+
+## User signup
+- **Endpoint**: `/signup`
+- **Description**: Go **directly** to `{backend_url}/signup` to access this endpoint as it loads request headers to send to Auth0. **Do not send a GET** to `/signup` or these headers get lost.
+- **Response**:
+  - **Status Code**: 307
+  - Similar behavior to `/logout` but also adds the newly registered user to the Auth0 database
