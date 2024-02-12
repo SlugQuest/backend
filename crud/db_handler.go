@@ -1,4 +1,3 @@
-
 package crud
 
 import (
@@ -53,7 +52,6 @@ type User struct {
 	Points   int
 	BossId   int
 }
-
 
 var DB *sqlx.DB
 
@@ -227,6 +225,11 @@ func Failtask(Tid int) bool {
 	return true
 
 }
+
+func GetCurrBossHealth(uid string) {
+
+}
+
 func isTableExists(tableName string) (bool, error) {
 	var count int
 	query := fmt.Sprintf("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='%s'", tableName)
@@ -506,6 +509,7 @@ func CreateCategory(cat Category) (bool, int64, error) {
 
 	return true, catID, nil
 }
+
 // Find user by UserID
 func GetUser(uid string) (User, bool, error) {
 	rows, err := DB.Query("SELECT * FROM UserTable WHERE UserID=?;", uid)
@@ -605,4 +609,3 @@ func DeleteUser(uid string) (bool, error) {
 
 	return true, nil
 }
-

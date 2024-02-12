@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	
 	"github.com/gin-contrib/cors"
 
 	"github.com/gin-contrib/sessions"
@@ -64,9 +63,22 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("userPoints", getUserPoints)
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)
+		v1.GET("task", getCurrBossHealth)
 	}
 
 	return router
+}
+
+func getCurrBossHealth(c *gin.Context) {
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		return
+	}
+	uid := userProfile.UserID
+	_, _, _ := crud.GetCurrBossHealth(uid)
 }
 
 func getCategory(c *gin.Context) {
@@ -275,7 +287,14 @@ func getuserTaskSpan(c *gin.Context) {
 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
 	// 	return
 	// }
-	uid := authentication.Curr_user_id
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		return
+	}
+	uid := userProfile.UserID
 	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
 	if err1 != nil {
 		log.Println("Please pass in a well formatted time. This is a frontend issue.")
