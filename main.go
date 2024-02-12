@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"fmt"
 
 	envfuncs "github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -19,7 +18,7 @@ func main() {
 	}
 
 	// Create new authenticator to pass to the router
-	auth, auth_err := authentication.New()
+	auth, auth_err := authentication.NewAuthenticator()
 	if auth_err != nil {
 		log.Fatalf("Failed to initialize the authenticator: %v", auth_err)
 	}
@@ -36,7 +35,7 @@ func main() {
 	}
 	utest := testing.RunAllTests()
 	if !utest {
-		fmt.Println("unit test failure")
+		log.Println("unit test failure")
 		return
 	}
 

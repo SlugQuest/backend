@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	
 	"github.com/gin-contrib/cors"
 
 	"github.com/gin-contrib/sessions"
@@ -266,16 +265,15 @@ func getTaskById(c *gin.Context) {
 
 // Returns a list of all tasks of the current user
 func getuserTaskSpan(c *gin.Context) {
-	// TODO: ill be fixing this
-	// user_id stored as a variable within the session
-	// uid := c.GetString("user_id")
-	// log.Printf("found userid = %v", uid)
-	// if uid == "" {
-	// 	log.Println("getAllUserTasks(): couldn't get user_id")
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retreive user id"})
-	// 	return
-	// }
-	uid := authentication.Curr_user_id
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		return
+	}
+	uid := userProfile.UserID
+
 	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
 	if err1 != nil {
 		log.Println("Please pass in a well formatted time. This is a frontend issue.")
