@@ -369,6 +369,39 @@ func CreateTask(task Task) (bool, int64, error) {
 	return true, taskID, nil
 }
 
+// for recurrence work in the future
+func CreateRecurringLogEntry(taskID int, isCurrent bool, status string) (bool, int64, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		fmt.Printf("CreateRecurringLog(): breaky 1: %v\n", err)
+		return false, -1, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status) VALUES (?, ?, ?)")
+	if err != nil {
+		fmt.Printf("CreateRecurringLog(): breaky 2: %v\n", err)
+		return false, -1, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(taskID, isCurrent, status)
+	if err != nil {
+		fmt.Printf("CreateRecurringLog(): breaky 3: %v\n", err)
+		return false, -1, err
+	}
+
+	logID, err := res.LastInsertId()
+	if err != nil {
+		fmt.Printf("CreateRecurringLog(): breaky 4: %v\n", err)
+		return false, -1, err
+	}
+
+	tx.Commit()
+
+	return true, logID, nil
+}
+
 func EditTask(task Task, id int) (bool, error) {
 
 	tx, err := DB.Beginx()
