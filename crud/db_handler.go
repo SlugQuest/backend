@@ -57,6 +57,7 @@ type Boss struct {
 	BossID int
 	Name   string
 	Health int
+	Image  string
 }
 
 var DB *sqlx.DB
@@ -237,7 +238,7 @@ func GetBossById(bossID int) (Boss, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		if err := rows.Scan(&boss.BossID, &boss.Name, &boss.Health); err != nil {
+		if err := rows.Scan(&boss.BossID, &boss.Name, &boss.Health, &boss.Image); err != nil {
 			return boss, false, err
 		}
 	}
@@ -288,10 +289,12 @@ func GetCurrBossHealth(uid string) (int, error) {
 	}
 
 	if !exists {
+		fmt.Println("Naur")
 		return 0, fmt.Errorf("No boss found")
 	}
 
-	currBossHealth := user.Points - boss.Health
+	currBossHealth := boss.Health - user.Points
+	fmt.Printf("in crud: currBossHealth: %v\n", currBossHealth)
 
 	if currBossHealth < 0 { //PLACEHOLDER FOR NOW
 		currBossHealth = 0

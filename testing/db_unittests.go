@@ -6,6 +6,9 @@ import (
 	"log"
 	"time"
 
+	"path/filepath"
+
+	"slugquest.com/backend/crud"
 	. "slugquest.com/backend/crud"
 )
 
@@ -18,7 +21,7 @@ func RunAllTests() bool {
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}
-	return TestGetUserTask() && TestGetCategory() && TestDeleteTask() && TestPassFailTask() && TestEditTask() && TestGetTaskId() && TestAddUser() && TestEditUser() && TestDeleteUser()
+	return TestGetCurrBossHealth() && TestGetUserTask() && TestGetCategory() && TestDeleteTask() && TestPassFailTask() && TestEditTask() && TestGetTaskId() && TestAddUser() && TestEditUser() && TestDeleteUser()
 }
 
 func TestUPoints() bool {
@@ -52,6 +55,73 @@ func TestGetCategory() bool {
 	}
 
 	return true
+}
+
+func TestGetCurrBossHealth() bool {
+	newUser := crud.User{
+		UserID:   "test_user",
+		Username: "test_username",
+		Picture:  "test_picture.jpg",
+		Points:   10,
+		BossId:   1,
+	}
+
+	addUserSuccess, addUserErr := crud.AddUser(newUser)
+	if addUserErr != nil || !addUserSuccess {
+		log.Printf("TestGetCurrBossHealth(): error adding test user: %v", addUserErr)
+		return false
+	}
+
+	newBoss := crud.Boss{
+		BossID: 1,
+		Name:   "Test Boss",
+		Health: 30,
+		Image:  filepath.Join("images", "clown.jpeg"),
+	}
+
+	addBossSuccess, addBossErr := AddBoss(newBoss)
+	if addBossErr != nil || !addBossSuccess {
+		log.Printf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
+		return false
+	}
+
+	currBossHealth, err := crud.GetCurrBossHealth(newUser.UserID)
+	if err != nil {
+		log.Printf("TestGetCurrBossHealth(): error getting current boss health: %v", err)
+		return false
+	}
+
+	if currBossHealth != 20 {
+		fmt.Printf("curr boss health: %v", currBossHealth)
+		return false
+	}
+	return true
+}
+
+func AddBoss(boss crud.Boss) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Preparex(`
+		INSERT INTO BossTable (BossID, BossName, Health, BossImage)
+		VALUES (?, ?, ?, ?)
+	`)
+	if err != nil {
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(boss.BossID, boss.Name, boss.Health, boss.Image)
+	if err != nil {
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
 }
 
 func TestPassFailTask() bool {

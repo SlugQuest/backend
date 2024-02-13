@@ -22,15 +22,14 @@ CREATE TABLE TaskTable (
     FOREIGN KEY (Category) REFERENCES Category(CatID)
 );
 
-CREATE TABLE RecurringLog {
+CREATE TABLE RecurringLog (
 	LogId INTEGER PRIMARY KEY AUTOINCREMENT,
 	TaskID INTEGER NOT NULL,
     isCurrent BOOLEAN NOT NULL,
     Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
-}
-
+);
 
 
 CREATE TABLE BossTable (
