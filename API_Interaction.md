@@ -135,6 +135,20 @@ const response = await fetch(backend/protected, {
       }
       ```
 
+### Get Current Boss Health (GET)
+
+- **Endpoint**: `/api/v1/task`
+- **Description**: Get the current health of the boss associated with the authenticated user.
+  - **Request Method**: GET
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "curr_boss_health": 30
+      }
+      ```
+
 ### Create Category (PUT)
 
 - **Endpoint**: `/api/v1/makeCat`
