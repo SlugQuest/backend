@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"fmt"
 
 	"github.com/gin-contrib/cors"
 
@@ -140,12 +141,12 @@ func getUserPoints(c *gin.Context) {
 // Create a new task
 func createTask(c *gin.Context) {
 	var json crud.Task //instance of Task struct defined in db_handler.go
-
 	if err := c.ShouldBindJSON(&json); err != nil {
+		fmt.Println("errorcasexsit", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
-
+	fmt.Println(json)
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})

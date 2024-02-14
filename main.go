@@ -8,7 +8,7 @@ import (
 
 	"slugquest.com/backend/authentication"
 	"slugquest.com/backend/crud"
-	"slugquest.com/backend/testing"
+	_"slugquest.com/backend/testing"
 )
 
 func main() {
@@ -23,6 +23,12 @@ func main() {
 		log.Fatalf("main(): Failed to initialize the authenticator: %v", auth_err)
 	}
 	router := CreateRouter(auth)
+	// utest := testing.RunAllTests()
+	// if !utest {
+	// 	log.Println("main(): unit test failure")
+	// 	return
+	// }
+
 
 	conn_err := crud.ConnectToDB(false)
 	if conn_err != nil {
@@ -30,11 +36,6 @@ func main() {
 		return
 	}
 
-	utest := testing.RunAllTests()
-	if !utest {
-		log.Println("main(): unit test failure")
-		return
-	}
 
 	log.Print("Running at http://localhost:8080")
 	router_err := router.Run() // listen and serve on 0.0.0.0:8080

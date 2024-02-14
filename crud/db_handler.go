@@ -23,7 +23,7 @@ type Task struct {
 	Category       string
 	TaskName       string
 	Description    string
-	StartTime      time.Time
+	StartTime      time.Time 
 	EndTime        time.Time
 	Status         string
 	IsRecurring    bool
@@ -339,9 +339,11 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
+	fmt.Println(task);
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
+		fmt.Println(task);
 		fmt.Println("CreateTask(): breaky 3 ", err)
 		return false, -1, err
 	}
@@ -368,7 +370,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	// }
 
 	tx.Commit() //commit transaction to database
-
+	fmt.Println("WE ADDED A TASK")
 	return true, taskID, nil
 }
 
