@@ -208,10 +208,13 @@ func Passtask(Tid int) bool {
 }
 
 func GetUserPoints(Uid string) (int, bool, error) {
+	fmt.Println(Uid)
 	rows, err := DB.Query("SELECT Points FROM UserTable WHERE UserID = ?", Uid)
 	thevalue := 0
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("SOMETHING HAPPENED")
+		rows.Close()
 		return thevalue, false, err
 	}
 	counter := 0

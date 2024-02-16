@@ -127,7 +127,9 @@ func putCat(c *gin.Context) {
 }
 func getUserPoints(c *gin.Context) {
 	//PLACEHOLDER VALUE
-	uid := "1111"
+	session := sessions.Default(c)
+	userProfile, _:= session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
 	ret, fnd, err := crud.GetUserPoints(uid)
 
 	if !fnd {
