@@ -1,9 +1,8 @@
-// As provided by Auth0
-
 package main
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,7 +21,6 @@ import (
 func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router := gin.Default()
 
-	// Allowing the frontend URL to get through CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://" + authentication.FRONTEND_HOST},
 		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
@@ -42,42 +40,112 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Router: takes incoming requests and routes them to functions to handle them
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	router.GET("/login", authentication.LoginHandler(auth))
+	router.GET("/login", authentication.LoginHandler(auth, false))
 	router.GET("/logout", authentication.LogoutHandler)
 	router.GET("/callback", authentication.CallbackHandler(auth))
-	// router.GET("/user", authentication.UserProfileHandler)
+	router.GET("/signup", authentication.LoginHandler(auth, true))
 
 	// Building a group of routes starting with this path
 	v1 := router.Group("/api/v1")
 	{
-		// First middleware to use is verifying authentication
+		// Verifying authenticated before any of the endpoints for this group
 		v1.Use(authentication.IsAuthenticated)
+
+		v1.GET("user", authentication.UserProfileHandler)
 
 		v1.GET("tasks", getAllUserTasks)
 		v1.GET("task/:id", getTaskById)
 		v1.POST("task", createTask)
+		v1.POST("passtask/:id", passTheTask)
+		v1.POST("failtask/:id", failTheTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
+		v1.GET("userTasks/:id/:start/:end", getuserTaskSpan)
+		v1.GET("userPoints", getUserPoints)
+		v1.GET("getCat/:id", getCategory)
+		v1.PUT("makeCat", putCat)
+		v1.GET("getBossHealth", getCurrBossHealth)
 	}
 
 	return router
 }
 
-// Create a new task
-func createTask(c *gin.Context) {
-	var json crud.Task //instance of Task struct defined in db_handler.go
+func getCurrBossHealth(c *gin.Context) {
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+	uid := userProfile.UserID
+	currBossHealth, err := crud.GetCurrBossHealth(uid)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Can't find boss health")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"curr_boss_health": currBossHealth})
+}
+
+func getCategory(c *gin.Context) {
+
+	cid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getCategory): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	Cat, bol, err := crud.GetCatId(cid)
+	if !bol {
+		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"Category": Cat})
+}
+
+func putCat(c *gin.Context) {
+	var json crud.Category //instance of Task struct defined in db_handler.go
 
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 
+	success, catID, err := crud.CreateCategory(json) //pass struct into function to add Task to db
+	if success {
+		c.JSON(http.StatusOK, gin.H{"message": "Success", "catID": catID})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cat", "details": err.Error()})
+		return
+	}
+}
+func getUserPoints(c *gin.Context) {
+	//PLACEHOLDER VALUE
+	session := sessions.Default(c)
+	userProfile, _ := session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
+	ret, fnd, err := crud.GetUserPoints(uid)
+
+	if !fnd {
+		log.Println("getTaskById(): Problem in getUserPoints, probably DB related", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"points": ret})
+}
+
+// Create a new task
+func createTask(c *gin.Context) {
+	var json crud.Task //instance of Task struct defined in db_handler.go
+	if err := c.ShouldBindJSON(&json); err != nil {
+		fmt.Println("errorcasexsit", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+	fmt.Println(json)
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})
@@ -139,11 +207,10 @@ func getAllUserTasks(c *gin.Context) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
-		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
 	uid := userProfile.UserID
-
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
 		log.Println("getAllUserTasks(): Problem probably DB related")
@@ -154,8 +221,50 @@ func getAllUserTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
+func passTheTask(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+	erro := crud.Passtask(id)
+
+	if !erro {
+
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Println(erro)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task"})
+		return
+	}
+}
+
+func failTheTask(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+
+	erro := crud.Failtask(id)
+
+	if !erro {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Println(erro)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task"})
+		return
+	}
+}
+
 // Retrieve task by ID
 func getTaskById(c *gin.Context) {
+
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getTaskById(): str2int error")
@@ -171,8 +280,39 @@ func getTaskById(c *gin.Context) {
 	}
 	if err != nil {
 		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related")
+	}
+	c.JSON(http.StatusOK, gin.H{"task": task})
+}
+
+// Returns a list of all tasks of the current user
+func getuserTaskSpan(c *gin.Context) {
+	// Retrieve the user_id through the struct stored in the session
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+	uid := userProfile.UserID
+
+	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
+	if err1 != nil {
+		c.String(http.StatusBadRequest, "Error: incorrect request time format")
+		return
+	}
+
+	endtime, err2 := time.Parse(time.RFC3339, c.GetString("end"))
+	if err2 != nil {
+		c.String(http.StatusBadRequest, "Error: incorrect request time format")
+		return
+	}
+
+	arr, err := crud.GetUserTaskDateTime(uid, starttime, endtime)
+	if err != nil {
+		log.Println("getAllUserTasks(): Problem probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"task": task})
+
+	c.JSON(http.StatusOK, gin.H{"list": arr})
 }

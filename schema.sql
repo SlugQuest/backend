@@ -8,22 +8,48 @@ CREATE TABLE IF NOT EXISTS UserTable (
 CREATE TABLE TaskTable (
     TaskID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID VARCHAR(255) NOT NULL,
-    Category VARCHAR(255) NOT NULL,
+    Category INT NOT NULL,
     TaskName VARCHAR(255) NOT NULL,
     Description TEXT NOT NULL,
-    StartTime DATETIME,
-    EndTime DATETIME,
-    IsCompleted BOOLEAN NOT NULL,
+    StartTime DATETIME, -- optional
+    EndTime DATETIME, --optional 
+    Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
     IsRecurring BOOLEAN NOT NULL,
     IsAllDay BOOLEAN NOT NULL,
+    Difficulty VARCHAR(15) CHECK(Difficulty IN ('easy','medium', 'hard')), -- Backend does conversion of easy/medium/hard to points
+    CronExpression VARCHAR(255) NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES UserTable(UserID),
+    FOREIGN KEY (Category) REFERENCES Category(CatID)
+);
+
+CREATE TABLE RecurringLog (
+	LogId INTEGER PRIMARY KEY AUTOINCREMENT,
+	TaskID INTEGER NOT NULL,
+    isCurrent BOOLEAN NOT NULL,
+    Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
+);
+
+
+CREATE TABLE BossTable (
+    BossID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BossName VARCHAR(255) NOT NULL,
+    HEALTH INTEGER NOT NULL,
+    BossImage VARCHAR(255) NOT NULL--FileName
+);
+
+CREATE TABLE Category (
+	CatID INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserID VARCHAR(255) NOT NULL,
+    Name VARCHAR(255) NOT NULL,
+	Color INT NOT NULL, -- hexcode? Ask frontend,
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
 );
 
-CREATE TABLE RecurrencePatterns (
-    TaskID INT NOT NULL,
-    RecurringType VARCHAR(15) CHECK(RecurringType IN ('daily','weekly','monthly')),
-    DayOfWeek INT check(DayOfWeek >= 0 and DayOfWeek <= 7),
-    DayOfMonth INT check(DayOfMonth >= 0 and DayOfMonth <= 31),
-    PRIMARY KEY (TaskID, RecurringType, DayOfWeek, DayOfMonth),
-    FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
+CREATE TABLE TrophyTable (
+    TrophyID INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserID VARCHAR(255),
+    TrophyName VARCHAR (255),
+    FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
 );

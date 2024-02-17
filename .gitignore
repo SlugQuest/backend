@@ -23,5 +23,7 @@ go.work
 # Avoid environment leaks
 .env
 
+.DS_Store
+
 
 result
