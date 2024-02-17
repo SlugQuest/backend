@@ -1,5 +1,3 @@
-// As provided by Auth0
-
 package main
 
 import (
@@ -12,6 +10,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"

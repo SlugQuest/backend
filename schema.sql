@@ -53,4 +53,3 @@ CREATE TABLE TrophyTable (
     TrophyName VARCHAR (255),
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
 );
-
