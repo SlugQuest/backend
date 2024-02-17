@@ -37,6 +37,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	// we must first register them using gob.Register
 	gob.Register(map[string]interface{}{})
 	gob.Register(crud.User{})
+
 	// Set up cookie store for the user session
 	store := cookie.NewStore([]byte("secret"))
 	router.Use(sessions.Sessions("auth-session", store))
@@ -77,7 +78,7 @@ func getCurrBossHealth(c *gin.Context) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
-		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
 	uid := userProfile.UserID
@@ -209,7 +210,7 @@ func getAllUserTasks(c *gin.Context) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
-		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
 	uid := userProfile.UserID
@@ -292,20 +293,20 @@ func getuserTaskSpan(c *gin.Context) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
-		c.String(http.StatusInternalServerError, "Couldn't retreive user's id to display tasks.")
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
 	uid := userProfile.UserID
 
 	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
 	if err1 != nil {
-		log.Println("Please pass in a well formatted time. This is a frontend issue.")
+		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
 
 	endtime, err2 := time.Parse(time.RFC3339, c.GetString("end"))
 	if err2 != nil {
-		log.Println("Please pass in a well formatted time. This is a frontend issue.")
+		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
 
