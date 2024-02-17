@@ -4,11 +4,11 @@ package main
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
-	"fmt"
 
 	"github.com/gin-contrib/cors"
 
@@ -46,7 +46,6 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	router.GET("/logout", authentication.LogoutHandler)
 	router.GET("/callback", authentication.CallbackHandler(auth))
 	router.GET("/signup", authentication.LoginHandler(auth, true))
-	//
 
 	// Building a group of routes starting with this path
 	v1 := router.Group("/api/v1")
@@ -67,7 +66,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("userPoints", getUserPoints)
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)
-		v1.GET("task", getCurrBossHealth)
+		v1.GET("getBossHealth", getCurrBossHealth)
 	}
 
 	return router
@@ -128,7 +127,7 @@ func putCat(c *gin.Context) {
 func getUserPoints(c *gin.Context) {
 	//PLACEHOLDER VALUE
 	session := sessions.Default(c)
-	userProfile, _:= session.Get("user_profile").(crud.User)
+	userProfile, _ := session.Get("user_profile").(crud.User)
 	uid := userProfile.UserID
 	ret, fnd, err := crud.GetUserPoints(uid)
 

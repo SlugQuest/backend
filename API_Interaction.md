@@ -137,7 +137,7 @@ const response = await fetch(backend/protected, {
 
 ### Get Current Boss Health (GET)
 
-- **Endpoint**: `/api/v1/task`
+- **Endpoint**: `/api/v1/getBossHealth`
 - **Description**: Get the current health of the boss associated with the authenticated user.
   - **Request Method**: GET
   - **Response**:
