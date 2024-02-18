@@ -1,8 +1,7 @@
 package testing
 
 import (
-	"fmt"
-	"log"
+	"testing"
 	"time"
 
 	. "slugquest.com/backend/crud"
@@ -30,13 +29,13 @@ var testTask = Task{
 	IsAllDay:       false,
 }
 
-func TestPassFailTask() bool {
+func TestPassFailTask(t *testing.T) {
 	// tx, err := DB.Beginx()
 
 	// // Insert the user into UserTable
 	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", userForTaskTable.UserID, 0, 1)
 	// if err != nil {
-	// 	log.Printf("TestPassFailTask(): error inserting user into UserTable: %v", err)
+	// 	t.Errorf("TestPassFailTask(): error inserting user into UserTable: %v", err)
 	// 	return false
 	// }
 
@@ -44,126 +43,103 @@ func TestPassFailTask() bool {
 
 	success, taskID, err := CreateTask(testTask)
 	if err != nil || !success {
-		log.Printf("TestPassFailTask(): error creating task: %v", err)
-		return false
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
 	passsucc := Passtask(int(taskID))
 	if !passsucc {
-		log.Printf("TestPassFailTask(): 1 %v", err)
-		return false
+		t.Errorf("TestPassFailTask(): 1 %v", err)
 	}
 	task2, _, _ := GetTaskId(int(taskID))
 	if task2.Status != "completed" {
-		fmt.Printf("TestPassFailTask(): wrong status: %v %v", testTask.Status, task2.Status)
-		return false
+		t.Errorf("TestPassFailTask(): wrong status: %v %v", testTask.Status, task2.Status)
 	}
 
 	//points, _, err := GetUserPoints(userForTaskTable.UserID)
 	failsucc := Failtask(int(taskID))
 	if !failsucc {
-		log.Printf("TestPassFailTask(): 2 %v", err)
-		return false
+		t.Errorf("TestPassFailTask(): 2 %v", err)
 	}
 	// if points != CalculatePoints(testTask.Difficulty) {
-	// 	log.Printf("TestPassFailTask(): 3 %v", err)
+	// 	t.Errorf("TestPassFailTask(): 3 %v", err)
 	// 	return false
 	// }
 
 	task3, _, _ := GetTaskId(int(taskID))
 	if task3.Status != "failed" {
-		log.Printf("TestPassFailTask(): bad value on true fal%v", task3.Status)
-		return false
+		t.Errorf("TestPassFailTask(): bad value on true fal%v", task3.Status)
 	}
-	return true
-
 }
 
-func TestGetUserTask() bool {
+func TestGetUserTask(t *testing.T) {
 	taskl, err := GetUserTask(userForTaskTable.UserID)
 	if err != nil {
-		log.Printf("TestGetUserTask(): %v", err)
-		return false
+		t.Errorf("TestGetUserTask(): %v", err)
 	}
 	if len(taskl) != 500 {
-		log.Printf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
-		return false
+		t.Errorf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
 	}
-	return true
 }
 
-func TestGetUserTaskTime() bool {
-
+func TestGetUserTaskTime(t *testing.T) {
 	starttime := time.Now().Add(-1 * time.Hour)
 	endTime := time.Now().Add(time.Hour)
 	taskl, err := GetUserTaskDateTime(userForTaskTable.UserID, starttime, endTime)
+
 	if err != nil {
-		log.Printf("TestGetUserTask(): %v", err)
-		return false
+		t.Errorf("TestGetUserTask(): %v", err)
 	}
+
 	if len(taskl) != 500 {
-		log.Printf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
-		return false
+		t.Errorf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
 	}
-	return true
 }
 
-func TestGetTaskId() bool {
+func TestGetTaskId(t *testing.T) {
 	task, bol, erro := GetTaskId(50)
 	if !bol {
-		log.Printf("not found")
+		t.Errorf("TestGetTaskid(): not found")
 	}
 	if erro != nil {
-		log.Printf("TestGetTaskid(): %v", erro)
-		return false
+		t.Errorf("TestGetTaskid(): %v", erro)
 	}
 
 	if task.TaskID != 50 {
-		log.Println("TestGetTaskId(): found wrong task")
-		return false
+		t.Error("TestGetTaskId(): found wrong task")
 	}
 
 	task, bol, erro = GetTaskId(-5)
-	if bol {
-		log.Printf("TestGetTaskid(): find task bad")
-		return false
+	if bol || erro != nil {
+		t.Errorf("TestGetTaskid(): find task bad")
 	}
-	return true
 }
 
-func TestDeleteTask() bool {
+func TestDeleteTask(t *testing.T) {
 	success, taskID, err := CreateTask(testTask)
 	if err != nil || !success {
-		log.Printf("TestDeleteTask(): error creating task: %v", err)
-		return false
+		t.Errorf("TestDeleteTask(): error creating task: %v", err)
 	}
 
 	success, deleteErr := DeleteTask(int(taskID))
 	if deleteErr != nil {
-		log.Printf("TestDeleteTask(): %v", err)
-		return false
+		t.Errorf("TestDeleteTask(): %v", err)
 	}
 
 	if !success {
-		log.Println("TestDeleteTask(): something's up")
-		return false
+		t.Error("TestDeleteTask(): something's up")
 	}
 
 	_, bol, _ := GetTaskId(int(taskID))
 
 	if bol {
-		log.Println("TestDeleteTask(): delete failed")
-		return false
+		t.Error("TestDeleteTask(): delete failed")
 	}
-
-	return true
 }
 
-func TestEditTask() bool {
+func TestEditTask(t *testing.T) {
 	success, taskID, err := CreateTask(testTask)
 	if err != nil || !success {
-		log.Printf("TestEditTask(): error creating task: %v", err)
-		return false
+		t.Errorf("TestEditTask(): error creating task: %v", err)
 	}
 
 	editedTask := Task{
@@ -185,8 +161,7 @@ func TestEditTask() bool {
 	// Perform the edit
 	editSuccess, editErr := EditTask(editedTask, editedTask.TaskID)
 	if editErr != nil || !editSuccess {
-		log.Printf("TestEditTask(): error editing task: %v", editErr)
-		return false
+		t.Errorf("TestEditTask(): error editing task: %v", editErr)
 	}
 
 	taskResult, _, _ := GetTaskId(int(taskID))
@@ -196,9 +171,7 @@ func TestEditTask() bool {
 		taskResult.Status != "failed" ||
 		taskResult.IsAllDay != true ||
 		taskResult.Difficulty != "medium" {
-		log.Println("TestEditTask(): edit verification failed")
-		return false
+		t.Error("TestEditTask(): edit verification failed")
 	}
 
-	return true
 }
