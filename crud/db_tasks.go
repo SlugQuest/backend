@@ -88,6 +88,10 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 	defer tx.Rollback() //abort transaction if error
+	if (task.IsRecurring){
+		fmt.Println("tasklogging")
+		fmt.Println(task.CronExpression)
+	}
 
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
