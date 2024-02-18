@@ -98,32 +98,6 @@ func TestGetCurrBossHealth() bool {
 	return true
 }
 
-func AddBoss(boss crud.Boss) (bool, error) {
-	tx, err := DB.Beginx()
-	if err != nil {
-		return false, err
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Preparex(`
-		INSERT INTO BossTable (BossID, BossName, Health, BossImage)
-		VALUES (?, ?, ?, ?)
-	`)
-	if err != nil {
-		return false, err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(boss.BossID, boss.Name, boss.Health, boss.Image)
-	if err != nil {
-		return false, err
-	}
-
-	tx.Commit()
-
-	return true, nil
-}
-
 func TestPassFailTask() bool {
 	// tx, err := DB.Beginx()
 
