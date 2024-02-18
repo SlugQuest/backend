@@ -1,6 +1,41 @@
 package crud
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
+
+func AddBoss(boss Boss) (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		log.Printf("AddBoss(): error beginning transaction")
+		return false, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Preparex(`
+		INSERT INTO BossTable (BossID, BossName, Health, BossImage)
+		VALUES (?, ?, ?, ?)
+	`)
+	if err != nil {
+		log.Printf("AddBoss(): error adding boss to table")
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(boss.BossID, boss.Name, boss.Health, boss.Image)
+	if err != nil {
+		return false, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("AddBoss(): error committing transaction")
+		return false, err
+	}
+
+	return true, nil
+}
 
 // GetBossById retrieves boss information by BossID.
 func GetBossById(bossID int) (Boss, bool, error) {
