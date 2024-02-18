@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	. "slugquest.com/backend/crud"
+	"slugquest.com/backend/crud"
 )
 
 // var dummyUserID string = "1111"
@@ -23,9 +23,9 @@ import (
 
 func TestMain(m *testing.M) {
 	// Setup
-	ConnectToDB(true)
+	crud.ConnectToDB(true)
 
-	dummy_err := LoadDumbData()
+	dummy_err := crud.LoadDumbData()
 	if dummy_err != nil {
 		log.Fatalf("error loaduing dumb data: %v", dummy_err)
 	}

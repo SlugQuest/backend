@@ -1,12 +1,9 @@
 package testing
 
 import (
-	"fmt"
-	"log"
 	"path/filepath"
 	"testing"
 
-	"slugquest.com/backend/crud"
 	. "slugquest.com/backend/crud"
 )
 
@@ -25,54 +22,31 @@ var testBoss = Boss{
 	Image:  filepath.Join("images", "clown.jpeg"),
 }
 
-func TestGetCurrBossHealth(t *testing.T) {
-	addUserSuccess, addUserErr := crud.AddUser(userForBossTable)
-	if addUserErr != nil || !addUserSuccess {
-		log.Printf("TestGetCurrBossHealth(): error adding test user: %v", addUserErr)
-		return false
-	}
-
+func TestAddBoss(t *testing.T) {
 	addBossSuccess, addBossErr := AddBoss(testBoss)
 	if addBossErr != nil || !addBossSuccess {
-		log.Printf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
-		return false
+		t.Errorf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
 	}
-
-	currBossHealth, err := crud.GetCurrBossHealth(userForBossTable.UserID)
-	if err != nil {
-		log.Printf("TestGetCurrBossHealth(): error getting current boss health: %v", err)
-		return false
-	}
-
-	if currBossHealth != 20 {
-		fmt.Printf("curr boss health: %v", currBossHealth)
-		return false
-	}
-	return true
 }
 
-func TestAddBoss(t *testing.T) (bool, error) {
-	tx, err := DB.Beginx()
-	if err != nil {
-		return false, err
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Preparex(`
-		INSERT INTO BossTable (BossID, BossName, Health, BossImage)
-		VALUES (?, ?, ?, ?)
-	`)
-	if err != nil {
-		return false, err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(boss.BossID, boss.Name, boss.Health, boss.Image)
-	if err != nil {
-		return false, err
+func TestGetCurrBossHealth(t *testing.T) {
+	addUserSuccess, addUserErr := AddUser(userForBossTable)
+	if addUserErr != nil || !addUserSuccess {
+		t.Errorf("TestGetCurrBossHealth(): error adding test user: %v", addUserErr)
 	}
 
-	tx.Commit()
+	// addBossSuccess, addBossErr := AddBoss(testBoss)
+	// if addBossErr != nil || !addBossSuccess {
+	// 	t.Errorf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
+	// }
+	TestAddBoss(t)
 
-	return true, nil
+	currBossHealth, err := GetCurrBossHealth(userForBossTable.UserID)
+	if err != nil {
+		t.Errorf("TestGetCurrBossHealth(): error getting current boss health: %v", err)
+	}
+
+	if currBossHealth != testBoss.Health {
+		t.Errorf("TestGetCurrBossHealth(): returned wrong health, expected %v, got %v", testBoss.Health, currBossHealth)
+	}
 }
