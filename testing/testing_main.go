@@ -23,7 +23,10 @@ import (
 
 func TestMain(m *testing.M) {
 	// Setup
-	crud.ConnectToDB(true)
+	conn_err := crud.ConnectToDB(true)
+	if conn_err != nil || crud.DB == nil {
+		log.Fatalf("Error setting up DB for unit tests: %v", conn_err)
+	}
 
 	dummy_err := crud.LoadDumbData()
 	if dummy_err != nil {
@@ -34,6 +37,7 @@ func TestMain(m *testing.M) {
 	result_code := m.Run()
 
 	// Teardown
+	crud.DB.Close()
 
 	os.Exit(result_code)
 }

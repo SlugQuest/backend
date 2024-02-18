@@ -1,7 +1,7 @@
 package testing
 
 import (
-	"log"
+	"testing"
 
 	. "slugquest.com/backend/crud"
 )
@@ -14,28 +14,23 @@ var userForUserTable = User{
 	BossId:   1,
 }
 
-func TestUPoints() bool {
-	// NEEDS TO BE DONE
-	return false
-}
+// func TestUPoints(t *testing.T) {
+// 	// NEEDS TO BE DONE
+// }
 
-func TestAddUser() bool {
+func TestAddUser(t *testing.T) {
 	addSuccess, addErr := AddUser(userForUserTable)
 	if addErr != nil || !addSuccess {
-		log.Printf("TestAddUser(): couldn't add user")
-		return false
+		t.Errorf("TestAddUser(): couldn't add user")
 	}
 
 	_, found, _ := GetUser(userForUserTable.UserID)
 	if !found {
-		log.Println("TestAddUser(): add failed")
-		return false
+		t.Error("TestAddUser(): add failed")
 	}
-
-	return true
 }
 
-func TestEditUser() bool {
+func TestEditUser(t *testing.T) {
 	editedUser := User{
 		UserID:   userForUserTable.UserID,
 		Username: "not in DB, not tested",
@@ -46,31 +41,23 @@ func TestEditUser() bool {
 
 	editSuccess, editErr := EditUser(editedUser, editedUser.UserID)
 	if editErr != nil || !editSuccess {
-		log.Printf("TestEditUser(): error editing user: %v", editErr)
-		return false
+		t.Errorf("TestEditUser(): error editing user: %v", editErr)
 	}
 
 	checkE, _, _ := GetUser(editedUser.UserID)
 	if checkE.Points != 5 || checkE.BossId != 10 {
-		log.Println("TestEditUser(): edit verfication failed")
-		return false
+		t.Error("TestEditUser(): edit verfication failed")
 	}
-
-	return true
 }
 
-func TestDeleteUser() bool {
+func TestDeleteUser(t *testing.T) {
 	deleteSuccess, deleteErr := DeleteUser(userForUserTable.UserID)
 	if deleteErr != nil || !deleteSuccess {
-		log.Printf("TestDeleteUser(): couldn't delete user")
-		return false
+		t.Errorf("TestDeleteUser(): couldn't delete user")
 	}
 
 	_, found, _ := GetUser(userForUserTable.UserID)
 	if found {
-		log.Println("TestDeleteUser(): delete failed")
-		return false
+		t.Error("TestDeleteUser(): delete failed")
 	}
-
-	return true
 }
