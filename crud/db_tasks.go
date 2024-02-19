@@ -3,6 +3,7 @@ package crud
 import (
 	"fmt"
 	"time"
+	"github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
@@ -88,10 +89,6 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 	defer tx.Rollback() //abort transaction if error
-	if (task.IsRecurring){
-		fmt.Println("tasklogging")
-		fmt.Println(task.CronExpression)
-	}
 
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -116,12 +113,31 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	// if task.IsRecurring {
-	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-	// 	if err != nil {
-	// 		fmt.Println("CreateTask(): breaky 4", err)
-	// 		return false, -1, err
-	// 	}
+	if task.IsRecurring {
+		// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
+		// if err != nil {
+		// 	fmt.Println("CreateTask(): breaky 4", err)
+		// 	return false, -1, err
+		// }
+		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
+		fmt.Println(nexTime)
+		rStmnt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			fmt.Println("CreateTask(): breaky 4", err)
+			return false, -1, err
+		}
+		for i := 0; i < 5; i++ {
+			_, err := rStmnt.Exec(task.UserID, task.Category, task.TaskName, task.Description, nexTime[i], nexTime[i].Add(task.EndTime.Sub(task.StartTime)), task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
+
+			if err != nil {
+				fmt.Println(task)
+				fmt.Println("CreateTask(): breaky 7 ", err)
+				return false, -1, err
+			}
+		}
+
+
+		}
 	// 	defer rStmnt.Close()
 
 	// 	_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)

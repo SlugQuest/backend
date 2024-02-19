@@ -49,6 +49,9 @@ schema = 3
   [mod."github.com/google/go-cmp"]
     version = "v0.6.0"
     hash = "sha256-qgra5jze4iPGP0JSTVeY5qV5AvEnEu39LYAuUCIkMtg="
+  [mod."github.com/gorhill/cronexpr"]
+    version = "v0.0.0-20180427100037-88b0669f7d75"
+    hash = "sha256-Oci0Vem4flkiU9lmXLslg2452VgyoBLyfFhcylzrh0E="
   [mod."github.com/gorilla/context"]
     version = "v1.1.2"
     hash = "sha256-QE6nQ0a8dSg4DcoItzTUgHb1fQovAMUdt0dUopdr4qw="
