@@ -241,36 +241,53 @@ func Passtask(Tid int) bool {
 		return false
 	}
 
-	stmt, err := tx.Preparex(`
-		UPDATE TaskTable 
-		SET Status = ?
-		WHERE TaskID = ?
-	`)
-	if err != nil {
-		fmt.Printf("Passtask(): breaky 2 %v\n", err)
-		tx.Rollback()
-		return false
-	}
-
-	_, err = stmt.Exec("completed", Tid)
-	if err != nil {
-		fmt.Printf("Passtask(): breaky 3 %v\n", err)
-		stmt.Close()
-		tx.Rollback()
-		return false
-	}
-	stmt.Close()
-	tx.Commit()
-
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
-		fmt.Printf("Passtask(): breaky 4 %v\n", err)
+		fmt.Printf("Passtask(): breaky 2 %v\n", err)
 		return false
 	}
 
 	if !ok {
 		fmt.Println("Passtask(): Task not found")
 		return false
+	}
+
+	if task.IsRecurring {
+		_, err := DB.Exec(`
+			UPDATE RecurringLog 
+			SET Status = ?
+			WHERE TaskID = ? AND isCurrent = true
+		`, "completed", Tid)
+
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 0 %v\n", err)
+			tx.Rollback()
+			return false
+		}
+	} else {
+
+		stmt, err := tx.Preparex(`
+		UPDATE TaskTable 
+		SET Status = ?
+		WHERE TaskID = ?
+		`)
+
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 2 %v\n", err)
+			tx.Rollback()
+			return false
+		}
+
+		_, err = stmt.Exec("completed", Tid)
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 3 %v\n", err)
+			stmt.Close()
+			tx.Rollback()
+			return false
+		}
+		stmt.Close()
+		tx.Commit()
+
 	}
 
 	//tx, err = DB.Beginx() // start transaction
