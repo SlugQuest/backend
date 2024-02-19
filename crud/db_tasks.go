@@ -324,29 +324,54 @@ func Passtask(Tid int) bool {
 }
 
 func Failtask(Tid int) bool {
-	tx, err := DB.Beginx() //start transaction
+	task, ok, err := GetTaskId(Tid)
 	if err != nil {
+		fmt.Printf("Failtask(): breaky %v\n", err)
 		return false
 	}
 
-	stmt, err := tx.Preparex(`
-	UPDATE TaskTable 
-	SET Status = ?
-	WHERE TaskID = ?
-	`)
-	if err != nil {
+	if !ok {
+		fmt.Println("Failtask(): Task not found")
 		return false
 	}
-	swag, erro := stmt.Exec("failed", Tid)
-	stmt.Close()
-	if erro != nil {
-		print(erro.Error())
-		print("FailtTask(): breaky 1 ")
-		fmt.Println(erro)
-		fmt.Println(swag)
-		return false
+
+	if task.IsRecurring {
+		_, err := DB.Exec(`
+			UPDATE RecurringLog 
+			SET Status = ?
+			WHERE TaskID = ? AND isCurrent = true
+		`, "failed", Tid)
+
+		if err != nil {
+			fmt.Printf("Failtask(): breaky 0 %v\n", err)
+			return false
+		}
+	} else {
+		tx, err := DB.Beginx() //start transaction
+		if err != nil {
+			return false
+		}
+
+		stmt, err := tx.Preparex(`
+		UPDATE TaskTable 
+		SET Status = ?
+		WHERE TaskID = ?
+		`)
+		if err != nil {
+			return false
+		}
+		swag, erro := stmt.Exec("failed", Tid)
+		stmt.Close()
+		if erro != nil {
+			print(erro.Error())
+			print("FailtTask(): breaky 1 ")
+			fmt.Println(erro)
+			fmt.Println(swag)
+			return false
+		}
+
+		tx.Commit()
 	}
-	tx.Commit()
 
 	return true
 
