@@ -1,4 +1,4 @@
-package testing
+package unit_tests
 
 // When a new backend function is made, add a test function for it that returns a bool, and then put that func in testmain
 import (
