@@ -127,29 +127,18 @@ func TestEditTask(t *testing.T) {
 }
 
 func TestPassFailTask(t *testing.T) {
-	// tx, err := DB.Beginx()
-
-	// // Insert the user into UserTable
-	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", testUser.UserID, 0, 1)
-	// if err != nil {
-	// 	t.Errorf("TestPassFailTask(): error inserting user into UserTable: %v", err)
-	// 	return false
-	// }
-
-	// tx.Commit()
-
 	success, taskID, err := CreateTask(testTask)
 	if err != nil || !success {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc := Passtask(int(taskID))
-	if !passsucc {
-		t.Errorf("TestPassFailTask(): 1 %v", err)
+	passsucc, err := Passtask(int(taskID))
+	if err != nil || !passsucc {
+		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
 	task2, _, _ := GetTaskId(int(taskID))
 	if task2.Status != "completed" {
-		t.Errorf("TestPassFailTask(): wrong status: %v %v", testTask.Status, task2.Status)
+		t.Errorf("TestPassFailTask(): wrong status: expected %v, got %v", testTask.Status, task2.Status)
 	}
 
 	//points, _, err := GetUserPoints(testUser.UserID)
