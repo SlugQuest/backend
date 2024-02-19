@@ -27,7 +27,7 @@ func TestGetUserTask(t *testing.T) {
 		t.Errorf("TestGetUserTask(): %v", err)
 	}
 	if len(taskl) != 500 {
-		t.Errorf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
+		t.Errorf("TestGetUserTask(): wrong task count, expected 500, got %v", len(taskl))
 	}
 }
 
@@ -41,7 +41,7 @@ func TestGetUserTaskTime(t *testing.T) {
 	}
 
 	if len(taskl) != 500 {
-		t.Errorf("TestGetUserTask(): wrong task count, expected 500 god %v", len(taskl))
+		t.Errorf("TestGetUserTask(): wrong task count, expected 500 got %v", len(taskl))
 	}
 }
 

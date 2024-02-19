@@ -15,19 +15,29 @@ var userForUserTable = User{
 	BossId:   1,
 }
 
-// func TestUPoints(t *testing.T) {
-// 	// NEEDS TO BE DONE
-// }
-
 func TestAddUser(t *testing.T) {
 	addSuccess, addErr := AddUser(userForUserTable)
 	if addErr != nil || !addSuccess {
-		t.Errorf("TestAddUser(): couldn't add user")
+		t.Error("TestAddUser(): couldn't add user")
 	}
 
 	_, found, _ := GetUser(userForUserTable.UserID)
 	if !found {
 		t.Error("TestAddUser(): add failed")
+	}
+}
+
+func TestGetUserPoints(t *testing.T) {
+	points, found, err := GetUserPoints(userForUserTable.UserID)
+
+	if err != nil {
+		t.Errorf("TestGetUserPoints(): %v", err)
+	}
+	if !found {
+		t.Error("TestGetUserPoints(): couldn't find user")
+	}
+	if points != userForUserTable.Points {
+		t.Errorf("TestGetUserPoints(): wrong number of points, expected %v, got %v", userForUserTable.Points, points)
 	}
 }
 
@@ -46,7 +56,7 @@ func TestEditUser(t *testing.T) {
 	}
 
 	checkE, _, _ := GetUser(editedUser.UserID)
-	if checkE.Points != 5 || checkE.BossId != 10 {
+	if checkE.Points != editedUser.Points || checkE.BossId != editedUser.BossId {
 		t.Error("TestEditUser(): edit verfication failed")
 	}
 }
@@ -54,11 +64,11 @@ func TestEditUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	deleteSuccess, deleteErr := DeleteUser(userForUserTable.UserID)
 	if deleteErr != nil || !deleteSuccess {
-		t.Errorf("TestDeleteUser(): couldn't delete user")
+		t.Errorf("TestDeleteUser(): couldn't delete user: %v", deleteErr)
 	}
 
 	_, found, _ := GetUser(userForUserTable.UserID)
 	if found {
-		t.Error("TestDeleteUser(): delete failed")
+		t.Error("TestDeleteUser(): delete failed, found user")
 	}
 }

@@ -33,7 +33,7 @@ func TestGetBossId(t *testing.T) {
 	}
 
 	if boss.BossID != testBoss.BossID {
-		t.Error("TestGetBossId(): found wrong boss")
+		t.Errorf("TestGetBossId(): found wrong boss, expected %v, got %v", testBoss.BossID, boss.BossID)
 	}
 }
 
@@ -43,7 +43,8 @@ func TestGetCurrBossHealth(t *testing.T) {
 		t.Errorf("TestGetCurrBossHealth(): error getting current boss health: %v", err)
 	}
 
-	if currBossHealth != testBoss.Health-testUser.Points {
-		t.Errorf("TestGetCurrBossHealth(): returned wrong health, expected %v, got %v", testBoss.Health, currBossHealth)
+	expectedHealth := testBoss.Health - testUser.Points
+	if currBossHealth != expectedHealth {
+		t.Errorf("TestGetCurrBossHealth(): returned wrong health, expected %v, got %v", expectedHealth, currBossHealth)
 	}
 }

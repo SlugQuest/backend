@@ -7,23 +7,25 @@ import (
 )
 
 func TestGetCategory(t *testing.T) {
-	cat, bol, erro := GetCatId(50)
-	if !bol {
-		t.Error("TestGetCat(): Get Cat ID(): cat id not found")
-	}
+	cat, found, erro := GetCatId(50)
 	if erro != nil {
 		t.Errorf("TestGetCat(): Get Cat ID() #1: %v", erro)
 	}
 
-	if cat.CatID != 50 {
-		t.Error("TestGcat(): found wrong cat")
+	if !found {
+		t.Error("TestGetCat(): Get Cat ID(): cat id not found")
 	}
 
-	cat, bol, erro = GetCatId(-5)
-	if bol {
-		t.Error("TestGetCat(): Get Cat ID():  find catad")
+	if cat.CatID != 50 {
+		t.Error("TestGetCat(): found wrong cat")
 	}
+
+	cat, found, erro = GetCatId(-5)
 	if erro != nil {
 		t.Errorf("TestGetCat(): Get Cat ID() #2: %v", erro)
+	}
+
+	if found {
+		t.Error("TestGetCat(): bad find cat, found -5")
 	}
 }
