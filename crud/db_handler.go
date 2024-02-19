@@ -16,14 +16,14 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "1111", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
 		}
 	}
 	for i := 1000; i < 1500; i++ {
-		cat := Category{CatID: i, UserID: "1111", Name: "lolcat", Color: 255}
+		cat := Category{CatID: i, UserID: "test_user_id", Name: "lolcat", Color: 255}
 		lol2, _, err2 := CreateCategory(cat)
 		if !lol2 || (err2 != nil) {
 			return err2
@@ -35,12 +35,10 @@ func LoadDumbData() error {
 func ConnectToDB(isunittest bool) error {
 	if isunittest {
 		// Read schema from file
-		schemaCreate, err := os.ReadFile("schema.sql")
+		schemaCreate, err := os.ReadFile("../schema.sql")
 		if err != nil {
 			return err
 		}
-
-		fmt.Println(string(schemaCreate))
 
 		// Connect to an in-memory SQLite database
 		db, err := sqlx.Open("sqlite3", ":memory:")

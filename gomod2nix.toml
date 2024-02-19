@@ -20,8 +20,8 @@ schema = 3
     version = "v1.5.0"
     hash = "sha256-NtdS8POOnyF+28ZZ3hFk4lt02jTz1BJL5Y73oCK2rII="
   [mod."github.com/gin-contrib/sessions"]
-    version = "v0.0.5"
-    hash = "sha256-pqw/taGJ+E0wkeKC8zcg/8rxP+ihMJJoW42X+O6IDOk="
+    version = "v0.0.4"
+    hash = "sha256-qe84JKt4QYGR6O8/aOK5ejMFRvXc7aQhklKuWe/ptA4="
   [mod."github.com/gin-contrib/sse"]
     version = "v0.1.0"
     hash = "sha256-zYbMTao+1F+385Lvsba9roLmmt9eYqr57sUWo0LCVhw="
@@ -83,8 +83,8 @@ schema = 3
     version = "v0.0.20"
     hash = "sha256-qhw9hWtU5wnyFyuMbKx+7RB8ckQaFQ8D+8GKPkN3HHQ="
   [mod."github.com/mattn/go-sqlite3"]
-    version = "v2.0.3+incompatible"
-    hash = "sha256-+zdGqThUb7if9JAiO+6s6KXBeuT322JhfcityvdrxD4="
+    version = "v1.14.22"
+    hash = "sha256-CWF2Hjg43658NhaePWbGzS19gHJXjuTroG5c0W3hgYQ="
   [mod."github.com/modern-go/concurrent"]
     version = "v0.0.0-20180306012644-bacd9c7ef1dd"
     hash = "sha256-OTySieAgPWR4oJnlohaFTeK1tRaVp/b0d1rYY8xKMzo="
