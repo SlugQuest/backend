@@ -3,6 +3,7 @@ package crud
 import (
 	"fmt"
 	"time"
+
 	"github.com/gorhill/cronexpr"
 )
 
@@ -136,8 +137,7 @@ func CreateTask(task Task) (bool, int64, error) {
 			}
 		}
 
-
-		}
+	}
 	// 	defer rStmnt.Close()
 
 	// 	_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
@@ -195,22 +195,21 @@ func DeleteTask(id int) (bool, error) {
 	// 	return false, err
 	// }
 
-	// if recurrenceTableExists {
-	// 	stmt, err := tx.Preparex("DELETE FROM RecurrencePatterns WHERE TaskID = ?")
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		fmt.Println("in here 2", err)
-	// 		return false, err
-	// 	}
-	// 	defer stmt.Close()
+	stmt1, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
+	if err != nil {
+		tx.Rollback()
+		fmt.Println("Breaky; can't preparing statement for RecurringLog deletion:", err)
+		return false, err
+	}
 
-	// 	_, err = stmt.Exec(id)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		fmt.Println("in here 3", err)
-	// 		return false, err
-	// 	}
-	// }
+	defer stmt1.Close()
+
+	_, err = stmt1.Exec(id)
+	if err != nil {
+		tx.Rollback()
+		fmt.Println("Error deleting from RecurringLog:", err)
+		return false, err
+	}
 
 	stmt2, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
 
