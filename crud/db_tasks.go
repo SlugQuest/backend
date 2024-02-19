@@ -2,79 +2,106 @@ package crud
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
-func GetTaskId(Tid int) (Task, bool, error) {
-	rows, err := DB.Queryx("SELECT * FROM TaskTable WHERE TaskID=?;", Tid)
+func GetTaskId(tid int) (Task, bool, error) {
 	var taskit Task
+
+	prep, err := DB.Preparex("SELECT * FROM TaskTable WHERE TaskID=?;")
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("GetTaskId() #1: %v", err)
+		prep.Close()
 		return taskit, false, err
 	}
+
+	rows, err := prep.Query(tid)
+	if err != nil {
+		log.Printf("GetTaskId() #2: %v", err)
+		rows.Close()
+		prep.Close()
+		return taskit, false, err
+	}
+
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		fmt.Println(counter)
-		rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
-		fmt.Println("finding")
+		err := rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
+		if err != nil {
+			log.Printf("GetTaskId() #3: %v", err)
+			rows.Close()
+		}
 	}
+
+	prep.Close()
 	rows.Close()
-	fmt.Println("done finding")
-	fmt.Println(counter)
-	fmt.Println(taskit.Status)
 	return taskit, counter == 1, err
 }
 
 // Uid is provided in a router context (session cookies)
-func GetUserTask(Uid string) ([]TaskPreview, error) {
-	rows, err := DB.Query("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable;")
+func GetUserTask(uid string) ([]TaskPreview, error) {
 	utaskArr := []TaskPreview{}
+
+	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable
+		WHERE UserID = ?;`)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("GetUserTask() #1: %v", err)
+		return utaskArr, err
+	}
+
+	rows, err := prep.Query(uid)
+	if err != nil {
+		log.Printf("GetUserTask() #2: %v", err)
 		rows.Close()
+		prep.Close()
 		return utaskArr, err
 	}
 
 	for rows.Next() {
 		var taskprev TaskPreview
-		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
-		if erro != nil {
-			fmt.Println(erro)
+		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		if err != nil {
+			log.Printf("GetUserTask() #3: %v", err)
 			rows.Close()
 		}
 		utaskArr = append(utaskArr, taskprev)
 	}
+	prep.Close()
 	rows.Close()
 	return utaskArr, err
 }
 
-func GetUserTaskDateTime(Uid string, startq time.Time, endq time.Time) ([]TaskPreview, error) {
-	prep, err := DB.Preparex("SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable t WHERE t.StartTime > ? AND t.EndTime < ?;")
+func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]TaskPreview, error) {
 	utaskArr := []TaskPreview{}
+
+	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable t 
+		WHERE UserID = ? AND t.StartTime > ? AND t.EndTime < ?;`)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("GetUserTaskDateTime() #1: %v", err)
 		prep.Close()
 		return utaskArr, err
 	}
-	rows, erro := prep.Query(startq, endq)
-	if erro != nil {
-		fmt.Println(err)
+
+	rows, err := prep.Query(uid, startq, endq)
+	if err != nil {
+		log.Printf("GetUserTaskDateTime() #2: %v", err)
 		rows.Close()
 		prep.Close()
 		return utaskArr, err
 	}
+
 	for rows.Next() {
 		var taskprev TaskPreview
-		erro := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
-		if erro != nil {
-			fmt.Println(erro)
+		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		if err != nil {
+			fmt.Println(err)
 			rows.Close()
 			prep.Close()
-			return utaskArr, erro
+			return utaskArr, err
 		}
 		utaskArr = append(utaskArr, taskprev)
 	}
@@ -89,7 +116,7 @@ func CreateTask(task Task) (bool, int64, error) {
 		fmt.Println("CreateTask(): breaky 1")
 		return false, -1, err
 	}
-	defer tx.Rollback() //abort transaction if error
+	defer tx.Rollback() // Abort transaction if any error occurs
 
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -152,10 +179,10 @@ func CreateTask(task Task) (bool, int64, error) {
 	return true, taskID, nil
 }
 
-func EditTask(task Task, id int) (bool, error) {
-
+func EditTask(task Task, tid int) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
+		log.Printf("EditTask() #1: %v", err)
 		return false, err
 	}
 
@@ -166,66 +193,65 @@ func EditTask(task Task, id int) (bool, error) {
 	`)
 
 	if err != nil {
+		log.Printf("EditTask() #2: %v", err)
 		return false, err
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, id)
-
+	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
+		tid)
 	if err != nil {
+		log.Printf("EditTask() #3: %v", err)
 		return false, err
 	}
-	tx.Commit()
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("EditTask() #4: %v", err)
+		return false, err
+	}
 
 	return true, nil
 }
 
-func DeleteTask(id int) (bool, error) {
+func DeleteTask(tid int) (bool, error) {
 	tx, err := DB.Beginx()
-
 	if err != nil {
+		log.Printf("DeleteTask() #1: %v", err)
 		return false, err
 	}
+	defer tx.Rollback() // Abort transaction if any error occurs
 
 	// recurrenceTableExists, err := isTableExists("RecurrencePatterns")
 	// if err != nil {
-	// 	tx.Rollback()
 	// 	fmt.Println("in here 1")
 	// 	return false, err
 	// }
 
-	stmt1, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
+	stmt1, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ? AND UserID = ?")
 	if err != nil {
-		tx.Rollback()
-		fmt.Println("Breaky; can't preparing statement for RecurringLog deletion:", err)
+		log.Printf("DeleteTask() #2: can't preparing statement for RecurringLog deletion: %v", err)
 		return false, err
 	}
-
 	defer stmt1.Close()
 
-	_, err = stmt1.Exec(id)
+	_, err = stmt1.Exec(tid)
 	if err != nil {
-		tx.Rollback()
-		fmt.Println("Error deleting from RecurringLog:", err)
+		log.Printf("DeleteTask() #3: Error deleting from RecurringLog: %v", err)
 		return false, err
 	}
 
 	stmt2, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
-
 	if err != nil {
-		tx.Rollback()
-		fmt.Println("in here 4", err)
+		log.Printf("DeleteTask() #4: %v", err)
 		return false, err
 	}
-
 	defer stmt2.Close()
 
-	_, err = stmt2.Exec(id)
-
+	_, err = stmt2.Exec(tid)
 	if err != nil {
-		tx.Rollback()
-		fmt.Println("in here 5", err)
+		log.Printf("DeleteTask() #5: %v", err)
 		return false, err
 	}
 
@@ -240,6 +266,7 @@ func Passtask(Tid int) bool {
 		fmt.Printf("Passtask(): breaky 1 %v\n", err)
 		return false
 	}
+	defer tx.Rollback() // Abort transaction if any error occurs
 
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
@@ -261,7 +288,6 @@ func Passtask(Tid int) bool {
 
 		if err != nil {
 			fmt.Printf("Passtask(): breaky 0 %v\n", err)
-			tx.Rollback()
 			return false
 		}
 	} else {
@@ -274,7 +300,6 @@ func Passtask(Tid int) bool {
 
 		if err != nil {
 			fmt.Printf("Passtask(): breaky 2 %v\n", err)
-			tx.Rollback()
 			return false
 		}
 
@@ -282,7 +307,6 @@ func Passtask(Tid int) bool {
 		if err != nil {
 			fmt.Printf("Passtask(): breaky 3 %v\n", err)
 			stmt.Close()
-			tx.Rollback()
 			return false
 		}
 		stmt.Close()
@@ -296,7 +320,6 @@ func Passtask(Tid int) bool {
 	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
 		fmt.Printf("Passtask(): breaky 5 %v\n", err)
-		tx.Rollback()
 		return false
 	}
 
@@ -351,6 +374,7 @@ func Failtask(Tid int) bool {
 		if err != nil {
 			return false
 		}
+		defer tx.Rollback() // Abort transaction if any error occurs
 
 		stmt, err := tx.Preparex(`
 		UPDATE TaskTable 

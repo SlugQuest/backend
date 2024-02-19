@@ -61,20 +61,23 @@ func GetBossById(bossID int) (Boss, bool, error) {
 func GetCurrBossHealth(uid string) (int, error) {
 	user, exists, err := GetUser(uid)
 	if err != nil {
+		log.Printf("GetCurrBossHealth() #1: %v", err)
 		return 0, err
 	}
 
 	if !exists {
+		log.Print("GetCurrBossHealth() #2: User not found")
 		return 0, fmt.Errorf("User not found")
 	}
 
 	boss, exists, err := GetBossById(user.BossId)
 	if err != nil {
+		log.Printf("GetCurrBossHealth() #3: %v", err)
 		return 0, err
 	}
 
 	if !exists {
-		fmt.Println("Naur")
+		log.Print("GetCurrBossHealth() #4: No boss found")
 		return 0, fmt.Errorf("no boss found")
 	}
 
