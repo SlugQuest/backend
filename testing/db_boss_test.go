@@ -7,16 +7,8 @@ import (
 	. "slugquest.com/backend/crud"
 )
 
-var userForBossTable = User{
-	UserID:   "bosstable_user_id",
-	Username: "sluggo3",
-	Picture:  "rofl.jpg",
-	Points:   1,
-	BossId:   1,
-}
-
 var testBoss = Boss{
-	BossID: 1,
+	BossID: testUser.BossId,
 	Name:   "testboss_name",
 	Health: 30,
 	Image:  filepath.Join("images", "clown.jpeg"),
@@ -29,24 +21,29 @@ func TestAddBoss(t *testing.T) {
 	}
 }
 
-func TestGetCurrBossHealth(t *testing.T) {
-	addUserSuccess, addUserErr := AddUser(userForBossTable)
-	if addUserErr != nil || !addUserSuccess {
-		t.Errorf("TestGetCurrBossHealth(): error adding test user: %v", addUserErr)
+func TestGetBossId(t *testing.T) {
+	boss, found, err := GetBossById(testBoss.BossID)
+
+	if err != nil {
+		t.Errorf("TestGetBossId(): error getting test boss: %v", err)
 	}
 
-	// addBossSuccess, addBossErr := AddBoss(testBoss)
-	// if addBossErr != nil || !addBossSuccess {
-	// 	t.Errorf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
-	// }
-	TestAddBoss(t)
+	if !found {
+		t.Error("TestGetBossId(): didn't find boss")
+	}
 
-	currBossHealth, err := GetCurrBossHealth(userForBossTable.UserID)
+	if boss.BossID != testBoss.BossID {
+		t.Error("TestGetBossId(): found wrong boss")
+	}
+}
+
+func TestGetCurrBossHealth(t *testing.T) {
+	currBossHealth, err := GetCurrBossHealth(testUser.UserID)
 	if err != nil {
 		t.Errorf("TestGetCurrBossHealth(): error getting current boss health: %v", err)
 	}
 
-	if currBossHealth != testBoss.Health {
+	if currBossHealth != testBoss.Health-testUser.Points {
 		t.Errorf("TestGetCurrBossHealth(): returned wrong health, expected %v, got %v", testBoss.Health, currBossHealth)
 	}
 }

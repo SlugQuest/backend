@@ -6,6 +6,7 @@ import (
 	. "slugquest.com/backend/crud"
 )
 
+// Don't conflict with dummy data's user
 var userForUserTable = User{
 	UserID:   "usertable_user_id",
 	Username: "sluggo2",

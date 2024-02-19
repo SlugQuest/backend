@@ -7,16 +7,8 @@ import (
 	. "slugquest.com/backend/crud"
 )
 
-var userForTaskTable = User{
-	UserID:   "tasktable_user_id",
-	Username: "sluggo1",
-	Picture:  "lol.jpg",
-	Points:   1,
-	BossId:   1,
-}
-
 var testTask = Task{
-	UserID:         userForTaskTable.UserID,
+	UserID:         testUser.UserID,
 	Category:       "yo",
 	TaskName:       "New Task",
 	Description:    "Description of the new task",
@@ -29,50 +21,8 @@ var testTask = Task{
 	IsAllDay:       false,
 }
 
-func TestPassFailTask(t *testing.T) {
-	// tx, err := DB.Beginx()
-
-	// // Insert the user into UserTable
-	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", userForTaskTable.UserID, 0, 1)
-	// if err != nil {
-	// 	t.Errorf("TestPassFailTask(): error inserting user into UserTable: %v", err)
-	// 	return false
-	// }
-
-	// tx.Commit()
-
-	success, taskID, err := CreateTask(testTask)
-	if err != nil || !success {
-		t.Errorf("TestPassFailTask(): error creating task: %v", err)
-	}
-
-	passsucc := Passtask(int(taskID))
-	if !passsucc {
-		t.Errorf("TestPassFailTask(): 1 %v", err)
-	}
-	task2, _, _ := GetTaskId(int(taskID))
-	if task2.Status != "completed" {
-		t.Errorf("TestPassFailTask(): wrong status: %v %v", testTask.Status, task2.Status)
-	}
-
-	//points, _, err := GetUserPoints(userForTaskTable.UserID)
-	failsucc := Failtask(int(taskID))
-	if !failsucc {
-		t.Errorf("TestPassFailTask(): 2 %v", err)
-	}
-	// if points != CalculatePoints(testTask.Difficulty) {
-	// 	t.Errorf("TestPassFailTask(): 3 %v", err)
-	// 	return false
-	// }
-
-	task3, _, _ := GetTaskId(int(taskID))
-	if task3.Status != "failed" {
-		t.Errorf("TestPassFailTask(): bad value on true fal%v", task3.Status)
-	}
-}
-
 func TestGetUserTask(t *testing.T) {
-	taskl, err := GetUserTask(userForTaskTable.UserID)
+	taskl, err := GetUserTask(testUser.UserID)
 	if err != nil {
 		t.Errorf("TestGetUserTask(): %v", err)
 	}
@@ -84,7 +34,7 @@ func TestGetUserTask(t *testing.T) {
 func TestGetUserTaskTime(t *testing.T) {
 	starttime := time.Now().Add(-1 * time.Hour)
 	endTime := time.Now().Add(time.Hour)
-	taskl, err := GetUserTaskDateTime(userForTaskTable.UserID, starttime, endTime)
+	taskl, err := GetUserTaskDateTime(testUser.UserID, starttime, endTime)
 
 	if err != nil {
 		t.Errorf("TestGetUserTask(): %v", err)
@@ -144,7 +94,7 @@ func TestEditTask(t *testing.T) {
 
 	editedTask := Task{
 		TaskID:         int(taskID),
-		UserID:         userForTaskTable.UserID,
+		UserID:         testUser.UserID,
 		Category:       "yo",
 		TaskName:       "edited name",
 		Description:    "edited description",
@@ -174,4 +124,46 @@ func TestEditTask(t *testing.T) {
 		t.Error("TestEditTask(): edit verification failed")
 	}
 
+}
+
+func TestPassFailTask(t *testing.T) {
+	// tx, err := DB.Beginx()
+
+	// // Insert the user into UserTable
+	// _, err = tx.Exec("INSERT INTO UserTable (UserID, Points, BossId) VALUES (?, ?, ?)", testUser.UserID, 0, 1)
+	// if err != nil {
+	// 	t.Errorf("TestPassFailTask(): error inserting user into UserTable: %v", err)
+	// 	return false
+	// }
+
+	// tx.Commit()
+
+	success, taskID, err := CreateTask(testTask)
+	if err != nil || !success {
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
+	}
+
+	passsucc := Passtask(int(taskID))
+	if !passsucc {
+		t.Errorf("TestPassFailTask(): 1 %v", err)
+	}
+	task2, _, _ := GetTaskId(int(taskID))
+	if task2.Status != "completed" {
+		t.Errorf("TestPassFailTask(): wrong status: %v %v", testTask.Status, task2.Status)
+	}
+
+	//points, _, err := GetUserPoints(testUser.UserID)
+	failsucc := Failtask(int(taskID))
+	if !failsucc {
+		t.Errorf("TestPassFailTask(): 2 %v", err)
+	}
+	// if points != CalculatePoints(testTask.Difficulty) {
+	// 	t.Errorf("TestPassFailTask(): 3 %v", err)
+	// 	return false
+	// }
+
+	task3, _, _ := GetTaskId(int(taskID))
+	if task3.Status != "failed" {
+		t.Errorf("TestPassFailTask(): bad value on true fal%v", task3.Status)
+	}
 }
