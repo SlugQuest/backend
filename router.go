@@ -222,10 +222,8 @@ func getAllUserTasks(c *gin.Context) {
 }
 
 func passTheTask(c *gin.Context) {
-	fmt.Println("RUNNING PASS TASK PLEASE")
 	id, err := strconv.Atoi(c.Param("id"))
-	fmt.Println(id)
-	fmt.Println("RUNNING PASS TASK PLEASE")
+
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
 		fmt.Println(id)
