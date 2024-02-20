@@ -24,11 +24,6 @@ func main() {
 		return
 	}
 	router := CreateRouter(auth)
-	// utest := testing.RunAllTests()
-	// if !utest {
-	// 	log.Println("main(): unit test failure")
-	// 	return
-	// }
 
 	conn_err := crud.ConnectToDB(false)
 	if conn_err != nil {

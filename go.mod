@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/mattn/go-sqlite3 v1.14.22
 	golang.org/x/oauth2 v0.16.0
 )
 
@@ -22,7 +22,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.9.0
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/cors v1.5.0
-	github.com/gin-contrib/sessions v0.0.5
+	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
