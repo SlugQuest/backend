@@ -50,21 +50,21 @@ func GetUserPoints(Uid string) (int, bool, error) {
 func AddUser(u User) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
-		log.Printf("AddUser(): breaky 1: %v", err)
+		log.Printf("AddUser() #1: %v", err)
 		return false, err
 	}
 	defer tx.Rollback() // aborrt transaction if error
 
 	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid) VALUES (?, ?, ?)")
 	if err != nil {
-		log.Printf("AddUser(): breaky 2: %v", err)
+		log.Printf("AddUser() #2: %v", err)
 		return false, err
 	}
 
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
 	_, err = stmt.Exec(u.UserID, u.Points, u.BossId)
 	if err != nil {
-		log.Printf("AddUser(): breaky 3: %v", err)
+		log.Printf("AddUser() #3: %v", err)
 		return false, err
 	}
 
@@ -111,14 +111,14 @@ func DeleteUser(uid string) (bool, error) {
 
 	stmt, err := tx.Preparex("DELETE FROM UserTable WHERE UserID = ?")
 	if err != nil {
-		log.Println("DeleteUser: breaky 1")
+		log.Printf("DeleteUser() #1: %v", err)
 		return false, err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(uid)
 	if err != nil {
-		log.Println("DeleteUser: breaky 2")
+		log.Printf("DeleteUser() #2: %v", err)
 		return false, err
 	}
 

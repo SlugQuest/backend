@@ -223,19 +223,21 @@ func getAllUserTasks(c *gin.Context) {
 
 func passTheTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
+		fmt.Println(id)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
-	erro := crud.Passtask(id)
 
-	if !erro {
-
+	success, err := crud.Passtask(id)
+	if success && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
-		log.Println(erro)
+		fmt.Println(err)
+		fmt.Println("done wiht swag")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task"})
 		return
 	}
