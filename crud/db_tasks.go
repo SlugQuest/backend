@@ -146,13 +146,13 @@ func CreateTask(task Task) (bool, int64, error) {
 		// }
 		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
 		// fmt.Println(nexTime)
-		rStmnt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status, CreatedAt) VALUES (?, ?, ?, ?)")
 		if err != nil {
 			fmt.Println("CreateTask(): breaky 4", err)
 			return false, -1, err
 		}
 		for i := 0; i < 5; i++ {
-			_, err := rStmnt.Exec(task.UserID, task.Category, task.TaskName, task.Description, nexTime[i], nexTime[i].Add(task.EndTime.Sub(task.StartTime)), task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
+			_, err := rStmnt.Exec(taskID, false, task.Status,nexTime[i] )
 
 			if err != nil {
 				// fmt.Println(task)
