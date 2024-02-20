@@ -18,8 +18,10 @@ CREATE TABLE TaskTable (
     IsAllDay BOOLEAN NOT NULL,
     Difficulty VARCHAR(15) CHECK(Difficulty IN ('easy','medium', 'hard')), -- Backend does conversion of easy/medium/hard to points
     CronExpression VARCHAR(255) NOT NULL,
+    TeamID INTEGER,
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID),
-    FOREIGN KEY (Category) REFERENCES Category(CatID)
+    FOREIGN KEY (Category) REFERENCES Category(CatID),
+    FOREIGN KEY (TeamID) REFERENCES TeamTable(TeamID) 
 );
 
 CREATE TABLE RecurringLog (
@@ -51,5 +53,18 @@ CREATE TABLE TrophyTable (
     TrophyID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID VARCHAR(255),
     TrophyName VARCHAR (255),
+    FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
+);
+
+CREATE TABLE TeamTable (
+    TeamID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TeamName VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE TeamMembers (
+    TeamID INTEGER NOT NULL,
+    UserID VARCHAR(255) NOT NULL,
+    PRIMARY KEY (TeamID, UserID),
+    FOREIGN KEY (TeamID) REFERENCES TeamTable(TeamID),
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID)
 );
