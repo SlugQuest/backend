@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/gorhill/cronexpr"
+	_ "github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
@@ -130,7 +130,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
-	// fmt.Println(task)
+	fmt.Println(task.UserID)
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
@@ -145,30 +145,30 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	if task.IsRecurring {
-		// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-		// if err != nil {
-		// 	fmt.Println("CreateTask(): breaky 4", err)
-		// 	return false, -1, err
-		// }
-		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-		// fmt.Println(nexTime)
-		rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status, CreatedAt) VALUES (?, ?, ?, ?)")
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 4", err)
-			return false, -1, err
-		}
-		for i := 0; i < 5; i++ {
-			_, err := rStmnt.Exec(taskID, false, task.Status,nexTime[i] )
+	// if task.IsRecurring {
+	// 	// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
+	// 	// if err != nil {
+	// 	// 	fmt.Println("CreateTask(): breaky 4", err)
+	// 	// 	return false, -1, err
+	// 	// }
+	// 	nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
+	// 	// fmt.Println(nexTime)
+	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status, CreatedAt) VALUES (?, ?, ?, ?)")
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 4", err)
+	// 		return false, -1, err
+	// 	}
+	// 	for i := 0; i < 5; i++ {
+	// 		_, err := rStmnt.Exec(taskID, false, task.Status,nexTime[i] )
 
-			if err != nil {
-				// fmt.Println(task)
-				fmt.Println("CreateTask(): breaky 7 ", err)
-				return false, -1, err
-			}
-		}
+	// 		if err != nil {
+	// 			// fmt.Println(task)
+	// 			fmt.Println("CreateTask(): breaky 7 ", err)
+	// 			return false, -1, err
+	// 		}
+	// 	}
 
-	}
+	// }
 	// 	defer rStmnt.Close()
 
 	// 	_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)
@@ -265,12 +265,6 @@ func DeleteTask(tid int) (bool, error) {
 }
 
 func Passtask(Tid int) (bool, error) {
-	tx, err := DB.Beginx() // start transaction
-	if err != nil {
-		fmt.Printf("Passtask(): breaky 1 %v\n", err)
-		return false, err
-	}
-	defer tx.Rollback() // Abort transaction if any error occurs
 
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
@@ -296,6 +290,12 @@ func Passtask(Tid int) (bool, error) {
 		}
 
 	} else {
+		tx, err := DB.Beginx() // start transaction
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 1 %v\n", err)
+			return false, err
+		}
+		defer tx.Rollback() // Abort transaction if any error occurs
 		stmt, err := tx.Preparex(`
 			UPDATE TaskTable 
 			SET Status = ?
@@ -312,6 +312,8 @@ func Passtask(Tid int) (bool, error) {
 			fmt.Printf("Passtask(): breaky 3 %v\n", err)
 			return false, err
 		}
+
+		tx.Commit()
 
 	}
 
@@ -351,7 +353,6 @@ func Passtask(Tid int) (bool, error) {
 		}
 	}
 
-	tx.Commit()
 	return true, nil
 }
 
