@@ -258,12 +258,6 @@ func DeleteTask(tid int) (bool, error) {
 }
 
 func Passtask(Tid int) (bool, error) {
-	tx, err := DB.Beginx() // start transaction
-	if err != nil {
-		fmt.Printf("Passtask(): breaky 1 %v\n", err)
-		return false, err
-	}
-	defer tx.Rollback() // Abort transaction if any error occurs
 
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
@@ -289,6 +283,12 @@ func Passtask(Tid int) (bool, error) {
 		}
 
 	} else {
+		tx, err := DB.Beginx() // start transaction
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 1 %v\n", err)
+			return false, err
+		}
+		defer tx.Rollback() // Abort transaction if any error occurs
 		stmt, err := tx.Preparex(`
 			UPDATE TaskTable 
 			SET Status = ?
@@ -305,6 +305,8 @@ func Passtask(Tid int) (bool, error) {
 			fmt.Printf("Passtask(): breaky 3 %v\n", err)
 			return false, err
 		}
+
+		tx.Commit()
 
 	}
 
@@ -344,7 +346,6 @@ func Passtask(Tid int) (bool, error) {
 		}
 	}
 
-	tx.Commit()
 	return true, nil
 }
 
