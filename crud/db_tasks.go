@@ -104,6 +104,13 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]TaskPr
 	}
 	prep.Close()
 	rows.Close()
+	// p2, err := DB.Preparex("SELECT * FROM RecurringLog WHERE UserID = ? AND t.StartTime > ? AND t.EndTime < ?;")
+	// if err != nil {
+	// 	log.Printf("GetUserTaskDateTime() #2: %v", err)
+	// 	return utaskArr, err
+	// }
+	// rowrec, err := prep.Query
+
 	return utaskArr, err
 }
 
