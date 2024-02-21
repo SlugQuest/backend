@@ -183,7 +183,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	return true, taskID, nil
 }
 
-func EditTask(task Task, tid int, uid string) (bool, error) {
+func EditTask(task Task, tid int) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
 		log.Printf("EditTask() #1: %v", err)
@@ -203,8 +203,8 @@ func EditTask(task Task, tid int, uid string) (bool, error) {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
-		tid, uid)
+	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
+		tid, task.UserID)
 	if err != nil {
 		log.Printf("EditTask() #3: %v", err)
 		return false, err
@@ -240,23 +240,32 @@ func DeleteTask(tid int, uid string) (bool, error) {
 	}
 	defer delTT.Close()
 
-	_, err = delTT.Exec(tid)
+	res, err := delTT.Exec(tid, uid)
 	if err != nil {
 		log.Printf("DeleteTask() #3: %v", err)
 		return false, err
 	}
 
-	delRL, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
+	numDeleted, err := res.RowsAffected()
 	if err != nil {
-		log.Printf("DeleteTask() #4: can't preparing statement for RecurringLog deletion: %v", err)
+		log.Printf("DeleteTask() #4: %v", err)
 		return false, err
 	}
-	defer delRL.Close()
 
-	_, err = delRL.Exec(tid)
-	if err != nil {
-		log.Printf("DeleteTask() #5: Error deleting from RecurringLog: %v", err)
-		return false, err
+	// Only delete from RecurringLog (not valited by UID) if any were deleted from the main table
+	if numDeleted > 0 {
+		delRL, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
+		if err != nil {
+			log.Printf("DeleteTask() #5: can't preparing statement for RecurringLog deletion: %v", err)
+			return false, err
+		}
+		defer delRL.Close()
+
+		_, err = delRL.Exec(tid)
+		if err != nil {
+			log.Printf("DeleteTask() #6: Error deleting from RecurringLog: %v", err)
+			return false, err
+		}
 	}
 
 	tx.Commit()
@@ -264,8 +273,7 @@ func DeleteTask(tid int, uid string) (bool, error) {
 	return true, nil
 }
 
-func Passtask(Tid int) (bool, error) {
-
+func Passtask(Tid int, uid string) (bool, error) {
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
 		fmt.Printf("Passtask(): breaky 2 %v\n", err)
@@ -275,6 +283,10 @@ func Passtask(Tid int) (bool, error) {
 	if !ok {
 		fmt.Println("Passtask(): Task not found")
 		return false, fmt.Errorf("task not found")
+	}
+
+	if task.UserID != uid {
+		return false, fmt.Errorf("task not owned by this user")
 	}
 
 	if task.IsRecurring {
@@ -356,16 +368,20 @@ func Passtask(Tid int) (bool, error) {
 	return true, nil
 }
 
-func Failtask(Tid int) bool {
+func Failtask(Tid int, uid string) (bool, error) {
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
 		fmt.Printf("Failtask(): breaky %v\n", err)
-		return false
+		return false, err
 	}
 
 	if !ok {
 		fmt.Println("Failtask(): Task not found")
-		return false
+		return false, fmt.Errorf("task not found")
+	}
+
+	if task.UserID != uid {
+		return false, fmt.Errorf("task not owned by this user")
 	}
 
 	if task.IsRecurring {
@@ -377,36 +393,35 @@ func Failtask(Tid int) bool {
 
 		if err != nil {
 			fmt.Printf("Failtask(): breaky 0 %v\n", err)
-			return false
+			return false, err
 		}
 	} else {
 		tx, err := DB.Beginx() //start transaction
 		if err != nil {
-			return false
+			return false, err
 		}
 		defer tx.Rollback() // Abort transaction if any error occurs
 
 		stmt, err := tx.Preparex(`
-		UPDATE TaskTable 
-		SET Status = ?
-		WHERE TaskID = ?
+			UPDATE TaskTable 
+			SET Status = ?
+			WHERE TaskID = ?
 		`)
 		if err != nil {
-			return false
+			return false, err
 		}
-		swag, erro := stmt.Exec("failed", Tid)
+		swag, err := stmt.Exec("failed", Tid)
 		stmt.Close()
-		if erro != nil {
-			print(erro.Error())
+		if err != nil {
+			print(err.Error())
 			print("FailtTask(): breaky 1 ")
-			fmt.Println(erro)
+			fmt.Println(err)
 			fmt.Println(swag)
-			return false
+			return false, err
 		}
 
 		tx.Commit()
 	}
 
-	return true
-
+	return true, nil
 }

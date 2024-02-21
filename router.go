@@ -220,7 +220,7 @@ func editTask(c *gin.Context) {
 	}
 	json.UserID = uid
 
-	success, err := crud.EditTask(json, tid, uid)
+	success, err := crud.EditTask(json, tid)
 
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -274,29 +274,38 @@ func getAllUserTasks(c *gin.Context) {
 }
 
 func passTheTask(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
 
+	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
-		fmt.Println(id)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
 
-	success, err := crud.Passtask(id)
+	success, err := crud.Passtask(tid, uid)
 	if success && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
-		fmt.Println(err)
-		fmt.Println("done wiht swag")
+		log.Printf("passTheTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task"})
 		return
 	}
 }
 
 func failTheTask(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 
 		log.Println("editTask(): Invalid taskID")
@@ -304,13 +313,12 @@ func failTheTask(c *gin.Context) {
 		return
 	}
 
-	erro := crud.Failtask(id)
-
-	if !erro {
+	success, err := crud.Failtask(tid, uid)
+	if success && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
-		log.Println(erro)
+		log.Printf("failTheTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task"})
 		return
 	}
@@ -318,11 +326,16 @@ func failTheTask(c *gin.Context) {
 
 // Retrieve task by ID
 func getTaskById(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
 
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getTaskById(): str2int error")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -333,21 +346,24 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related")
+		log.Printf("getTaskById(): %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+		return
 	}
+	if task.UserID != uid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "task not owned by user"})
+	}
+
 	c.JSON(http.StatusOK, gin.H{"task": task})
 }
 
 // Returns a list of all tasks of the current user
 func getuserTaskSpan(c *gin.Context) {
-	// Retrieve the user_id through the struct stored in the session
-	session := sessions.Default(c)
-	userProfile, ok := session.Get("user_profile").(crud.User)
-	if !ok {
+	uid, err := getUserId(c)
+	if err != nil {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
-	uid := userProfile.UserID
 
 	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
 	if err1 != nil {

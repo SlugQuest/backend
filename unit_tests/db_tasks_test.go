@@ -85,7 +85,7 @@ func TestDeleteTask(t *testing.T) {
 		t.Errorf("TestDeleteTask(): error creating task: %v", err)
 	}
 
-	success, deleteErr := DeleteTask(int(taskID))
+	success, deleteErr := DeleteTask(int(taskID), testTask.UserID)
 	if deleteErr != nil {
 		t.Errorf("TestDeleteTask(): %v", err)
 	}
@@ -147,7 +147,7 @@ func TestPassFailTask(t *testing.T) {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc, err := Passtask(int(taskID))
+	passsucc, err := Passtask(int(taskID), testTask.UserID)
 	if err != nil || !passsucc {
 		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
@@ -157,8 +157,8 @@ func TestPassFailTask(t *testing.T) {
 	}
 
 	//points, _, err := GetUserPoints(testUser.UserID)
-	failsucc := Failtask(int(taskID))
-	if !failsucc {
+	failsucc, err := Failtask(int(taskID), testTask.UserID)
+	if !failsucc || err != nil {
 		t.Errorf("TestPassFailTask(): 2 %v", err)
 	}
 	// if points != CalculatePoints(testTask.Difficulty) {
