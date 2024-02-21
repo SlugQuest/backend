@@ -14,10 +14,33 @@ var testBoss = Boss{
 	Image:  filepath.Join("images", "clown.jpeg"),
 }
 
+var secondTestBoss = Boss{
+	BossID: testUser.BossId + 1,
+	Name:   "secondtestboss_name",
+	Health: 30,
+	Image:  filepath.Join("images", "lol.jpeg"),
+}
+
+func TestGetAddBoss(t *testing.T) {
+	// Added as dummy data, should be found
+	returnedBoss, found, getBossErr := GetBossById(testBoss.BossID)
+	if getBossErr != nil {
+		t.Errorf("TestGetAddBoss(): error querying for boss: %v", getBossErr)
+	}
+
+	if !found {
+		t.Error("TestGetAddBoss(): error finding boss")
+	}
+
+	if returnedBoss.BossID != testBoss.BossID {
+		t.Error("TestGetAddBoss(): found wrong boss")
+	}
+}
+
 func TestAddBoss(t *testing.T) {
-	addBossSuccess, addBossErr := AddBoss(testBoss)
+	addBossSuccess, addBossErr := AddBoss(secondTestBoss)
 	if addBossErr != nil || !addBossSuccess {
-		t.Errorf("TestGetCurrBossHealth(): error adding test boss: %v", addBossErr)
+		t.Errorf("TestGetAddBoss(): error adding test boss: %v", addBossErr)
 	}
 }
 

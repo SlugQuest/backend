@@ -38,15 +38,15 @@ type TaskPreview struct {
 }
 
 type RecurTypeTask struct {
-	TaskID      int
-	UserID      string
-	Category    string
-	TaskName    string
-	StartTime   time.Time
-	EndTime     time.Time
-	Status      string
-	IsRecurring bool
-	IsAllDay    bool
+	TaskID       int
+	UserID       string
+	Category     string
+	TaskName     string
+	StartTime    time.Time
+	EndTime      time.Time
+	Status       string
+	IsRecurring  bool
+	IsAllDay     bool
 	RecurrenceId string
 }
 

@@ -10,7 +10,7 @@ import (
 
 var testTask = Task{
 	UserID:         testUser.UserID,
-	Category:       1,
+	Category:       "test_category",
 	TaskName:       "New Task",
 	Description:    "Description of the new task",
 	StartTime:      time.Now(),
@@ -23,8 +23,8 @@ var testTask = Task{
 }
 
 var recurringTask = Task{
-	UserID:         "test_user_id",
-	Category:       1,
+	UserID:         testUser.UserID,
+	Category:       "test_category",
 	TaskName:       "Recurring Test Task",
 	Description:    "Sample description",
 	StartTime:      time.Now(),
@@ -85,7 +85,7 @@ func TestDeleteTask(t *testing.T) {
 		t.Errorf("TestDeleteTask(): error creating task: %v", err)
 	}
 
-	success, deleteErr := DeleteTask(int(taskID))
+	success, deleteErr := DeleteTask(int(taskID), testTask.UserID)
 	if deleteErr != nil {
 		t.Errorf("TestDeleteTask(): %v", err)
 	}
@@ -110,7 +110,7 @@ func TestEditTask(t *testing.T) {
 	editedTask := Task{
 		TaskID:         int(taskID),
 		UserID:         testUser.UserID,
-		Category:       1,
+		Category:       testTask.Category,
 		TaskName:       "edited name",
 		Description:    "edited description",
 		StartTime:      time.Now(),
@@ -147,7 +147,7 @@ func TestPassFailTask(t *testing.T) {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc, err := Passtask(int(taskID))
+	passsucc, err := Passtask(int(taskID), testTask.UserID)
 	if err != nil || !passsucc {
 		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
@@ -157,8 +157,8 @@ func TestPassFailTask(t *testing.T) {
 	}
 
 	//points, _, err := GetUserPoints(testUser.UserID)
-	failsucc := Failtask(int(taskID))
-	if !failsucc {
+	failsucc, err := Failtask(int(taskID), testTask.UserID)
+	if !failsucc || err != nil {
 		t.Errorf("TestPassFailTask(): 2 %v", err)
 	}
 	// if points != CalculatePoints(testTask.Difficulty) {

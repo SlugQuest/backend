@@ -17,7 +17,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "test_user_id", Category: "yeeet", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -30,6 +30,12 @@ func LoadDumbData() error {
 			return err2
 		}
 	}
+
+	bossAdded, err := AddBoss(Boss{BossID: 1, Name: "testboss_name", Health: 30, Image: "../images/clown.jpeg"})
+	if !bossAdded || err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -100,7 +106,7 @@ func CalculatePoints(difficulty string) int {
 }
 
 // for recurrence work in the future
-func CreateRecurringLogEntry(taskID int, isCurrent bool, status string) (bool, int64, error) {
+func CreateRecurringLogEntry(taskID int, status string, timestamp time.Time) (bool, int64, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
 		fmt.Printf("CreateRecurringLog(): breaky 1: %v\n", err)
@@ -108,14 +114,14 @@ func CreateRecurringLogEntry(taskID int, isCurrent bool, status string) (bool, i
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status) VALUES (?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
 	if err != nil {
 		fmt.Printf("CreateRecurringLog(): breaky 2: %v\n", err)
 		return false, -1, err
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(taskID, isCurrent, status)
+	res, err := stmt.Exec(taskID, status, timestamp)
 	if err != nil {
 		fmt.Printf("CreateRecurringLog(): breaky 3: %v\n", err)
 		return false, -1, err
@@ -194,7 +200,7 @@ func PopRecurringTasksMonth() error {
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
 			if nextTime.Month() == currentMonth {
-				_, _, err = CreateRecurringLogEntry(task.TaskID, false, "todo")
+				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", time.Now())
 				if err != nil {
 					fmt.Printf("In here")
 					return err
