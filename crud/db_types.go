@@ -12,7 +12,7 @@ type Category struct {
 type Task struct {
 	TaskID         int
 	UserID         string
-	Category       string
+	Category       int
 	TaskName       string
 	Description    string
 	StartTime      time.Time

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorhill/cronexpr"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -16,7 +17,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "test_user_id", Category: "yo", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: 1, TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -85,13 +86,6 @@ func ConnectToDB(isunittest bool) error {
 	return nil
 }
 
-func isTableExists(tableName string) (bool, error) {
-	var count int
-	query := fmt.Sprintf("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='%s'", tableName)
-	err := DB.Get(&count, query)
-	return count > 0, err
-}
-
 func CalculatePoints(difficulty string) int {
 	switch difficulty {
 	case "easy":
@@ -136,4 +130,92 @@ func CreateRecurringLogEntry(taskID int, isCurrent bool, status string) (bool, i
 	tx.Commit()
 
 	return true, logID, nil
+}
+
+func GetRecurringTasks() ([]Task, error) {
+	var recurringTasks []Task
+
+	query := `SELECT * FROM TaskTable WHERE IsRecurring = true`
+
+	rows, err := DB.Query(query)
+	if err != nil {
+		fmt.Printf("GetRecurringTasks(): Error querying recurring tasks: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(
+			&task.TaskID,
+			&task.UserID,
+			&task.Category,
+			&task.TaskName,
+			&task.Description,
+			&task.StartTime,
+			&task.EndTime,
+			&task.Status,
+			&task.IsRecurring,
+			&task.IsAllDay,
+			&task.Difficulty,
+			&task.CronExpression,
+		)
+		if err != nil {
+			fmt.Printf("GetRecurringTasks(): Error scanning row: %v\n", err)
+			return nil, err
+		}
+		recurringTasks = append(recurringTasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		fmt.Printf("GetRecurringTasks(): Error iterating over rows: %v\n", err)
+		return nil, err
+	}
+
+	if len(recurringTasks) == 0 {
+		fmt.Println("No recurring tasks found.")
+	}
+
+	return recurringTasks, nil
+}
+
+func PopRecurringTasksMonth() error {
+	currentMonth := time.Now().Month()
+
+	recurringTasks, err := GetRecurringTasks()
+	if err != nil {
+		return err
+	}
+
+	for _, task := range recurringTasks {
+		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
+		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
+
+		for _, nextTime := range nextTimes {
+			// Check if the next occurrence is in the current month
+			if nextTime.Month() == currentMonth {
+				_, _, err = CreateRecurringLogEntry(task.TaskID, false, "todo")
+				if err != nil {
+					fmt.Printf("In here")
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func CountRecurringLogEntries() (int, error) {
+	var count int
+
+	query := "SELECT COUNT(*) FROM RecurringLog"
+
+	err := DB.Get(&count, query)
+	if err != nil {
+		fmt.Printf("CountRecurringLogEntries(): Error counting recurring log entries: %v\n", err)
+		return 0, err
+	}
+
+	fmt.Printf("Number of recurring log entries: %d\n", count)
+	return count, nil
 }

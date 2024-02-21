@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS UserTable (
 CREATE TABLE TaskTable (
     TaskID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID VARCHAR(255) NOT NULL,
-    Category INT NOT NULL,
+    Category INTEGER NOT NULL,
     TaskName VARCHAR(255) NOT NULL,
     Description TEXT NOT NULL,
     StartTime DATETIME, -- optional

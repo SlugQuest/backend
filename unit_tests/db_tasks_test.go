@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"slugquest.com/backend/crud"
 	. "slugquest.com/backend/crud"
 )
 
 var testTask = Task{
 	UserID:         testUser.UserID,
-	Category:       "yo",
+	Category:       1,
 	TaskName:       "New Task",
 	Description:    "Description of the new task",
 	StartTime:      time.Now(),
@@ -19,6 +20,20 @@ var testTask = Task{
 	CronExpression: "",
 	IsRecurring:    false,
 	IsAllDay:       false,
+}
+
+var recurringTask = Task{
+	UserID:         "test_user_id",
+	Category:       1,
+	TaskName:       "Recurring Test Task",
+	Description:    "Sample description",
+	StartTime:      time.Now(),
+	EndTime:        time.Now().Add(time.Hour),
+	Status:         "todo",
+	IsRecurring:    true,
+	IsAllDay:       false,
+	Difficulty:     "easy",
+	CronExpression: "0 0 * * *", //every day at midnight
 }
 
 func TestGetUserTask(t *testing.T) {
@@ -95,7 +110,7 @@ func TestEditTask(t *testing.T) {
 	editedTask := Task{
 		TaskID:         int(taskID),
 		UserID:         testUser.UserID,
-		Category:       "yo",
+		Category:       1,
 		TaskName:       "edited name",
 		Description:    "edited description",
 		StartTime:      time.Now(),
@@ -155,4 +170,26 @@ func TestPassFailTask(t *testing.T) {
 	if task3.Status != "failed" {
 		t.Errorf("TestPassFailTask(): bad value on true fal%v", task3.Status)
 	}
+}
+
+func TestPopRecurringTasksMonth(t *testing.T) {
+	success, _, err := CreateTask(recurringTask)
+	if err != nil || !success {
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
+	}
+
+	popErr := crud.PopRecurringTasksMonth()
+	if popErr != nil {
+		t.Fatalf("Error populating recurring tasks: %v", popErr)
+	}
+
+	count, err := CountRecurringLogEntries()
+	if err != nil {
+		t.Fatalf("Error counting recurring log entries: %v", err)
+	}
+	if count != 32 {
+		t.Errorf("TestPopRecurringTasksMonth(): wrong count%v", count)
+	}
+
+	// Add any additional assertions or checks based on your application requirements
 }
