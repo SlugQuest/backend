@@ -68,7 +68,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("getTeamTask/:id", getTeamTask)
 		v1.PUT("addUserTeam/:id/:uid", addUserTeam)
 		v1.GET("getUserTeams", getUserTeams)
-		 v1.GET("getTeamUseres/:id", getTeamUsers)
+		v1.GET("getTeamUseres/:id", getTeamUsers)
 		v1.DELETE("team/:tid/:uid", deleteTeamUser)
 		v1.DELETE("deleteTeam/:tid",deleteTeam)
 		v1.PUT("createTeam/:name", createTeam)

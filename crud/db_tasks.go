@@ -311,6 +311,9 @@ func CreateTask(task Task) (bool, int64, error) {
 		// 	fmt.Println("CreateTask(): breaky 4", err)
 		// 	return false, -1, err
 		// }
+
+
+		// COMMENT THIS OUT WHEN WE GET A CRONEXPR FROM THE FRONTEND!!
 		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
 		// fmt.Println(nexTime)
 		rStmnt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
