@@ -1,7 +1,6 @@
 package unit_tests
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -239,6 +238,6 @@ func TestPopRecurringTasksMonthGoroutine(t *testing.T) {
 		t.Errorf("Timeout waiting for goroutine to finish")
 	}
 
-	fmt.Printf("Total recurrence logs  %v", totalLogs)
+	t.Logf("Total recurrence logs  %v", totalLogs)
 
 }
