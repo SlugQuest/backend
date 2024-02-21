@@ -288,16 +288,16 @@ func Passtask(Tid int) (bool, error) {
 	}
 
 	if task.IsRecurring {
-		// _, err := DB.Exec(`
-		// 	UPDATE RecurringLog 
-		// 	SET Status = ?
-		// 	WHERE TaskID = ? AND isCurrent = true
-		// `, "completed", Tid)
+		_, err := DB.Exec(`
+		UPDATE RecurringLog 
+		SET Status = ?
+		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
+	`, "failed", Tid, time.Now())
 
-		// if err != nil {
-		// 	fmt.Printf("Passtask(): breaky 0 %v\n", err)
-		// 	return false, err
-		// }
+		if err != nil {
+			fmt.Printf("Passtask(): breaky 0 %v\n", err)
+			return false, err
+		}
 
 	} else {
 		tx, err := DB.Beginx() // start transaction
@@ -379,16 +379,16 @@ func Failtask(Tid int) bool {
 	}
 
 	if task.IsRecurring {
-		// _, err := DB.Exec(`
-		// 	UPDATE RecurringLog 
-		// 	SET Status = ?
-		// 	WHERE TaskID = ? AND isCurrent = true
-		// `, "failed", Tid)
+		_, err := DB.Exec(`
+		UPDATE RecurringLog 
+		SET Status = ?
+		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
+	`, "failed", Tid, time.Now())
 
-		// if err != nil {
-		// 	fmt.Printf("Failtask(): breaky 0 %v\n", err)
-		// 	return false
-		// }
+		if err != nil {
+			fmt.Printf("Failtask(): breaky 0 %v\n", err)
+			return false
+		}
 	} else {
 		tx, err := DB.Beginx() //start transaction
 		if err != nil {
