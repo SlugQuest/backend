@@ -9,6 +9,12 @@ type Category struct {
 	Color  int
 }
 
+type Team struct {
+	TeamID int64
+	Name string
+	Members []string
+}
+
 type Task struct {
 	TaskID         int
 	UserID         string

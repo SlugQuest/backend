@@ -65,10 +65,127 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)
 		v1.GET("getBossHealth", getCurrBossHealth)
+		v1.GET("getTeamTask/:id", getTeamTask)
+		v1.PUT("addUserTeam/:id/:uid", addUserTeam)
+		v1.GET("getUserTeams", getUserTeams)
+		 v1.GET("getTeamUseres/:id", getTeamUsers)
+		v1.DELETE("team/:tid/:uid", deleteTeamUser)
+		v1.DELETE("deleteTeam/:tid",deleteTeam)
+		v1.PUT("createTeam/:name", createTeam)
+
 	}
 
 	return router
 }
+
+func getTeamTask(c *gin.Context){
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getTeamTaskId(): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	task,  err := crud.GetTeamTask(tid)
+	if err != nil {
+		log.Println("getTaskById(): Problem in team tasks, probably DB related")
+	}
+	c.JSON(http.StatusOK, gin.H{"tasks": task})
+}
+
+func addUserTeam(c *gin.Context){
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	uid:= c.Param("uid")
+	if err1 != nil {
+		log.Println("getTeamTaskId(): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	succ := crud.AddUserToTeam(int64(tid), uid)
+	if succ{
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cadd memebr"})
+		return
+	}
+
+
+}
+
+func getUserTeams(c *gin.Context){
+	session := sessions.Default(c)
+	userProfile, _ := session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
+	ret,  err := crud.GetUserTeams(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"teams": ret})
+}
+
+func getTeamUsers(c *gin.Context){
+	uid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getteamusers): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret,  err := crud.GetTeamUsers(int64(uid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": ret})
+}
+
+func deleteTeamUser(c *gin.Context){
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	uid:= c.Param("uid")
+	if err1 != nil {
+		log.Println("getteamusers): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret := crud.RemoveUserFromTeam(int64(tid), uid)
+	if !ret{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func deleteTeam(c *gin.Context){
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getteamusers): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret := crud.DeleteTeam(int64(tid));
+	if !ret{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func createTeam(c *gin.Context){
+	name :=c.Param("name")
+	session := sessions.Default(c)
+	userProfile, _ := session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
+	ret, val := crud.CreateTeam(name, uid)
+	if !ret {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+c.JSON(http.StatusOK, gin.H{"teamid": val})
+}
+
 
 func getCurrBossHealth(c *gin.Context) {
 	// Retrieve the user_id through the struct stored in the session

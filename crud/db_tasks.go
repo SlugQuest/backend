@@ -74,6 +74,173 @@ func GetUserTask(uid string) ([]TaskPreview, error) {
 	return utaskArr, err
 }
 
+func GetTeamTask(tid int) ([]Task, error) {
+	utaskArr := []Task{}
+
+	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay, Description, Difficulty FROM TaskTable
+		WHERE TeamID = ?;`)
+	if err != nil {
+		log.Printf("GetTeamTask() #1: %v", err)
+		return utaskArr, err
+	}
+
+	rows, err := prep.Query(tid)
+	if err != nil {
+		log.Printf("GetTeamTask() #2: %v", err)
+		rows.Close()
+		prep.Close()
+		return utaskArr, err
+	}
+
+	for rows.Next() {
+		var taskprev Task
+		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &taskprev.Description, &taskprev.Difficulty)
+		if err != nil {
+			log.Printf("GetTeamTask() #3: %v", err)
+			rows.Close()
+		}
+		utaskArr = append(utaskArr, taskprev)
+	}
+	prep.Close()
+	rows.Close()
+	return utaskArr, err
+}
+
+
+
+
+func AddUserToTeam(tid int64, uid string) (bool){
+	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
+	if err != nil{
+		log.Printf("bricked in adduser team")
+		return false
+	}
+	_, err = prep.Exec(tid, uid)
+	if err != nil{
+		log.Printf("bricked in adduser team")
+		return false
+	}
+	return true
+
+}
+
+func GetUserTeams(uid string) ([]Team, error){
+	uteamArr := []Team{}
+	prep, err := DB.Preparex("SELECT t.TeamID, t.TeamName FROM TeamMembers z, Team t WHERE UserID = ? AND t.TeamID = z.TeamID ")
+	rows, err := prep.Query(uid)
+	if err != nil {
+		log.Printf("getuserteamissue")
+		rows.Close()
+		return uteamArr, err
+	}
+
+	for rows.Next() {
+		var taskprev Team
+		err := rows.Scan(&taskprev.TeamID, taskprev.Name)
+		if err != nil {
+			fmt.Println(err)
+			rows.Close()
+			return uteamArr, err
+		}
+		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
+		uteamArr = append(uteamArr, taskprev)
+	}
+	return uteamArr, nil
+
+}
+
+func GetTeamUsers(tid int64) ([]string, error){
+	uarr := []string{}
+	prep, err := DB.Preparex("SELECT UserID FROm UserTable u, TeamMembers m WHERE u.UserID = m.UserID AND t.TeamID = ?")
+	rows, err:= prep.Query(tid)
+	if err != nil {
+		log.Printf("getuserteamissue")
+		rows.Close()
+		return uarr, err
+	}
+
+	for rows.Next() {
+		var uid string
+		err := rows.Scan(&uid)
+		if err != nil {
+			fmt.Println(err)
+			rows.Close()
+			return uarr, err
+		}
+		uarr = append(uarr, uid)
+	}
+	return uarr, err
+
+}
+
+func RemoveUserFromTeam(tid int64, uid string) (bool){
+	prep, err := DB.Preparex("DELETE FROM TeamMembers WHERE TeamID = ? AND UserID = ?")
+	if err != nil{
+		log.Printf("bricked in del team")
+		return false
+	}
+	_, err = prep.Exec(tid, uid)
+	if err != nil{
+		log.Printf("bricked in delteam")
+		return false
+	}
+	return true
+
+}
+
+func DeleteTeam(tid int64) (bool){
+	tx, err := DB.Beginx() //start transaction
+	defer tx.Rollback()
+	stmnt, err := tx.Preparex("DELETE FROM TeamMembers WHERE TeamID = ? ")
+	if err != nil{
+		log.Printf("bricked in del team")
+		return false
+	}
+	_, err = stmnt.Exec(tid)
+	if err != nil{
+		log.Printf("bricked in del team")
+		return false
+	}
+
+	stmnt2, err := tx.Preparex("DELETE FROM TeamTable WHERE TeamID = ?")
+	if err != nil{
+		log.Printf("bricked in del team")
+		return false
+	}
+	
+	_, err = stmnt2.Exec(tid)
+	if err != nil{
+		log.Printf("bricked in del team")
+		return false
+	}
+	tx.Commit();
+	return true;
+}
+
+func CreateTeam(name string, uid string) (bool, int64){
+	tx, err := DB.Beginx() //start transaction
+	defer tx.Rollback()
+	stmnt, err := tx.Preparex("INSERT INTO Teamtable (TeamName) VALUES (?)")
+	if err != nil{
+		log.Printf("bricked in add team")
+		return false, 0
+	}
+	res, err := stmnt.Exec(name)
+	if err != nil{
+		log.Printf("bricked in add team")
+		return false, 0
+	}
+	teamins, err := res.LastInsertId()
+	if err != nil {
+		// fmt.Println(task)
+		fmt.Println("CreateTask(): breaky 3 ", err)
+		return false, 0
+	}
+
+	AddUserToTeam(teamins, uid);
+	tx.Commit();
+	return true, teamins
+}
 func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]TaskPreview, error) {
 	utaskArr := []TaskPreview{}
 
