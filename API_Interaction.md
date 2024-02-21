@@ -176,6 +176,33 @@ const response = await fetch(backend/protected, {
       }
       ```
 
+### Get Boss Information by ID (GET)
+
+- **Endpoint**: `/api/v1/getBoss/:id`
+  - **NOTE**: Replace `:id` with the actual BossID.
+  - Ex.: `/api/v1/getBoss/123`
+- **Description**: Get information about a boss by its ID.
+  - **Request Method**: GET
+  - **Parameters**: 
+    - `id` (integer): The ID of the boss.
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "boss": {
+          "BossID": 123,
+          "Name": "Boss Name",
+          "Health": 100,
+          "Image": "http://localhost:8080/api/v1/images/clown.jpg"
+        }
+      }
+      ```
+      - `BossID`: The unique identifier for the boss.
+      - `Name`: The name of the boss.
+      - `Health`: The current health of the boss.
+      - `Image`: URL of the boss image.
+
 ### Create Category (PUT)
 
 - **Endpoint**: `/api/v1/makeCat`
