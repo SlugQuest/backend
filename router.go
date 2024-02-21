@@ -185,6 +185,7 @@ func createTask(c *gin.Context) {
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 	json.UserID = uid
+	fmt.Println("creat")
 	fmt.Println(json)
 
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db

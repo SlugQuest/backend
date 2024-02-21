@@ -12,7 +12,7 @@ type Category struct {
 type Task struct {
 	TaskID         int
 	UserID         string
-	Category       int
+	Category       string
 	TaskName       string
 	Description    string
 	StartTime      time.Time
@@ -35,6 +35,19 @@ type TaskPreview struct {
 	Status      string
 	IsRecurring bool
 	IsAllDay    bool
+}
+
+type RecurTypeTask struct {
+	TaskID       int
+	UserID       string
+	Category     string
+	TaskName     string
+	StartTime    time.Time
+	EndTime      time.Time
+	Status       string
+	IsRecurring  bool
+	IsAllDay     bool
+	RecurrenceId string
 }
 
 type User struct {
