@@ -70,15 +70,25 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	return router
 }
 
-func getCurrBossHealth(c *gin.Context) {
-	// Retrieve the user_id through the struct stored in the session
+// Get userID stored in the session
+func getUserId(c *gin.Context) (string, error) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
+		return "", fmt.Errorf("couldn't get user id")
+	}
+	uid := userProfile.UserID
+
+	return uid, nil
+}
+
+func getCurrBossHealth(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
-	uid := userProfile.UserID
+
 	currBossHealth, err := crud.GetCurrBossHealth(uid)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Can't find boss health")
@@ -88,32 +98,53 @@ func getCurrBossHealth(c *gin.Context) {
 }
 
 func getCategory(c *gin.Context) {
-
-	cid, err1 := strconv.Atoi(c.Param("id"))
-	if err1 != nil {
-		log.Println("getCategory): str2int error")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
 
-	Cat, bol, err := crud.GetCatId(cid)
-	if !bol {
-		log.Println("getTaskById(): Problem in getAllUserTasks, probably DB related", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	cid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("getCategory(): str2int error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "uh oh"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Category": Cat})
+
+	cat, found, err := crud.GetCatId(cid)
+	if err != nil {
+		log.Printf("getCategory(): %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not find category"})
+		return
+	}
+	if !found {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not find category"})
+		return
+	}
+
+	if cat.UserID != uid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Category is not owned by user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Category": cat})
 }
 
 func putCat(c *gin.Context) {
-	var json crud.Category //instance of Task struct defined in db_handler.go
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
 
+	var json crud.Category
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
-	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+	}
+	json.UserID = uid
 
-	success, catID, err := crud.CreateCategory(json) //pass struct into function to add Task to db
+	success, catID, err := crud.CreateCategory(json)
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "catID": catID})
 		return
@@ -122,13 +153,15 @@ func putCat(c *gin.Context) {
 		return
 	}
 }
-func getUserPoints(c *gin.Context) {
-	//PLACEHOLDER VALUE
-	session := sessions.Default(c)
-	userProfile, _ := session.Get("user_profile").(crud.User)
-	uid := userProfile.UserID
-	ret, fnd, err := crud.GetUserPoints(uid)
 
+func getUserPoints(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	ret, fnd, err := crud.GetUserPoints(uid)
 	if !fnd {
 		log.Println("getTaskById(): Problem in getUserPoints, probably DB related", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
@@ -139,17 +172,21 @@ func getUserPoints(c *gin.Context) {
 
 // Create a new task
 func createTask(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
 	var json crud.Task //instance of Task struct defined in db_handler.go
 	if err := c.ShouldBindJSON(&json); err != nil {
 		fmt.Println("errorcasexsit", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
-	session := sessions.Default(c)
-	userProfile, _ := session.Get("user_profile").(crud.User)
-	uid := userProfile.UserID
 	json.UserID = uid
 	fmt.Println(json)
+
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})
@@ -162,6 +199,12 @@ func createTask(c *gin.Context) {
 
 // Edit a task by its ID
 func editTask(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
 	var json crud.Task //instance of Task struct defined in handler
 
 	id, err := strconv.Atoi(c.Param("id"))
@@ -175,6 +218,7 @@ func editTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	json.UserID = uid
 
 	success, err := crud.EditTask(json, id)
 
@@ -207,15 +251,12 @@ func deleteTask(c *gin.Context) {
 
 // Returns a list of all tasks of the current user
 func getAllUserTasks(c *gin.Context) {
-	// Retrieve the user_id through the struct stored in the session
-	session := sessions.Default(c)
-
-	userProfile, ok := session.Get("user_profile").(crud.User)
-	if !ok {
+	uid, err := getUserId(c)
+	if err != nil {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
 		return
 	}
-	uid := userProfile.UserID
+
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
 		log.Println("getAllUserTasks(): Problem probably DB related")

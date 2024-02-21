@@ -15,11 +15,9 @@ func GetCatId(Cid int) (Category, bool, error) {
 		counter += 1
 		log.Println(counter)
 		rows.Scan(&cat.CatID, &cat.UserID, &cat.Name, &cat.Color)
-		log.Println("finding")
 	}
 	rows.Close()
-	log.Println("done finding")
-	log.Println(counter)
+
 	return cat, counter == 1, err
 }
 
