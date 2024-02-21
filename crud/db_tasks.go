@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/gorhill/cronexpr"
+	_ "github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
@@ -104,6 +104,13 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]TaskPr
 	}
 	prep.Close()
 	rows.Close()
+	// p2, err := DB.Preparex("SELECT * FROM RecurringLog WHERE UserID = ? AND t.StartTime > ? AND t.EndTime < ?;")
+	// if err != nil {
+	// 	log.Printf("GetUserTaskDateTime() #2: %v", err)
+	// 	return utaskArr, err
+	// }
+	// rowrec, err := prep.Query
+
 	return utaskArr, err
 }
 
@@ -123,7 +130,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
-	// fmt.Println(task)
+	fmt.Println(task.UserID)
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
@@ -138,30 +145,30 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	if task.IsRecurring {
-		// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-		// if err != nil {
-		// 	fmt.Println("CreateTask(): breaky 4", err)
-		// 	return false, -1, err
-		// }
-		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-		// fmt.Println(nexTime)
-		rStmnt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 4", err)
-			return false, -1, err
-		}
-		for i := 0; i < 5; i++ {
-			_, err := rStmnt.Exec(task.UserID, task.Category, task.TaskName, task.Description, nexTime[i], nexTime[i].Add(task.EndTime.Sub(task.StartTime)), task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
+	// if task.IsRecurring {
+	// 	// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
+	// 	// if err != nil {
+	// 	// 	fmt.Println("CreateTask(): breaky 4", err)
+	// 	// 	return false, -1, err
+	// 	// }
+	// 	nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
+	// 	// fmt.Println(nexTime)
+	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, isCurrent, Status, CreatedAt) VALUES (?, ?, ?, ?)")
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 4", err)
+	// 		return false, -1, err
+	// 	}
+	// 	for i := 0; i < 5; i++ {
+	// 		_, err := rStmnt.Exec(taskID, false, task.Status,nexTime[i] )
 
-			if err != nil {
-				// fmt.Println(task)
-				fmt.Println("CreateTask(): breaky 7 ", err)
-				return false, -1, err
-			}
-		}
+	// 		if err != nil {
+	// 			// fmt.Println(task)
+	// 			fmt.Println("CreateTask(): breaky 7 ", err)
+	// 			return false, -1, err
+	// 		}
+	// 	}
 
-	}
+	// }
 	// 	defer rStmnt.Close()
 
 	// 	_, err = rStmnt.Exec(taskID, task.RecurringType, task.DayOfWeek, task.DayOfMonth)

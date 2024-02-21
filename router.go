@@ -145,6 +145,10 @@ func createTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+	session := sessions.Default(c)
+	userProfile, _ := session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
+	json.UserID = uid
 	fmt.Println(json)
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
@@ -205,6 +209,7 @@ func deleteTask(c *gin.Context) {
 func getAllUserTasks(c *gin.Context) {
 	// Retrieve the user_id through the struct stored in the session
 	session := sessions.Default(c)
+
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
@@ -217,7 +222,8 @@ func getAllUserTasks(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-
+	log.Println("working")
+	log.Println(arr)
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
