@@ -1,6 +1,7 @@
 package unit_tests
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -190,4 +191,54 @@ func TestPopRecurringTasksMonth(t *testing.T) {
 	if count <= 0 {
 		t.Errorf("TestPopRecurringTasksMonth(): wrong count%v", count)
 	}
+}
+
+func TestPopRecurringTasksMonthGoroutine(t *testing.T) {
+
+	success, _, err := CreateTask(recurringTask)
+	if err != nil || !success {
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
+	}
+
+	done := make(chan struct{})
+
+	shortDuration := 100 * time.Millisecond
+	counter := 0
+	totalLogs := 0
+
+	go func() {
+		defer close(done)
+
+		timer := time.NewTimer(0)
+		for {
+			<-timer.C
+			err := crud.PopRecurringTasksMonth()
+			if err != nil {
+				t.Errorf("Error populating recurring tasks: %v", err)
+			}
+
+			count, _ := CountRecurringLogEntries()
+			totalLogs = count
+			timer.Reset(shortDuration)
+			counter++
+		}
+	}()
+
+	time.Sleep(3 * shortDuration)
+
+	close(done)
+
+	time.Sleep(shortDuration)
+
+	select {
+	case <-done:
+		if counter <= 3 {
+			t.Errorf("Expected the goroutine to run multiple times, but it ran %d times", counter)
+		}
+	case <-time.After(time.Second * 2):
+		t.Errorf("Timeout waiting for goroutine to finish")
+	}
+
+	fmt.Printf("Total recurrence logs  %v", totalLogs)
+
 }
