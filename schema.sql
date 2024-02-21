@@ -33,6 +33,13 @@ CREATE TABLE RecurringLog (
     FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
 );
 
+CREATE TABLE Friends (
+    userA VARCHAR(255),
+    userB VARCHAR(255),
+    PRIMARY KEY (userA, userB),
+    FOREIGN KEY (userA) REFERENCES UserTable(UserID),
+    FOREIGN KEY (userB) REFERENCES UserTable(UserID)
+);
 
 CREATE TABLE BossTable (
     BossID INTEGER PRIMARY KEY AUTOINCREMENT,
