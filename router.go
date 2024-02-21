@@ -65,9 +65,31 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)
 		v1.GET("getBossHealth", getCurrBossHealth)
+		v1.GET("/getBoss/:id", getBossById)
 	}
 
 	return router
+}
+
+func getBossById(c *gin.Context) {
+	bossID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BossID"})
+		return
+	}
+
+	boss, exists, err := crud.GetBossById(bossID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve boss"})
+		return
+	}
+
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Boss not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"boss": boss})
 }
 
 // Get userID stored in the session
