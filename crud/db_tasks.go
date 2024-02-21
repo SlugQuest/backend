@@ -401,7 +401,7 @@ func Failtask(Tid int, uid string) (bool, error) {
 
 		if err != nil {
 			fmt.Printf("Failtask(): breaky 0 %v\n", err)
-			return false
+			return false, err
 		}
 	} else {
 		tx, err := DB.Beginx() //start transaction
