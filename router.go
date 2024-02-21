@@ -207,7 +207,7 @@ func editTask(c *gin.Context) {
 
 	var json crud.Task //instance of Task struct defined in handler
 
-	id, err := strconv.Atoi(c.Param("id"))
+	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
@@ -220,7 +220,7 @@ func editTask(c *gin.Context) {
 	}
 	json.UserID = uid
 
-	success, err := crud.EditTask(json, id)
+	success, err := crud.EditTask(json, tid, uid)
 
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -233,14 +233,20 @@ func editTask(c *gin.Context) {
 
 // Deletes a task by its ID
 func deleteTask(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println("deleteTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
 	}
 
-	success, err := crud.DeleteTask(id)
+	success, err := crud.DeleteTask(tid, uid)
 
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -259,8 +265,7 @@ func getAllUserTasks(c *gin.Context) {
 
 	arr, err := crud.GetUserTask(uid)
 	if err != nil {
-		log.Println("getAllUserTasks(): Problem probably DB related")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve all user tasks"})
 		return
 	}
 	log.Println("working")

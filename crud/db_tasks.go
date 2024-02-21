@@ -183,7 +183,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	return true, taskID, nil
 }
 
-func EditTask(task Task, tid int) (bool, error) {
+func EditTask(task Task, tid int, uid string) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
 		log.Printf("EditTask() #1: %v", err)
@@ -192,8 +192,8 @@ func EditTask(task Task, tid int) (bool, error) {
 
 	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
-		SET UserID = ?, Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ? 
-		WHERE TaskID = ?
+		SET Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ? 
+		WHERE TaskID = ? AND UserID = ?
 	`)
 
 	if err != nil {
@@ -204,7 +204,7 @@ func EditTask(task Task, tid int) (bool, error) {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
-		tid)
+		tid, uid)
 	if err != nil {
 		log.Printf("EditTask() #3: %v", err)
 		return false, err
@@ -219,7 +219,7 @@ func EditTask(task Task, tid int) (bool, error) {
 	return true, nil
 }
 
-func DeleteTask(tid int) (bool, error) {
+func DeleteTask(tid int, uid string) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
 		log.Printf("DeleteTask() #1: %v", err)
@@ -233,29 +233,29 @@ func DeleteTask(tid int) (bool, error) {
 	// 	return false, err
 	// }
 
-	stmt1, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
+	delTT, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ? AND UserID = ?")
 	if err != nil {
-		log.Printf("DeleteTask() #2: can't preparing statement for RecurringLog deletion: %v", err)
+		log.Printf("DeleteTask() #2: %v", err)
 		return false, err
 	}
-	defer stmt1.Close()
+	defer delTT.Close()
 
-	_, err = stmt1.Exec(tid)
+	_, err = delTT.Exec(tid)
 	if err != nil {
-		log.Printf("DeleteTask() #3: Error deleting from RecurringLog: %v", err)
+		log.Printf("DeleteTask() #3: %v", err)
 		return false, err
 	}
 
-	stmt2, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ?")
+	delRL, err := tx.Preparex("DELETE FROM RecurringLog WHERE TaskID = ?")
 	if err != nil {
-		log.Printf("DeleteTask() #4: %v", err)
+		log.Printf("DeleteTask() #4: can't preparing statement for RecurringLog deletion: %v", err)
 		return false, err
 	}
-	defer stmt2.Close()
+	defer delRL.Close()
 
-	_, err = stmt2.Exec(tid)
+	_, err = delRL.Exec(tid)
 	if err != nil {
-		log.Printf("DeleteTask() #5: %v", err)
+		log.Printf("DeleteTask() #5: Error deleting from RecurringLog: %v", err)
 		return false, err
 	}
 
