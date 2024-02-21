@@ -190,6 +190,4 @@ func TestPopRecurringTasksMonth(t *testing.T) {
 	if count != 32 {
 		t.Errorf("TestPopRecurringTasksMonth(): wrong count%v", count)
 	}
-
-	// Add any additional assertions or checks based on your application requirements
 }
