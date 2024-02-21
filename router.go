@@ -149,6 +149,7 @@ func createTask(c *gin.Context) {
 	userProfile, _ := session.Get("user_profile").(crud.User)
 	uid := userProfile.UserID
 	json.UserID = uid
+	fmt.Println("creat")
 	fmt.Println(json)
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {

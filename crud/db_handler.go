@@ -17,7 +17,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "test_user_id", Category: 1, TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: "yeeet", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
