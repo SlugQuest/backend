@@ -302,7 +302,7 @@ func Passtask(Tid int, uid string) (bool, error) {
 		UPDATE RecurringLog 
 		SET Status = ?
 		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
-	`, "failed", Tid, time.Now())
+	`, "completed", Tid, time.Now())
 
 		if err != nil {
 			fmt.Printf("Passtask(): breaky 0 %v\n", err)
