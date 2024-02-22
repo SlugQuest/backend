@@ -58,6 +58,8 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("task", createTask)
 		v1.POST("passtask/:id", passTheTask)
 		v1.POST("failtask/:id", failTheTask)
+		v1.POST("passRecurringTask/:id/:recurrenceID", passRecurringTask)
+		v1.POST("failRecurringTask/:id/:recurrenceID", failRecurringTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
 		v1.GET("userTasks/:id/:start/:end", getuserTaskSpan)
@@ -69,6 +71,70 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 	}
 
 	return router
+}
+
+func passRecurringTask(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	tid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("passRecurringTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+
+	recurrenceID, err := strconv.Atoi(c.Param("recurrenceID"))
+	if err != nil {
+		log.Println("passRecurringTask(): Invalid recurrenceID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RecurrenceID"})
+		return
+	}
+
+	success, err := crud.PassRecurringTask(tid, recurrenceID, uid)
+	if success && err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Printf("passRecurringTask(): %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass recurring task"})
+		return
+	}
+}
+
+func failRecurringTask(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	tid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("failRecurringTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+
+	recurrenceID, err := strconv.Atoi(c.Param("recurrenceID"))
+	if err != nil {
+		log.Println("failRecurringTask(): Invalid recurrenceID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RecurrenceID"})
+		return
+	}
+
+	success, err := crud.FailRecurringTask(tid, recurrenceID, uid)
+	if success && err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		log.Printf("failRecurringTask(): %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail recurring task"})
+		return
+	}
 }
 
 func getBossById(c *gin.Context) {

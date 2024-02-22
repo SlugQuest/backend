@@ -47,7 +47,8 @@ type RecurTypeTask struct {
 	Status       string
 	IsRecurring  bool
 	IsAllDay     bool
-	RecurrenceId string
+	Difficulty   string
+	RecurrenceId int
 }
 
 type User struct {
