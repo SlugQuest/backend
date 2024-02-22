@@ -96,7 +96,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		var taskprev RecurTypeTask
 		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("GetUserTaskDateTime() #3: %v", err)
 			rows.Close()
 			return utaskArr, err
 		}
@@ -107,7 +107,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	rows.Close()
 	p2, err := DB.Preparex("SELECT c.TaskID, c.UserID, c.Category, c.TaskName, c.StartTime, c.EndTime, c.Status, c.IsRecurring, c.IsAllDay, l.timestamp, l.LogId FROM TaskTable c, RecurringLog l WHERE l.TaskID == c.TaskID AND  c.UserID = ? AND l.timestamp > ? AND l.timestamp < ?;")
 	if err != nil {
-		log.Printf("GetUserTaskDateTime() #2: %v", err)
+		log.Printf("GetUserTaskDateTime() #4: %v", err)
 		return utaskArr, err
 	}
 	rowrec, err := p2.Query(uid, startq, endq)
@@ -116,7 +116,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		var reftime time.Time
 		err := rowrec.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &reftime, &taskprev.RecurrenceId)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("GetUserTaskDateTime() #5: %v", err)
 			rowrec.Close()
 			return utaskArr, err
 		}
@@ -144,11 +144,9 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
-	fmt.Println(task)
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
-		// fmt.Println(task)
 		fmt.Println("CreateTask(): breaky 3 ", err)
 		return false, -1, err
 	}
@@ -177,7 +175,6 @@ func CreateTask(task Task) (bool, int64, error) {
 			_, err := rStmnt.Exec(taskID, task.Status, nexTime[i])
 
 			if err != nil {
-				// fmt.Println(task)
 				fmt.Println("CreateTask(): breaky 7 ", err)
 				return false, -1, err
 			}
@@ -187,7 +184,6 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	tx.Commit() //commit transaction to database
-	// fmt.Println("WE ADDED A TASK")
 	return true, taskID, nil
 }
 
