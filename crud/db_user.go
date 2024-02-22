@@ -1,8 +1,13 @@
 package crud
 
 import (
+	"database/sql"
 	"log"
+	"math/rand"
+	"time"
 )
+
+const USER_CODE_LEN int = 6
 
 // Find user by UserID
 func GetUser(uid string) (User, bool, error) {
@@ -16,7 +21,7 @@ func GetUser(uid string) (User, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		rows.Scan(&user.UserID, &user.Points, &user.BossId)
+		rows.Scan(&user.UserID, &user.Points, &user.BossId, &user.SocialCode)
 	}
 	rows.Close()
 
@@ -48,29 +53,72 @@ func GetUserPoints(Uid string) (int, bool, error) {
 
 // Add user into DB
 func AddUser(u User) (bool, error) {
-	tx, err := DB.Beginx()
+	socialCode, err := generateSocialCode()
 	if err != nil {
 		log.Printf("AddUser(): breaky 1: %v", err)
 		return false, err
 	}
-	defer tx.Rollback() // aborrt transaction if error
 
-	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid) VALUES (?, ?, ?)")
+	tx, err := DB.Beginx()
 	if err != nil {
 		log.Printf("AddUser(): breaky 2: %v", err)
 		return false, err
 	}
+	defer tx.Rollback() // abort transaction if error
 
-	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
-	_, err = stmt.Exec(u.UserID, u.Points, u.BossId)
+	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid, SocialCode) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("AddUser(): breaky 3: %v", err)
+		return false, err
+	}
+	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
+
+	_, err = stmt.Exec(u.UserID, u.Points, u.BossId, socialCode)
+	if err != nil {
+		log.Printf("AddUser(): breaky 4: %v", err)
 		return false, err
 	}
 
 	tx.Commit() //commit transaction to database
 
 	return true, nil
+}
+
+// Generates a public code to differentiate users
+func generateSocialCode() (string, error) {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	codearr := make([]byte, USER_CODE_LEN)
+
+	// Seed at the current time
+	randgen := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Loop until a unique ID was created
+	isUnique := false
+	var code string
+	for !isUnique {
+		// Generate a code
+		for i := range codearr {
+			codearr[i] = charset[randgen.Intn(len(charset))]
+		}
+		code = string(codearr)
+
+		var count int
+		err := DB.QueryRow("SELECT COUNT(*) FROM UserTable WHERE SocialCode = ?", code).Scan(&count)
+		if err != nil {
+			// No rows is desired in this case
+			if err == sql.ErrNoRows {
+				isUnique = true
+			} else {
+				return "", err
+			}
+		}
+
+		if count < 1 {
+			isUnique = true
+		}
+	}
+
+	return code, nil
 }
 
 // Edit a user by supplying new values
