@@ -32,6 +32,24 @@ func TestAddUser(t *testing.T) {
 	}
 }
 
+// To keep unit tests independent, always have the test user added
+func checkIfTestUserAdded() (bool, error) {
+	_, found, getErr := GetUser(userForUserTable.UserID)
+	if getErr != nil {
+		return false, getErr
+	}
+
+	if !found {
+		addSuccess, addErr := AddUser(userForUserTable)
+		if addErr != nil || !addSuccess {
+			return false, addErr
+		}
+
+	}
+
+	return true, nil
+}
+
 func TestAddMultipleUsers(t *testing.T) {
 	// Add multiple users to ensure no constraints break
 	for i := 1; i <= 10; i++ {
@@ -60,6 +78,8 @@ func TestAddMultipleUsers(t *testing.T) {
 }
 
 func TestGetUserPoints(t *testing.T) {
+	checkIfTestUserAdded()
+
 	points, found, err := GetUserPoints(userForUserTable.UserID)
 
 	if err != nil {
@@ -74,6 +94,8 @@ func TestGetUserPoints(t *testing.T) {
 }
 
 func TestEditUser(t *testing.T) {
+	checkIfTestUserAdded()
+
 	editedUser := User{
 		UserID:   userForUserTable.UserID,
 		Username: "not in DB, not tested",
@@ -94,6 +116,8 @@ func TestEditUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
+	checkIfTestUserAdded()
+
 	deleteSuccess, deleteErr := DeleteUser(userForUserTable.UserID)
 	if deleteErr != nil || !deleteSuccess {
 		t.Errorf("TestDeleteUser(): couldn't delete user: %v", deleteErr)
@@ -102,5 +126,25 @@ func TestDeleteUser(t *testing.T) {
 	_, found, _ := GetUser(userForUserTable.UserID)
 	if found {
 		t.Error("TestDeleteUser(): delete failed, found user")
+	}
+}
+
+func TestSearchUserCode(t *testing.T) {
+	checkIfTestUserAdded()
+
+	// Social code generated upon add to DB
+	fullUserInfo, found, err := GetUser(userForUserTable.UserID)
+	if !found || err != nil {
+		t.Errorf("TestSearchUserCode(): couldn't find user: %v", err)
+	}
+
+	socialcode := fullUserInfo.SocialCode
+	searchedUser, found, err := SearchUserCode(socialcode)
+	if !found || err != nil {
+		t.Errorf("TestSearchUserCode(): couldn't search by social code: %v", err)
+	}
+
+	if userForUserTable.UserID != searchedUser.UserID || userForUserTable.Points != searchedUser.Points || userForUserTable.BossId != searchedUser.BossId {
+		t.Error("TestSearchUserCode(): found wrong user")
 	}
 }

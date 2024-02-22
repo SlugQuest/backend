@@ -169,3 +169,27 @@ func DeleteUser(uid string) (bool, error) {
 
 	return true, nil
 }
+
+// Search for **one** specific user by their social code.
+func SearchUserCode(code string) (User, bool, error) {
+	rows, err := DB.Query("SELECT * FROM UserTable WHERE SocialCode=?;", code)
+	var user User
+	if err != nil {
+		log.Printf("SearchUserCode() #1: %v", err)
+		return user, false, err
+	}
+
+	counter := 0
+	for rows.Next() {
+		counter += 1
+		err := rows.Scan(&user.UserID, &user.Points, &user.BossId, &user.SocialCode)
+
+		if err != nil {
+			log.Printf("SearchUserCode() #2: %v", err)
+			return user, false, err
+		}
+	}
+	rows.Close()
+
+	return user, counter == 1, nil
+}
