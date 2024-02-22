@@ -1,6 +1,7 @@
 package unit_tests
 
 import (
+	"strconv"
 	"testing"
 
 	. "slugquest.com/backend/crud"
@@ -18,12 +19,43 @@ var userForUserTable = User{
 func TestAddUser(t *testing.T) {
 	addSuccess, addErr := AddUser(userForUserTable)
 	if addErr != nil || !addSuccess {
-		t.Error("TestAddUser(): couldn't add user")
+		t.Errorf("TestAddGetUser(): couldn't add user: %v", addErr)
 	}
 
-	_, found, _ := GetUser(userForUserTable.UserID)
+	foundUser, found, getErr := GetUser(userForUserTable.UserID)
 	if !found {
-		t.Error("TestAddUser(): add failed")
+		t.Errorf("TestAddGetUser(): could not find user after adding: %v", getErr)
+	}
+
+	if userForUserTable.UserID != foundUser.UserID || userForUserTable.Points != foundUser.Points || userForUserTable.BossId != foundUser.BossId {
+		t.Error("TestAddGetUser(): found wrong user")
+	}
+}
+
+func TestAddMultipleUsers(t *testing.T) {
+	// Add multiple users to ensure no constraints break
+	for i := 1; i <= 10; i++ {
+		user := User{
+			UserID:   "adduser" + strconv.Itoa(i),
+			Username: "newuser" + strconv.Itoa(i),
+			Picture:  strconv.Itoa(i) + ".png",
+			Points:   i,
+			BossId:   1,
+		}
+
+		addSuccess, addErr := AddUser(user)
+		if addErr != nil || !addSuccess {
+			t.Errorf("TestAddGetUser(): couldn't add user: %v", addErr)
+		}
+
+		foundUser, found, getErr := GetUser(user.UserID)
+		if getErr != nil || !found {
+			t.Errorf("TestAddGetUser(): could not find user after adding: %v", getErr)
+		}
+
+		if user.UserID != foundUser.UserID || user.Points != foundUser.Points || user.BossId != foundUser.BossId {
+			t.Error("TestAddGetUser(): found wrong user")
+		}
 	}
 }
 
