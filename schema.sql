@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS UserTable (
     UserID VARCHAR(255) PRIMARY KEY NOT NULL,
     Points INTEGER NOT NULL,
     BossId INTEGER NOT NULL,
+    SocialCode TEXT UNIQUE NOT NULL, -- created in AddUser()
     FOREIGN KEY (BossId) REFERENCES BossTable(BossID)
 );
 
