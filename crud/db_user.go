@@ -1,13 +1,12 @@
 package crud
 
 import (
-	"database/sql"
 	"log"
 	"math/rand"
 	"time"
 )
 
-const USER_CODE_LEN int = 6
+const USER_CODE_LEN int = 7
 
 // Find user by UserID
 func GetUser(uid string) (User, bool, error) {
@@ -102,15 +101,11 @@ func generateSocialCode() (string, error) {
 		}
 		code = string(codearr)
 
-		var count int
-		err := DB.QueryRow("SELECT COUNT(*) FROM UserTable WHERE SocialCode = ?", code).Scan(&count)
+		// No rows is desired in this case
+		count := 0
+		err := DB.Get(&count, "SELECT COUNT(*) FROM UserTable WHERE SocialCode = ?", code)
 		if err != nil {
-			// No rows is desired in this case
-			if err == sql.ErrNoRows {
-				isUnique = true
-			} else {
-				return "", err
-			}
+			return "", err
 		}
 
 		if count < 1 {
