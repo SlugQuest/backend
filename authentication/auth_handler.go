@@ -3,11 +3,13 @@
 package authentication
 
 import (
-	"crypto/rand"
+	crypto "crypto/rand"
 	"encoding/base64"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -15,6 +17,7 @@ import (
 )
 
 const FRONTEND_HOST string = "localhost:5185"
+const USER_CODE_LEN int = 5
 
 // Checks if user is authenticated before redirecting to next page
 func IsAuthenticated(c *gin.Context) {
@@ -68,7 +71,7 @@ func LoginHandler(auth *Authenticator, goToSignup bool) gin.HandlerFunc {
 
 func generateRandomState() (string, error) {
 	b := make([]byte, 32)
-	_, err := rand.Read(b)
+	_, err := crypto.Read(b)
 	if err != nil {
 		return "", err
 	}
@@ -210,6 +213,19 @@ func getUserInfo(c *gin.Context) *crud.User {
 	}
 
 	return &user
+}
+
+func generateUserCode() string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	code := make([]byte, USER_CODE_LEN)
+
+	// Seed at the current time
+	randgen := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := range code {
+		code[i] = charset[randgen.Intn(len(charset))]
+	}
+
+	return string(code)
 }
 
 // Sends public user profile from the current session as JSON
