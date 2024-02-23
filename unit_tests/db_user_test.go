@@ -122,6 +122,35 @@ func TestSearchUserCode(t *testing.T) {
 	}
 }
 
+func TestSearchUsername(t *testing.T) {
+	common := "common_name"
+	numUsers := 5
+	for i := 1; i <= numUsers; i++ {
+		user := User{
+			UserID:   "user" + strconv.Itoa(i),
+			Username: common + strconv.Itoa(i),
+			Picture:  strconv.Itoa(i) + ".png",
+			Points:   i,
+			BossId:   1,
+		}
+
+		addSuccess, addErr := AddUser(user)
+		if addErr != nil || !addSuccess {
+			t.Errorf("TestSearchUsername(): couldn't add user: %v", addErr)
+		}
+	}
+
+	foundUsers, found, err := SearchUsername(common)
+	if !found || err != nil {
+		t.Errorf("TestSearchUsername(): didn't find any users on search: %v", err)
+	}
+
+	if len(foundUsers) != numUsers {
+		t.Errorf("TestSearchUsername(): search did not return correct num of users, expected %v, got %v", numUsers, len(foundUsers))
+	}
+
+}
+
 func TestMultipleUserLifecycle(t *testing.T) {
 	// Add multiple users to ensure no constraints break
 	for i := 1; i <= 10; i++ {

@@ -207,6 +207,18 @@ func getUserInfo(c *gin.Context) *crud.User {
 			c.String(http.StatusInternalServerError, "Couldn't register user into our records.")
 			return nil
 		}
+	} else {
+		// Do any updates as necessary
+		if user.Username != sesUsername || user.Picture != sesPFP {
+			user.Username = sesUsername
+			user.Picture = sesPFP
+
+			editSuccess, err := crud.EditUser(user, sesUID)
+			if !editSuccess || err != nil {
+				c.String(http.StatusInternalServerError, "Couldn't update our user records.")
+				return nil
+			}
+		}
 	}
 
 	return &user

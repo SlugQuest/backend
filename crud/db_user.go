@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+const socialcode_set = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const USER_CODE_LEN int = 7
 
 // Find user by UserID
@@ -65,14 +66,14 @@ func AddUser(u User) (bool, error) {
 	}
 	defer tx.Rollback() // abort transaction if error
 
-	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Points, Bossid, SocialCode) VALUES (?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Username, Points, Bossid, SocialCode) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("AddUser(): breaky 3: %v", err)
 		return false, err
 	}
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
 
-	_, err = stmt.Exec(u.UserID, u.Points, u.BossId, socialCode)
+	_, err = stmt.Exec(u.UserID, u.Username, u.Points, u.BossId, socialCode)
 	if err != nil {
 		log.Printf("AddUser(): breaky 4: %v", err)
 		return false, err
@@ -85,7 +86,6 @@ func AddUser(u User) (bool, error) {
 
 // Generates a public code to differentiate users
 func generateSocialCode() (string, error) {
-	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	codearr := make([]byte, USER_CODE_LEN)
 
 	// Seed at the current time
@@ -97,7 +97,7 @@ func generateSocialCode() (string, error) {
 	for !isUnique {
 		// Generate a code
 		for i := range codearr {
-			codearr[i] = charset[randgen.Intn(len(charset))]
+			codearr[i] = socialcode_set[randgen.Intn(len(socialcode_set))]
 		}
 		code = string(codearr)
 
@@ -126,7 +126,7 @@ func EditUser(u User, uid string) (bool, error) {
 
 	stmt, err := tx.Preparex(`
 		UPDATE UserTable 
-		SET UserID = ?, Points = ?, Bossid = ?
+		SET Username = ?, Points = ?, Bossid = ?
 		WHERE UserID = ?
 	`)
 	if err != nil {
@@ -135,7 +135,7 @@ func EditUser(u User, uid string) (bool, error) {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(u.UserID, u.Points, u.BossId, uid)
+	_, err = stmt.Exec(u.Username, u.Points, u.BossId, uid)
 	if err != nil {
 		return false, err
 	}
@@ -192,4 +192,32 @@ func SearchUserCode(code string) (User, bool, error) {
 	rows.Close()
 
 	return user, counter == 1, nil
+}
+
+// Search for any users that match this username
+func SearchUsername(uname string) ([]User, bool, error) {
+	rows, err := DB.Query("SELECT * FROM UserTable WHERE Username LIKE ?", "%"+uname+"%")
+	var users []User
+	if err != nil {
+		log.Printf("SearchUsername() #1: %v", err)
+		return users, false, err
+	}
+
+	counter := 0
+	for rows.Next() {
+		counter += 1
+
+		var user User
+		err := rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
+		if err != nil {
+			log.Printf("SearchUsername() #2: %v", err)
+			return users, false, err
+		}
+
+		users = append(users, user)
+	}
+	rows.Close()
+
+	// Return if found any matches
+	return users, counter > 0, nil
 }
