@@ -50,33 +50,6 @@ func checkIfTestUserAdded() (bool, error) {
 	return true, nil
 }
 
-func TestAddMultipleUsers(t *testing.T) {
-	// Add multiple users to ensure no constraints break
-	for i := 1; i <= 10; i++ {
-		user := User{
-			UserID:   "adduser" + strconv.Itoa(i),
-			Username: "newuser" + strconv.Itoa(i),
-			Picture:  strconv.Itoa(i) + ".png",
-			Points:   i,
-			BossId:   1,
-		}
-
-		addSuccess, addErr := AddUser(user)
-		if addErr != nil || !addSuccess {
-			t.Errorf("TestAddGetUser(): couldn't add user: %v", addErr)
-		}
-
-		foundUser, found, getErr := GetUser(user.UserID)
-		if getErr != nil || !found {
-			t.Errorf("TestAddGetUser(): could not find user after adding: %v", getErr)
-		}
-
-		if user.UserID != foundUser.UserID || user.Points != foundUser.Points || user.BossId != foundUser.BossId {
-			t.Error("TestAddGetUser(): found wrong user")
-		}
-	}
-}
-
 func TestGetUserPoints(t *testing.T) {
 	checkIfTestUserAdded()
 
@@ -146,5 +119,42 @@ func TestSearchUserCode(t *testing.T) {
 
 	if userForUserTable.UserID != searchedUser.UserID || userForUserTable.Points != searchedUser.Points || userForUserTable.BossId != searchedUser.BossId {
 		t.Error("TestSearchUserCode(): found wrong user")
+	}
+}
+
+func TestMultipleUserLifecycle(t *testing.T) {
+	// Add multiple users to ensure no constraints break
+	for i := 1; i <= 10; i++ {
+		user := User{
+			UserID:   "adduser" + strconv.Itoa(i),
+			Username: "newuser" + strconv.Itoa(i),
+			Picture:  strconv.Itoa(i) + ".png",
+			Points:   i,
+			BossId:   1,
+		}
+
+		addSuccess, addErr := AddUser(user)
+		if addErr != nil || !addSuccess {
+			t.Errorf("TestMultipleUserLifecycle(): couldn't add user: %v", addErr)
+		}
+
+		foundUser, found, getErr := GetUser(user.UserID)
+		if getErr != nil || !found {
+			t.Errorf("TestMultipleUserLifecycle(): could not find user after adding: %v", getErr)
+		}
+
+		if user.UserID != foundUser.UserID || user.Points != foundUser.Points || user.BossId != foundUser.BossId {
+			t.Error("TestMultipleUserLifecycle(): found wrong user")
+		}
+
+		deleteSuccess, deleteErr := DeleteUser(user.UserID)
+		if deleteErr != nil || !deleteSuccess {
+			t.Errorf("TestMultipleUserLifecycle(): couldn't delete user: %v", deleteErr)
+		}
+
+		_, found, _ = GetUser(user.UserID)
+		if found {
+			t.Error("TestMultipleUserLifecycle(): delete failed, found user")
+		}
 	}
 }
