@@ -2,6 +2,7 @@ package unit_tests
 
 import (
 	"strconv"
+	"strings"
 	"testing"
 
 	. "slugquest.com/backend/crud"
@@ -149,6 +150,11 @@ func TestSearchUsername(t *testing.T) {
 		t.Errorf("TestSearchUsername(): search did not return correct num of users, expected %v, got %v", numUsers, len(foundUsers))
 	}
 
+	for _, user := range foundUsers {
+		if !strings.Contains(user.Username, common) {
+			t.Errorf("TestSearchUsername(): username did not contain queried string")
+		}
+	}
 }
 
 func TestMultipleUserLifecycle(t *testing.T) {

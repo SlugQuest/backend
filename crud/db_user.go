@@ -21,7 +21,7 @@ func GetUser(uid string) (User, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		rows.Scan(&user.UserID, &user.Points, &user.BossId, &user.SocialCode)
+		rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
 	}
 	rows.Close()
 
@@ -182,7 +182,7 @@ func SearchUserCode(code string) (User, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		err := rows.Scan(&user.UserID, &user.Points, &user.BossId, &user.SocialCode)
+		err := rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
 
 		if err != nil {
 			log.Printf("SearchUserCode() #2: %v", err)
