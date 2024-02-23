@@ -221,3 +221,66 @@ func SearchUsername(uname string) ([]User, bool, error) {
 	// Return if found any matches
 	return users, counter > 0, nil
 }
+
+func AddFriend(my_uid string, their_soccode string) (bool, error) {
+	their_user, found, err := SearchUserCode(their_soccode)
+	if !found || err != nil {
+		log.Printf("AddFriend() #1: could not find other user: %v", err)
+		return false, err
+	}
+
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	stmt, err := tx.Preparex("INSERT INTO Friends (userA, userB) VALUES (?, ?)")
+	if err != nil {
+		log.Printf("AddFriend() #2: error preparing statement: %v", err)
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(my_uid, their_user.UserID)
+	if err != nil {
+		log.Printf("AddFriend() #3: error adding friend pair: %v", err)
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
+
+func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
+	their_user, found, err := SearchUserCode(their_soccode)
+	if !found || err != nil {
+		log.Printf("DeleteFriend() #1: could not find other user: %v", err)
+		return false, err
+	}
+
+	tx, err := DB.Beginx()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback() // aborrt transaction if error
+
+	// Depends which user was denoted as userA vs. userB
+	stmt, err := tx.Preparex("DELETE FROM Friends WHERE (? = userA AND ? = userB) OR (? = userA AND ? = userB)")
+	if err != nil {
+		log.Printf("DeleteFriend() #2: error preparing statement: %v", err)
+		return false, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(my_uid, their_user.UserID, their_user.UserID, my_uid)
+	if err != nil {
+		log.Printf("DeleteFriend() #3: error adding friend pair: %v", err)
+		return false, err
+	}
+
+	tx.Commit()
+
+	return true, nil
+}
