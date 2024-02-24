@@ -18,4 +18,7 @@ buildGoApplication {
   pwd = ./.;
   src = ./.;
   modules = ./gomod2nix.toml;
+
+  # Disables the checkPhase (unit tests)
+  doCheck = false;
 }

@@ -36,28 +36,12 @@ const response = await fetch(backend/protected, {
             "IsRecurring":    false,
             "IsAllDay":       false,
             "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
-        }
-         "task": {
-            "TaskID":         1,
-            "UserID":         "testUserId",
-            "Category":       "yo",
-            "TaskName":       "New Task",
-            "Description":    "Description of the new task",
-            "StartTime":      "2024-01-01T08:00:00Z",
-            "EndTime":        "2024-01-01T17:00:00Z",
-            "Status":         "completed",
-            "IsRecurring":    false,
-            "IsAllDay":       false,
-            "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
+            "CronExpression": ""
         }
       }
       ```
 
 ### Get Task by ID (GET)
-### Get Task by ID (GET)
-
 - **Endpoint**: `/api/v1/task/:id`
   - **NOTE**: Replace `:id` with the actual TaskID.
 - **Description**: Get a task by ID.
@@ -81,21 +65,8 @@ const response = await fetch(backend/protected, {
             "IsRecurring":    false,
             "IsAllDay":       false,
             "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
-         "task": {
-            "TaskID":         1,
-            "UserID":         "testUserId",
-            "Category":       "yo",
-            "TaskName":       "New Task",
-            "Description":    "Description of the new task",
-            "StartTime":      "2024-01-01T08:00:00Z",
-            "EndTime":        "2024-01-01T17:00:00Z",
-            "Status":         "completed",
-            "IsRecurring":    false,
-            "IsAllDay":       false,
-            "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
-        }
+            "CronExpression": ""
+          }
       }
       ```
 
@@ -175,6 +146,33 @@ const response = await fetch(backend/protected, {
         "curr_boss_health": 30
       }
       ```
+
+### Get Boss Information by ID (GET)
+
+- **Endpoint**: `/api/v1/getBoss/:id`
+  - **NOTE**: Replace `:id` with the actual BossID.
+  - Ex.: `/api/v1/getBoss/123`
+- **Description**: Get information about a boss by its ID.
+  - **Request Method**: GET
+  - **Parameters**: 
+    - `id` (integer): The ID of the boss.
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "boss": {
+          "BossID": 123,
+          "Name": "Boss Name",
+          "Health": 100,
+          "Image": "http://localhost:8080/api/v1/images/clown.jpg"
+        }
+      }
+      ```
+      - `BossID`: The unique identifier for the boss.
+      - `Name`: The name of the boss.
+      - `Health`: The current health of the boss.
+      - `Image`: URL of the boss image.
 
 ### Create Category (PUT)
 
