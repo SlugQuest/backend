@@ -275,14 +275,22 @@ func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
 	defer tx.Rollback() // aborrt transaction if error
 
 	// Depends which user was denoted as userA vs. userB
-	stmt, err := tx.Preparex("DELETE FROM Friends WHERE (? = userA AND ? = userB) OR (? = userA AND ? = userB)")
+	stmt, err := tx.Preparex("DELETE FROM Friends WHERE ? = userA AND ? = userB")
 	if err != nil {
 		log.Printf("DeleteFriend() #2: error preparing statement: %v", err)
 		return false, err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(my_uid, their_user.UserID, their_user.UserID, my_uid)
+	// Order enforced in schema
+	var firstID, secondID string
+	if my_uid < their_user.UserID {
+		firstID, secondID = my_uid, their_user.UserID
+	} else {
+		firstID, secondID = their_user.UserID, my_uid
+	}
+
+	_, err = stmt.Exec(firstID, secondID)
 	if err != nil {
 		log.Printf("DeleteFriend() #3: error adding friend pair: %v", err)
 		return false, err
