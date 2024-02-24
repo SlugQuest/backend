@@ -190,7 +190,8 @@ func SearchUserCode(code string) (User, bool, error) {
 	return user, counter == 1, nil
 }
 
-// Search for any users that match this username
+// Search for any users that match this username.
+// Note: does NOT return user ids in the results
 func SearchUsername(uname string) ([]User, bool, error) {
 	rows, err := DB.Query("SELECT * FROM UserTable WHERE Username LIKE ?", "%"+uname+"%")
 	var users []User
@@ -210,6 +211,7 @@ func SearchUsername(uname string) ([]User, bool, error) {
 			return users, false, err
 		}
 
+		user.UserID = "hidden"
 		users = append(users, user)
 	}
 	rows.Close()
@@ -264,6 +266,14 @@ func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
 		return false, err
 	}
 
+	// Order enforced in schema
+	var firstID, secondID string
+	if my_uid < their_user.UserID {
+		firstID, secondID = my_uid, their_user.UserID
+	} else {
+		firstID, secondID = their_user.UserID, my_uid
+	}
+
 	tx, err := DB.Beginx()
 	if err != nil {
 		return false, err
@@ -277,14 +287,6 @@ func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
 		return false, err
 	}
 	defer stmt.Close()
-
-	// Order enforced in schema
-	var firstID, secondID string
-	if my_uid < their_user.UserID {
-		firstID, secondID = my_uid, their_user.UserID
-	} else {
-		firstID, secondID = their_user.UserID, my_uid
-	}
 
 	_, err = stmt.Exec(firstID, secondID)
 	if err != nil {

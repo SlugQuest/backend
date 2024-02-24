@@ -196,7 +196,7 @@ func TestMultipleUserLifecycle(t *testing.T) {
 
 func TestAddFriend(t *testing.T) {
 	userA := User{
-		UserID:   "userA_id",
+		UserID:   "addFrnA",
 		Username: "userA",
 		Picture:  "lmao.jpg",
 		Points:   1,
@@ -204,7 +204,7 @@ func TestAddFriend(t *testing.T) {
 	}
 
 	userB := User{
-		UserID:   "userB_id",
+		UserID:   "addFrnB",
 		Username: "userB",
 		Picture:  "lmao.jpg",
 		Points:   1,
@@ -248,7 +248,7 @@ func TestAddFriend(t *testing.T) {
 
 func TestDeleteFriend(t *testing.T) {
 	userA := User{
-		UserID:   "userA_id",
+		UserID:   "delFrnA",
 		Username: "userA",
 		Picture:  "lmao.jpg",
 		Points:   1,
@@ -256,7 +256,7 @@ func TestDeleteFriend(t *testing.T) {
 	}
 
 	userB := User{
-		UserID:   "userB_id",
+		UserID:   "delFrnB",
 		Username: "userB",
 		Picture:  "lmao.jpg",
 		Points:   1,

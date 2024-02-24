@@ -68,9 +68,24 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.PUT("makeCat", putCat)
 		v1.GET("getBossHealth", getCurrBossHealth)
 		v1.GET("/getBoss/:id", getBossById)
+		v1.GET("searchUsers/:query", searchUsers)
+		v1.POST("addFriend/:code", addFriend)
+		v1.DELETE("removeFriend/:code", removeFriend)
 	}
 
 	return router
+}
+
+// Get userID stored in the session
+func getUserId(c *gin.Context) (string, error) {
+	session := sessions.Default(c)
+	userProfile, ok := session.Get("user_profile").(crud.User)
+	if !ok {
+		return "", fmt.Errorf("couldn't get user id")
+	}
+	uid := userProfile.UserID
+
+	return uid, nil
 }
 
 func passRecurringTask(c *gin.Context) {
@@ -156,18 +171,6 @@ func getBossById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"boss": boss})
-}
-
-// Get userID stored in the session
-func getUserId(c *gin.Context) (string, error) {
-	session := sessions.Default(c)
-	userProfile, ok := session.Get("user_profile").(crud.User)
-	if !ok {
-		return "", fmt.Errorf("couldn't get user id")
-	}
-	uid := userProfile.UserID
-
-	return uid, nil
 }
 
 func getCurrBossHealth(c *gin.Context) {
@@ -474,4 +477,59 @@ func getuserTaskSpan(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"list": arr})
+}
+
+func searchUsers(c *gin.Context) {
+	query := c.Param("query")
+	users, foundAny, err := crud.SearchUsername(query)
+	if err != nil {
+		log.Printf("searchUsers(): error searching for users: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	if !foundAny {
+		c.JSON(http.StatusNotFound, gin.H{"message": "No users found", "num_results": 0, "users": users})
+		return
+	}
+
+	log.Print(users)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Success", "num_results": len(users), "users": users})
+}
+
+func addFriend(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	their_code := c.Param("code")
+	addSuccess, err := crud.AddFriend(uid, their_code)
+	if !addSuccess || err != nil {
+		log.Printf("addFriend(): error adding friend: %v", err)
+		c.String(http.StatusInternalServerError, "Failure to add friend")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func removeFriend(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	their_code := c.Param("code")
+	delSuccess, err := crud.DeleteFriend(uid, their_code)
+	if !delSuccess || err != nil {
+		log.Printf("deleteFriend(): error removing friend: %v", err)
+		c.String(http.StatusInternalServerError, "Failure to remove friend")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
