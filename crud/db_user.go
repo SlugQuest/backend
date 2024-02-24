@@ -242,7 +242,15 @@ func AddFriend(my_uid string, their_soccode string) (bool, error) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(my_uid, their_user.UserID)
+	// Order by string compare to avoid duplicate rows
+	var firstID, secondID string
+	if my_uid < their_user.UserID {
+		firstID, secondID = my_uid, their_user.UserID
+	} else {
+		firstID, secondID = their_user.UserID, my_uid
+	}
+
+	_, err = stmt.Exec(firstID, secondID)
 	if err != nil {
 		log.Printf("AddFriend() #3: error adding friend pair: %v", err)
 		return false, err

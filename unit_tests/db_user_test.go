@@ -193,3 +193,55 @@ func TestMultipleUserLifecycle(t *testing.T) {
 		}
 	}
 }
+
+func TestAddFriend(t *testing.T) {
+	userA := User{
+		UserID:   "userA_id",
+		Username: "userA",
+		Picture:  "lmao.jpg",
+		Points:   1,
+		BossId:   1,
+	}
+
+	userB := User{
+		UserID:   "userB_id",
+		Username: "userB",
+		Picture:  "lmao.jpg",
+		Points:   1,
+		BossId:   1,
+	}
+
+	addSuccess, addErr := AddUser(userA)
+	if addErr != nil || !addSuccess {
+		t.Errorf("TestAddFriend(): couldn't insert userA: %v", addErr)
+	}
+
+	addSuccess, addErr = AddUser(userB)
+	if addErr != nil || !addSuccess {
+		t.Errorf("TestAddFriend(): couldn't insert userB: %v", addErr)
+	}
+
+	// Social codes are generated upon insert into DB
+	userAFull, found, getErr := GetUser(userA.UserID)
+	if getErr != nil || !found {
+		t.Errorf("TestAddFriend(): could not retreive userA: %v", getErr)
+	}
+	userA.SocialCode = userAFull.SocialCode
+
+	userBFull, found, getErr := GetUser(userB.UserID)
+	if getErr != nil || !found {
+		t.Errorf("TestAddFriend(): could not retreive userB: %v", getErr)
+	}
+	userB.SocialCode = userBFull.SocialCode
+
+	friendSuccess, friendErr := AddFriend(userA.UserID, userB.SocialCode)
+	if !friendSuccess || friendErr != nil {
+		t.Errorf("TestAddFriend(): could not add friend: %v", friendErr)
+	}
+
+	// Should NOT be allowed to add a duplicate friend, even when reversed
+	friendSuccess, friendErr = AddFriend(userB.UserID, userA.SocialCode)
+	if !(!friendSuccess || friendErr != nil) {
+		t.Error("TestAddFriend(): should not allow duplicate friending")
+	}
+}
