@@ -36,7 +36,7 @@ const response = await fetch(backend/protected, {
             "IsRecurring":    false,
             "IsAllDay":       false,
             "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
+            "CronExpression": ""
         }
       }
       ```
@@ -65,7 +65,7 @@ const response = await fetch(backend/protected, {
             "IsRecurring":    false,
             "IsAllDay":       false,
             "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
+            "CronExpression": ""
           }
       }
       ```

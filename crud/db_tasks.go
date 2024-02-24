@@ -158,14 +158,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	if task.IsRecurring {
-		fmt.Println("entering recur")
-		// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-		// if err != nil {
-		// 	fmt.Println("CreateTask(): breaky 4", err)
-		// 	return false, -1, err
-		// }
 		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-		// fmt.Println(nexTime)
 		rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
 		if err != nil {
 			fmt.Println("CreateTask(): breaky 4", err)
@@ -230,12 +223,6 @@ func DeleteTask(tid int, uid string) (bool, error) {
 		return false, err
 	}
 	defer tx.Rollback() // Abort transaction if any error occurs
-
-	// recurrenceTableExists, err := isTableExists("RecurrencePatterns")
-	// if err != nil {
-	// 	fmt.Println("in here 1")
-	// 	return false, err
-	// }
 
 	delTT, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ? AND UserID = ?")
 	if err != nil {
