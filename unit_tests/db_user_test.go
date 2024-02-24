@@ -296,3 +296,43 @@ func TestDeleteFriend(t *testing.T) {
 		t.Errorf("TestAddFriend(): could not add friend: %v", friendErr)
 	}
 }
+
+func TestGetFriendList(t *testing.T) {
+	checkIfTestUserAdded()
+
+	numFriends := 5
+	for i := 1; i <= numFriends; i++ {
+		frn := User{
+			UserID:   "friendid" + strconv.Itoa(i),
+			Username: "frn" + strconv.Itoa(i),
+			Picture:  "lol.png",
+			Points:   i,
+			BossId:   1,
+		}
+
+		addSuccess, addErr := AddUser(frn)
+		if addErr != nil || !addSuccess {
+			t.Errorf("TestGetFriendList(): couldn't add user: %v", addErr)
+		}
+
+		userFull, found, getErr := GetUser(frn.UserID)
+		if !found || getErr != nil {
+			t.Errorf("TestGetFriendList(): could not retreive user: %v", getErr)
+		}
+		frn.SocialCode = userFull.SocialCode
+
+		friendAddSuccess, faErr := AddFriend(userForUserTable.UserID, frn.SocialCode)
+		if !friendAddSuccess || faErr != nil {
+			t.Errorf("TestGetFriendList(): could add friend: %v", faErr)
+		}
+	}
+
+	friends, getErr := GetFriendList(userForUserTable.UserID)
+	if getErr != nil {
+		t.Errorf("TestGetFriendList(): couldn't fetch friends list: %v", getErr)
+	}
+
+	if len(friends) != numFriends {
+		t.Errorf("TestGetFriendList(): did not fetch right number of friends, expected %v, got %v", numFriends, len(friends))
+	}
+}

@@ -300,3 +300,45 @@ func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
 
 	return true, nil
 }
+
+func GetFriendList(my_uid string) ([]User, error) {
+	friends := []User{}
+	friendIDs := []string{}
+
+	rows, err := DB.Query("SELECT * FROM Friends WHERE userA=? OR userB=?;", my_uid, my_uid)
+	if err != nil {
+		log.Printf("GetFriendList() #1: %v", err)
+		return friends, err
+	}
+
+	counter := 0
+	for rows.Next() {
+		counter += 1
+
+		var userAid, userBid string
+		err := rows.Scan(&userAid, &userBid)
+		if err != nil {
+			log.Printf("GetFriendList() #2: %v", err)
+			return friends, err
+		}
+
+		if my_uid == userAid {
+			friendIDs = append(friendIDs, userBid)
+		} else {
+			friendIDs = append(friendIDs, userAid)
+		}
+	}
+	rows.Close()
+
+	for _, fID := range friendIDs {
+		fUser, found, err := GetUser(fID)
+		if !found || err != nil {
+			log.Printf("GetFriendList(): could not retrieve friend: %v", err)
+			return friends, err
+		}
+
+		friends = append(friends, fUser)
+	}
+
+	return friends, nil
+}
