@@ -43,6 +43,20 @@ type TaskPreview struct {
 	IsAllDay    bool
 }
 
+type RecurTypeTask struct {
+	TaskID       int
+	UserID       string
+	Category     string
+	TaskName     string
+	StartTime    time.Time
+	EndTime      time.Time
+	Status       string
+	IsRecurring  bool
+	IsAllDay     bool
+	Difficulty   string
+	RecurrenceId int
+}
+
 type User struct {
 	UserID   string // Not known to user, do not expose
 	Username string // Set by user, can be exposed

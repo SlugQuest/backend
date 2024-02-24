@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"slugquest.com/backend/crud"
 	. "slugquest.com/backend/crud"
 )
 
 var testTask = Task{
 	UserID:         testUser.UserID,
-	Category:       "yo",
+	Category:       "test_category",
 	TaskName:       "New Task",
 	Description:    "Description of the new task",
 	StartTime:      time.Now(),
@@ -19,6 +20,20 @@ var testTask = Task{
 	CronExpression: "",
 	IsRecurring:    false,
 	IsAllDay:       false,
+}
+
+var recurringTask = Task{
+	UserID:         testUser.UserID,
+	Category:       "test_category",
+	TaskName:       "Recurring Test Task",
+	Description:    "Sample description",
+	StartTime:      time.Now(),
+	EndTime:        time.Now().Add(time.Hour),
+	Status:         "todo",
+	IsRecurring:    true,
+	IsAllDay:       false,
+	Difficulty:     "easy",
+	CronExpression: "0 0 * * *", //every day at midnight
 }
 
 func TestGetUserTask(t *testing.T) {
@@ -70,7 +85,7 @@ func TestDeleteTask(t *testing.T) {
 		t.Errorf("TestDeleteTask(): error creating task: %v", err)
 	}
 
-	success, deleteErr := DeleteTask(int(taskID))
+	success, deleteErr := DeleteTask(int(taskID), testTask.UserID)
 	if deleteErr != nil {
 		t.Errorf("TestDeleteTask(): %v", err)
 	}
@@ -95,7 +110,7 @@ func TestEditTask(t *testing.T) {
 	editedTask := Task{
 		TaskID:         int(taskID),
 		UserID:         testUser.UserID,
-		Category:       "yo",
+		Category:       testTask.Category,
 		TaskName:       "edited name",
 		Description:    "edited description",
 		StartTime:      time.Now(),
@@ -132,7 +147,7 @@ func TestPassFailTask(t *testing.T) {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc, err := Passtask(int(taskID))
+	passsucc, err := Passtask(int(taskID), testTask.UserID)
 	if err != nil || !passsucc {
 		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
@@ -142,8 +157,8 @@ func TestPassFailTask(t *testing.T) {
 	}
 
 	//points, _, err := GetUserPoints(testUser.UserID)
-	failsucc := Failtask(int(taskID))
-	if !failsucc {
+	failsucc, err := Failtask(int(taskID), testTask.UserID)
+	if !failsucc || err != nil {
 		t.Errorf("TestPassFailTask(): 2 %v", err)
 	}
 	// if points != CalculatePoints(testTask.Difficulty) {
@@ -155,4 +170,74 @@ func TestPassFailTask(t *testing.T) {
 	if task3.Status != "failed" {
 		t.Errorf("TestPassFailTask(): bad value on true fal%v", task3.Status)
 	}
+}
+
+func TestPopRecurringTasksMonth(t *testing.T) {
+	success, _, err := CreateTask(recurringTask)
+	if err != nil || !success {
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
+	}
+
+	popErr := crud.PopRecurringTasksMonth()
+	if popErr != nil {
+		t.Fatalf("Error populating recurring tasks: %v", popErr)
+	}
+
+	count, err := CountRecurringLogEntries()
+	if err != nil {
+		t.Fatalf("Error counting recurring log entries: %v", err)
+	}
+	if count <= 0 {
+		t.Errorf("TestPopRecurringTasksMonth(): wrong count%v", count)
+	}
+}
+
+func TestPopRecurringTasksMonthGoroutine(t *testing.T) {
+
+	success, _, err := CreateTask(recurringTask)
+	if err != nil || !success {
+		t.Errorf("TestPassFailTask(): error creating task: %v", err)
+	}
+
+	done := make(chan struct{})
+
+	shortDuration := 100 * time.Millisecond
+	counter := 0
+	totalLogs := 0
+
+	go func() {
+		defer close(done)
+
+		timer := time.NewTimer(0)
+		for {
+			<-timer.C
+			err := crud.PopRecurringTasksMonth()
+			if err != nil {
+				t.Errorf("Error populating recurring tasks: %v", err)
+			}
+
+			count, _ := CountRecurringLogEntries()
+			totalLogs = count
+			timer.Reset(shortDuration)
+			counter++
+		}
+	}()
+
+	time.Sleep(3 * shortDuration)
+
+	close(done)
+
+	time.Sleep(shortDuration)
+
+	select {
+	case <-done:
+		if counter <= 3 {
+			t.Errorf("Expected the goroutine to run multiple times, but it ran %d times", counter)
+		}
+	case <-time.After(time.Second * 2):
+		t.Errorf("Timeout waiting for goroutine to finish")
+	}
+
+	t.Logf("Total recurrence logs  %v", totalLogs)
+
 }
