@@ -7,19 +7,16 @@ func GetCatId(Cid int) (Category, bool, error) {
 	rows, err := DB.Query("SELECT * FROM Category WHERE CatID=?;", Cid)
 	var cat Category
 	if err != nil {
-		log.Println(err)
+		log.Printf("GetCatId() #1: %v", err)
 		return cat, false, err
 	}
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		log.Println(counter)
 		rows.Scan(&cat.CatID, &cat.UserID, &cat.Name, &cat.Color)
-		log.Println("finding")
 	}
 	rows.Close()
-	log.Println("done finding")
-	log.Println(counter)
+
 	return cat, counter == 1, err
 }
 

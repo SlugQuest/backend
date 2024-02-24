@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS UserTable (
 CREATE TABLE TaskTable (
     TaskID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID VARCHAR(255) NOT NULL,
-    Category INT NOT NULL,
+    Category INTEGER NOT NULL,
     TaskName VARCHAR(255) NOT NULL,
     Description TEXT NOT NULL,
     StartTime DATETIME, -- optional
@@ -27,9 +27,8 @@ CREATE TABLE TaskTable (
 CREATE TABLE RecurringLog (
 	LogId INTEGER PRIMARY KEY AUTOINCREMENT,
 	TaskID INTEGER NOT NULL,
-    isCurrent BOOLEAN NOT NULL,
     Status VARCHAR(15) CHECK(Status IN ('completed','failed', 'todo')),
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
 );
 
