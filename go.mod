@@ -4,6 +4,7 @@ go 1.21.5
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.22
