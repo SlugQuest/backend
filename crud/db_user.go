@@ -14,14 +14,14 @@ func GetUser(uid string) (User, bool, error) {
 	rows, err := DB.Query("SELECT * FROM UserTable WHERE UserID=?;", uid)
 	var user User
 	if err != nil {
-		log.Println(err)
+		log.Printf("GetUser() #1: %v", err)
 		return user, false, err
 	}
 
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
+		rows.Scan(&user.UserID, &user.Username, &user.Picture, &user.Points, &user.BossId, &user.SocialCode)
 	}
 	rows.Close()
 
@@ -32,12 +32,12 @@ func GetUser(uid string) (User, bool, error) {
 func GetPublicUser(uid string) (map[string]interface{}, bool, error) {
 	user, found, err := GetUser(uid)
 	if err != nil {
-		log.Println(err)
+		log.Printf("GetPublicUser() #1: %v", err)
 		return map[string]interface{}{}, false, err
 	}
 
 	if !found {
-		log.Println("GetPublicUser(): did not find user")
+		log.Println("GetPublicUser() #2: did not find user")
 		return map[string]interface{}{}, false, err
 	}
 
@@ -86,14 +86,14 @@ func AddUser(u User) (bool, error) {
 	}
 	defer tx.Rollback() // abort transaction if error
 
-	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Username, Points, Bossid, SocialCode) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO UserTable (UserID, Username, Picture, Points, Bossid, SocialCode) VALUES (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("AddUser() #3: %v", err)
 		return false, err
 	}
 	defer stmt.Close() //defer the closing of SQL statement to ensure it Closes once the function completes
 
-	_, err = stmt.Exec(u.UserID, u.Username, u.Points, u.BossId, socialCode)
+	_, err = stmt.Exec(u.UserID, u.Username, u.Picture, u.Points, u.BossId, socialCode)
 	if err != nil {
 		log.Printf("AddUser(): breaky 4: %v", err)
 		return false, err
@@ -190,10 +190,11 @@ func DeleteUser(uid string) (bool, error) {
 	return true, nil
 }
 
-// Search for **one** specific user by their social code.
+// Search for one specific user by their social code.
 func SearchUserCode(code string, includeID bool) (map[string]interface{}, bool, error) {
 	rows, err := DB.Query("SELECT UserID FROM UserTable WHERE SocialCode=?;", code)
 	var user map[string]interface{}
+	var uid string
 	var found bool = false
 	if err != nil {
 		log.Printf("SearchUserCode() #1: %v", err)
@@ -204,24 +205,23 @@ func SearchUserCode(code string, includeID bool) (map[string]interface{}, bool, 
 	for rows.Next() {
 		counter += 1
 
-		var uid string
 		err := rows.Scan(&uid)
 		if err != nil {
 			log.Printf("SearchUserCode() #2: %v", err)
 			return map[string]interface{}{}, false, err
 		}
-
-		user, found, err = GetPublicUser(uid)
-		if !found || err != nil {
-			log.Printf("SearchUsername() #2: did not find a user: %v", err)
-			return map[string]interface{}{}, false, err
-		}
-
-		if includeID {
-			user["UserID"] = uid
-		}
 	}
 	rows.Close()
+
+	user, found, err = GetPublicUser(uid)
+	if !found || err != nil {
+		log.Printf("SearchUserCode() #4: did not find a user: %v", err)
+		return user, false, err
+	}
+
+	if includeID {
+		user["UserID"] = uid
+	}
 
 	return user, counter == 1, nil
 }
@@ -230,6 +230,7 @@ func SearchUserCode(code string, includeID bool) (map[string]interface{}, bool, 
 func SearchUsername(uname string, includeID bool) ([]map[string]interface{}, bool, error) {
 	rows, err := DB.Query("SELECT UserID FROM UserTable WHERE Username LIKE ?", "%"+uname+"%")
 	var users []map[string]interface{}
+	var userids []string
 	if err != nil {
 		log.Printf("SearchUsername() #1: %v", err)
 		return users, false, err
@@ -246,19 +247,23 @@ func SearchUsername(uname string, includeID bool) ([]map[string]interface{}, boo
 			return users, false, err
 		}
 
-		user, found, err := GetPublicUser(uid)
+		userids = append(userids, uid)
+	}
+	rows.Close()
+
+	for _, uID := range userids {
+		user, found, err := GetPublicUser(uID)
 		if !found || err != nil {
-			log.Printf("SearchUsername() #2: did not find a user: %v", err)
+			log.Printf("SearchUsername() #3: did not find a user: %v", err)
 			return users, false, err
 		}
 
 		if includeID {
-			user["UserID"] = uid
+			user["UserID"] = uID
 		}
 
 		users = append(users, user)
 	}
-	rows.Close()
 
 	// Return if found any matches
 	return users, counter > 0, nil

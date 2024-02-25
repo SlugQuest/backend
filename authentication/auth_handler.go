@@ -135,6 +135,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 
 		session.Set("access_token", token.AccessToken)
 		session.Set("profile", profile)
+		session.Set("user_id", profile["sub"])
 		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
@@ -228,19 +229,13 @@ func getUserInfo(c *gin.Context) *crud.User {
 func UserProfileHandler(c *gin.Context) {
 	session := sessions.Default(c)
 
-	profile, ok := session.Get("profile").(map[string]interface{})
-	if !ok || profile == nil {
+	my_uid, ok := session.Get("user_id").(string)
+	if !ok || my_uid == "" {
 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 		return
 	}
 
-	sesUID, ok := profile["sub"].(string)
-	if !ok {
-		c.String(http.StatusInternalServerError, "Couldn't resolve user id.")
-		return
-	}
-
-	publicUser, found, err := crud.GetPublicUser(sesUID)
+	publicUser, found, err := crud.GetPublicUser(my_uid)
 	if !found || err != nil {
 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 		return

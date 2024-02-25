@@ -113,12 +113,12 @@ func TestSearchUserCode(t *testing.T) {
 	}
 
 	socialcode := fullUserInfo.SocialCode
-	searchedUser, found, err := SearchUserCode(socialcode)
+	searchedUser, found, err := SearchUserCode(socialcode, true)
 	if !found || err != nil {
 		t.Errorf("TestSearchUserCode(): couldn't search by social code: %v", err)
 	}
 
-	if userForUserTable.UserID != searchedUser.UserID || userForUserTable.Points != searchedUser.Points || userForUserTable.BossId != searchedUser.BossId {
+	if userForUserTable.UserID != searchedUser["UserID"] || userForUserTable.Points != searchedUser["Points"] || userForUserTable.BossId != searchedUser["BossId"] {
 		t.Error("TestSearchUserCode(): found wrong user")
 	}
 }
@@ -141,7 +141,7 @@ func TestSearchUsername(t *testing.T) {
 		}
 	}
 
-	foundUsers, found, err := SearchUsername(common)
+	foundUsers, found, err := SearchUsername(common, false)
 	if !found || err != nil {
 		t.Errorf("TestSearchUsername(): didn't find any users on search: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestSearchUsername(t *testing.T) {
 	}
 
 	for _, user := range foundUsers {
-		if !strings.Contains(user.Username, common) {
+		if !strings.Contains(user["Username"].(string), common) {
 			t.Errorf("TestSearchUsername(): username did not contain queried string")
 		}
 	}
@@ -327,7 +327,7 @@ func TestGetFriendList(t *testing.T) {
 		}
 	}
 
-	friends, getErr := GetFriendList(userForUserTable.UserID)
+	friends, getErr := GetFriendList(userForUserTable.UserID, false)
 	if getErr != nil {
 		t.Errorf("TestGetFriendList(): couldn't fetch friends list: %v", getErr)
 	}

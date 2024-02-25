@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS UserTable (
     UserID VARCHAR(255) PRIMARY KEY NOT NULL,
     Username VARCHAR(32) NOT NULL,
+    Picture TEXT,
     Points INTEGER NOT NULL,
     BossId INTEGER NOT NULL,
     SocialCode VARCHAR(8) UNIQUE NOT NULL, -- created in AddUser()
