@@ -147,7 +147,7 @@ func TestPassFailTask(t *testing.T) {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc, err := Passtask(int(taskID), testTask.UserID)
+	passsucc, err, _ := Passtask(int(taskID), testTask.UserID)
 	if err != nil || !passsucc {
 		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
