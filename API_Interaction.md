@@ -14,6 +14,41 @@ const response = await fetch(backend/protected, {
 });
 ```
 
+### Searching Users  (GET)
+- **Endpoint**: `/api/v1/searchuser/:method/:query`
+  - **NOTE**: Replace `:method` with the search method and `:query` with the search query.
+- **Description**: Returns a list of users that have similar usernames to the query provided
+  - **Request Method**: GET
+  - **Parameters**:
+    - `method` (string): Method to search users by, must be either `"name"` (by username) or `code` (by social code)
+    - `query` (string): Query to match usernames to
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON
+      ```json
+      {
+          "num_results": 2,
+          "users": [
+              {
+                  "UserID": "hidden",
+                  "Username": "person1",
+                  "Picture": "",
+                  "Points": 0,
+                  "BossId": 0,
+                  "SocialCode": "1"
+              },
+              {
+                  "UserID": "hidden",
+                  "Username": "person2",
+                  "Picture": "",
+                  "Points": 0,
+                  "BossId": 0,
+                  "SocialCode": "2"
+              },
+          ]
+      }
+      ```
+
 ### Getting All User Tasks (GET)
 
 - **Endpoint**: `/api/v1/tasks`

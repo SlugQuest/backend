@@ -68,7 +68,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.PUT("makeCat", putCat)
 		v1.GET("getBossHealth", getCurrBossHealth)
 		v1.GET("/getBoss/:id", getBossById)
-		v1.GET("searchUsers/:query", searchUsers)
+		v1.GET("searchuser/:method/:query", searchUsers)
 		v1.POST("addFriend/:code", addFriend)
 		v1.DELETE("removeFriend/:code", removeFriend)
 	}
@@ -481,21 +481,39 @@ func getuserTaskSpan(c *gin.Context) {
 
 func searchUsers(c *gin.Context) {
 	query := c.Param("query")
-	users, foundAny, err := crud.SearchUsername(query)
-	if err != nil {
-		log.Printf("searchUsers(): error searching for users: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
-		return
+	method := c.Param("method")
+	if method == "name" {
+		users, foundAny, err := crud.SearchUsername(query)
+		if err != nil {
+			log.Printf("searchUsers(): error searching for users: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+			return
+		}
+
+		if !foundAny {
+			c.JSON(http.StatusNotFound, gin.H{"message": "No users found", "num_results": 0, "users": users})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"num_results": len(users), "users": users})
+	} else if method == "code" {
+		user, foundOne, err := crud.SearchUserCode(query)
+		if err != nil {
+			log.Printf("searchUsers(): error searching for users: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+			return
+		}
+
+		if !foundOne {
+			c.JSON(http.StatusNotFound, gin.H{"message": "No user with this social code found", "num_results": 0, "users": []crud.User{}})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"num_results": 1, "users": []crud.User{user}})
+
+	} else {
+		c.String(http.StatusBadRequest, "Format error: accepted methods of user search are by \"name\" and \"code\".")
 	}
-
-	if !foundAny {
-		c.JSON(http.StatusNotFound, gin.H{"message": "No users found", "num_results": 0, "users": users})
-		return
-	}
-
-	log.Print(users)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Success", "num_results": len(users), "users": users})
 }
 
 func addFriend(c *gin.Context) {
