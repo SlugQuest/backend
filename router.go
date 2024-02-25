@@ -71,6 +71,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("searchuser/:method/:query", searchUsers)
 		v1.POST("addFriend/:code", addFriend)
 		v1.DELETE("removeFriend/:code", removeFriend)
+		v1.GET("user/friends", getFriendList)
 	}
 
 	return router
@@ -483,7 +484,7 @@ func searchUsers(c *gin.Context) {
 	query := c.Param("query")
 	method := c.Param("method")
 	if method == "name" {
-		users, foundAny, err := crud.SearchUsername(query)
+		users, foundAny, err := crud.SearchUsername(query, false)
 		if err != nil {
 			log.Printf("searchUsers(): error searching for users: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
@@ -497,7 +498,8 @@ func searchUsers(c *gin.Context) {
 
 		c.JSON(http.StatusOK, gin.H{"num_results": len(users), "users": users})
 	} else if method == "code" {
-		user, foundOne, err := crud.SearchUserCode(query)
+		res := []map[string]interface{}{}
+		user, foundOne, err := crud.SearchUserCode(query, false)
 		if err != nil {
 			log.Printf("searchUsers(): error searching for users: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
@@ -505,11 +507,12 @@ func searchUsers(c *gin.Context) {
 		}
 
 		if !foundOne {
-			c.JSON(http.StatusNotFound, gin.H{"message": "No user with this social code found", "num_results": 0, "users": []crud.User{}})
+			c.JSON(http.StatusNotFound, gin.H{"message": "No user with this social code found", "num_results": 0, "users": res})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"num_results": 1, "users": []crud.User{user}})
+		res = append(res, user)
+		c.JSON(http.StatusOK, gin.H{"num_results": 1, "users": res})
 
 	} else {
 		c.String(http.StatusBadRequest, "Format error: accepted methods of user search are by \"name\" and \"code\".")
@@ -550,4 +553,21 @@ func removeFriend(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func getFriendList(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		return
+	}
+
+	friends, err := crud.GetFriendList(uid, false)
+	if err != nil {
+		log.Printf("getFriendList(): error retrieving friend list: %v", err)
+		c.String(http.StatusInternalServerError, "Failure to retrieve friend list")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"num_friends": len(friends), "list": friends})
 }

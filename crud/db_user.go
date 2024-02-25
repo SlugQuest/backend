@@ -28,6 +28,30 @@ func GetUser(uid string) (User, bool, error) {
 	return user, counter == 1, err
 }
 
+// Return public information about a user
+func GetPublicUser(uid string) (map[string]interface{}, bool, error) {
+	user, found, err := GetUser(uid)
+	if err != nil {
+		log.Println(err)
+		return map[string]interface{}{}, false, err
+	}
+
+	if !found {
+		log.Println("GetPublicUser(): did not find user")
+		return map[string]interface{}{}, false, err
+	}
+
+	publicUser := map[string]interface{}{
+		"Username":   user.Username,
+		"Picture":    user.Picture,
+		"Points":     user.Points,
+		"BossId":     user.BossId,
+		"SoicalCode": user.SocialCode,
+	}
+
+	return publicUser, true, nil
+}
+
 func GetUserPoints(Uid string) (int, bool, error) {
 	rows, err := DB.Query("SELECT Points FROM UserTable WHERE UserID = ?", Uid)
 	points := 0
@@ -167,9 +191,10 @@ func DeleteUser(uid string) (bool, error) {
 }
 
 // Search for **one** specific user by their social code.
-func SearchUserCode(code string) (User, bool, error) {
-	rows, err := DB.Query("SELECT * FROM UserTable WHERE SocialCode=?;", code)
-	var user User
+func SearchUserCode(code string, includeID bool) (map[string]interface{}, bool, error) {
+	rows, err := DB.Query("SELECT UserID FROM UserTable WHERE SocialCode=?;", code)
+	var user map[string]interface{}
+	var found bool = false
 	if err != nil {
 		log.Printf("SearchUserCode() #1: %v", err)
 		return user, false, err
@@ -178,11 +203,22 @@ func SearchUserCode(code string) (User, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		err := rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
 
+		var uid string
+		err := rows.Scan(&uid)
 		if err != nil {
 			log.Printf("SearchUserCode() #2: %v", err)
-			return user, false, err
+			return map[string]interface{}{}, false, err
+		}
+
+		user, found, err = GetPublicUser(uid)
+		if !found || err != nil {
+			log.Printf("SearchUsername() #2: did not find a user: %v", err)
+			return map[string]interface{}{}, false, err
+		}
+
+		if includeID {
+			user["UserID"] = uid
 		}
 	}
 	rows.Close()
@@ -191,10 +227,9 @@ func SearchUserCode(code string) (User, bool, error) {
 }
 
 // Search for any users that match this username.
-// Note: does NOT return user ids in the results
-func SearchUsername(uname string) ([]User, bool, error) {
-	rows, err := DB.Query("SELECT * FROM UserTable WHERE Username LIKE ?", "%"+uname+"%")
-	var users []User
+func SearchUsername(uname string, includeID bool) ([]map[string]interface{}, bool, error) {
+	rows, err := DB.Query("SELECT UserID FROM UserTable WHERE Username LIKE ?", "%"+uname+"%")
+	var users []map[string]interface{}
 	if err != nil {
 		log.Printf("SearchUsername() #1: %v", err)
 		return users, false, err
@@ -204,14 +239,23 @@ func SearchUsername(uname string) ([]User, bool, error) {
 	for rows.Next() {
 		counter += 1
 
-		var user User
-		err := rows.Scan(&user.UserID, &user.Username, &user.Points, &user.BossId, &user.SocialCode)
+		var uid string
+		err := rows.Scan(&uid)
 		if err != nil {
 			log.Printf("SearchUsername() #2: %v", err)
 			return users, false, err
 		}
 
-		user.UserID = "hidden"
+		user, found, err := GetPublicUser(uid)
+		if !found || err != nil {
+			log.Printf("SearchUsername() #2: did not find a user: %v", err)
+			return users, false, err
+		}
+
+		if includeID {
+			user["UserID"] = uid
+		}
+
 		users = append(users, user)
 	}
 	rows.Close()
@@ -221,9 +265,14 @@ func SearchUsername(uname string) ([]User, bool, error) {
 }
 
 func AddFriend(my_uid string, their_soccode string) (bool, error) {
-	their_user, found, err := SearchUserCode(their_soccode)
+	their_user, found, err := SearchUserCode(their_soccode, true)
 	if !found || err != nil {
 		log.Printf("AddFriend() #1: could not find other user: %v", err)
+		return false, err
+	}
+	their_uid, ok := their_user["UserID"].(string)
+	if !ok {
+		log.Printf("AddFriend(): conversion error")
 		return false, err
 	}
 
@@ -242,10 +291,10 @@ func AddFriend(my_uid string, their_soccode string) (bool, error) {
 
 	// Order by string compare to avoid duplicate rows
 	var firstID, secondID string
-	if my_uid < their_user.UserID {
-		firstID, secondID = my_uid, their_user.UserID
+	if my_uid < their_uid {
+		firstID, secondID = my_uid, their_uid
 	} else {
-		firstID, secondID = their_user.UserID, my_uid
+		firstID, secondID = their_uid, my_uid
 	}
 
 	_, err = stmt.Exec(firstID, secondID)
@@ -260,18 +309,23 @@ func AddFriend(my_uid string, their_soccode string) (bool, error) {
 }
 
 func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
-	their_user, found, err := SearchUserCode(their_soccode)
+	their_user, found, err := SearchUserCode(their_soccode, true)
 	if !found || err != nil {
 		log.Printf("DeleteFriend() #1: could not find other user: %v", err)
+		return false, err
+	}
+	their_uid, ok := their_user["UserID"].(string)
+	if !ok {
+		log.Printf("AddFriend(): conversion error")
 		return false, err
 	}
 
 	// Order enforced in schema
 	var firstID, secondID string
-	if my_uid < their_user.UserID {
-		firstID, secondID = my_uid, their_user.UserID
+	if my_uid < their_uid {
+		firstID, secondID = my_uid, their_uid
 	} else {
-		firstID, secondID = their_user.UserID, my_uid
+		firstID, secondID = their_uid, my_uid
 	}
 
 	tx, err := DB.Beginx()
@@ -299,8 +353,9 @@ func DeleteFriend(my_uid string, their_soccode string) (bool, error) {
 	return true, nil
 }
 
-func GetFriendList(my_uid string) ([]User, error) {
-	friends := []User{}
+// Returns all the friends of the current user
+func GetFriendList(my_uid string, includeID bool) ([]map[string]interface{}, error) {
+	friends := []map[string]interface{}{}
 	friendIDs := []string{}
 
 	rows, err := DB.Query("SELECT * FROM Friends WHERE userA=? OR userB=?;", my_uid, my_uid)
@@ -329,10 +384,14 @@ func GetFriendList(my_uid string) ([]User, error) {
 	rows.Close()
 
 	for _, fID := range friendIDs {
-		fUser, found, err := GetUser(fID)
+		fUser, found, err := GetPublicUser(fID)
 		if !found || err != nil {
 			log.Printf("GetFriendList(): could not retrieve friend: %v", err)
 			return friends, err
+		}
+
+		if includeID {
+			fUser["UserID"] = fID
 		}
 
 		friends = append(friends, fUser)

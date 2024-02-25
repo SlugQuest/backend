@@ -228,16 +228,22 @@ func getUserInfo(c *gin.Context) *crud.User {
 func UserProfileHandler(c *gin.Context) {
 	session := sessions.Default(c)
 
-	allUserData, ok := session.Get("user_profile").(crud.User)
-	if !ok {
+	profile, ok := session.Get("profile").(map[string]interface{})
+	if !ok || profile == nil {
 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 		return
 	}
 
-	publicUser := map[string]interface{}{
-		"picture":  allUserData.Picture,
-		"points":   allUserData.Points,
-		"username": allUserData.Username,
+	sesUID, ok := profile["sub"].(string)
+	if !ok {
+		c.String(http.StatusInternalServerError, "Couldn't resolve user id.")
+		return
+	}
+
+	publicUser, found, err := crud.GetPublicUser(sesUID)
+	if !found || err != nil {
+		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+		return
 	}
 
 	c.JSON(http.StatusOK, publicUser)
