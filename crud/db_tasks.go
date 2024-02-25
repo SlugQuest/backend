@@ -361,26 +361,26 @@ func Passtask(Tid int, uid string) (bool, error, int) {
 	return true, nil, user.BossId
 }
 
-func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
+func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error, int) {
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
 		fmt.Printf("Passtask(): breaky 0 %v\n", err)
-		return false, err
+		return false, err, -1
 	}
 
 	if !ok {
 		fmt.Println("Passtask(): Task not found")
-		return false, fmt.Errorf("task not found")
+		return false, fmt.Errorf("task not found"), -1
 	}
 
 	if task.UserID != uid {
-		return false, fmt.Errorf("task not owned by this user")
+		return false, fmt.Errorf("task not owned by this user"), -1
 	}
 
 	tx, err := DB.Beginx()
 	if err != nil {
 		fmt.Printf("PassRecurringTask(): breaky 1 %v\n", err)
-		return false, err
+		return false, err, -1
 	}
 	defer tx.Rollback()
 
@@ -392,7 +392,7 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
 
 	if err != nil {
 		fmt.Printf("PassRecurringTask(): breaky 2 %v\n", err)
-		return false, err
+		return false, err, -1
 	}
 
 	tx.Commit()
@@ -402,13 +402,13 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
 	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
 		fmt.Printf("PassRecurringTask(): breaky 3 %v\n", err)
-		return false, err
+		return false, err, -1
 	}
 
 	currBossHealth, err := GetCurrBossHealth(uid)
 	if err != nil {
 		fmt.Printf("PassRecurringTask(): breaky 4 %v\n", err)
-		return false, err
+		return false, err, -1
 	}
 
 	// Check if the current boss health is zero
@@ -417,18 +417,20 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
 		_, err := DB.Exec("UPDATE UserTable SET BossId = BossId + 1 WHERE UserID = ?", task.UserID)
 		if err != nil {
 			fmt.Printf("PassRecurringTask(): breaky 5 %v\n", err)
-			return false, err
+			return false, err, -1
 		}
 
 		// Reset user points to 0
 		_, err = DB.Exec("UPDATE UserTable SET Points = ? WHERE UserID = ?", 0, task.UserID)
 		if err != nil {
 			fmt.Printf("PassRecurringTask(): breaky 6 %v\n", err)
-			return false, err
+			return false, err, -1
 		}
 	}
 
-	return true, nil
+	user, _, _ := GetUser(uid)
+
+	return true, nil, user.BossId
 }
 
 func Failtask(Tid int, uid string) (bool, error) {
