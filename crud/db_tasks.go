@@ -128,6 +128,29 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	return utaskArr, err
 }
 
+func PassRecur(recurid int) (bool){
+	_, err := DB.Exec(`
+	UPDATE RecurringLog 
+	SET Status = ?
+	WHERE LogId = ?`, "completed", recurid)
+	if err != nil {
+		log.Println(" pass recur break")
+		return false
+	}
+	return true
+}
+func FailRecur(recurid int) (bool){
+	_, err := DB.Exec(`
+	UPDATE RecurringLog 
+	SET Status = ?
+	WHERE LogId = ?`, "failed", recurid)
+	if err != nil {
+		log.Println("fai; recur")
+		return false
+	}
+	return true
+}
+
 func CreateTask(task Task) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -401,7 +424,7 @@ func Failtask(Tid int, uid string) (bool, error) {
 
 		if err != nil {
 			fmt.Printf("Failtask(): breaky 0 %v\n", err)
-			return false
+			return false, err
 		}
 	} else {
 		tx, err := DB.Beginx() //start transaction

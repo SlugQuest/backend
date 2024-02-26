@@ -60,14 +60,46 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("failtask/:id", failTheTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
-		v1.GET("userTasks/:id/:start/:end", getuserTaskSpan)
+		v1.GET("userTasks/:start/:end", getuserTaskSpan)
 		v1.GET("userPoints", getUserPoints)
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)
 		v1.GET("getBossHealth", getCurrBossHealth)
+		v1.POST("passrecur/:id", passRecurring)
+		v1.POST("failrecur/:id", failRecurring)
 	}
 
 	return router
+}
+
+func passRecurring( c *gin.Context) {
+	rid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+	worked := crud.PassRecur(rid)
+	if( worked){
+		c.JSON(http.StatusOK, gin.H{"updated": rid})
+		}else{
+			c.JSON(http.StatusOK, gin.H{"update failed": rid})
+		}
+}
+
+func failRecurring(c *gin.Context) {
+	rid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("editTask(): Invalid taskID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
+		return
+	}
+	worked := crud.PassRecur(rid)
+	if( worked){
+	c.JSON(http.StatusOK, gin.H{"updated": rid})
+	}else{
+		c.JSON(http.StatusOK, gin.H{"update failed": rid})
+	}
 }
 
 // Get userID stored in the session
