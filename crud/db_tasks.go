@@ -96,18 +96,18 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		var taskprev RecurTypeTask
 		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("GetUserTaskDateTime() #3: %v", err)
 			rows.Close()
 			return utaskArr, err
 		}
-		taskprev.RecurrenceId = ""
+		taskprev.RecurrenceId = 1
 		utaskArr = append(utaskArr, taskprev)
 	}
 	prep.Close()
 	rows.Close()
 	p2, err := DB.Preparex("SELECT c.TaskID, c.UserID, c.Category, c.TaskName, c.StartTime, c.EndTime, c.Status, c.IsRecurring, c.IsAllDay, l.timestamp, l.LogId FROM TaskTable c, RecurringLog l WHERE l.TaskID == c.TaskID AND  c.UserID = ? AND l.timestamp > ? AND l.timestamp < ?;")
 	if err != nil {
-		log.Printf("GetUserTaskDateTime() #2: %v", err)
+		log.Printf("GetUserTaskDateTime() #4: %v", err)
 		return utaskArr, err
 	}
 	rowrec, err := p2.Query(uid, startq, endq)
@@ -116,7 +116,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		var reftime time.Time
 		err := rowrec.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &reftime, &taskprev.RecurrenceId)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("GetUserTaskDateTime() #5: %v", err)
 			rowrec.Close()
 			return utaskArr, err
 		}
@@ -167,11 +167,9 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
-	fmt.Println(task)
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
 	if err != nil {
-		// fmt.Println(task)
 		fmt.Println("CreateTask(): breaky 3 ", err)
 		return false, -1, err
 	}
@@ -183,14 +181,7 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	if task.IsRecurring {
-		fmt.Println("entering recur")
-		// rStmnt, err := tx.Preparex("INSERT INTO RecurrencePatterns (TaskID, RecurringType, DayOfWeek, DayOfMonth) VALUES (?, ?, ?, ?)")
-		// if err != nil {
-		// 	fmt.Println("CreateTask(): breaky 4", err)
-		// 	return false, -1, err
-		// }
 		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-		// fmt.Println(nexTime)
 		rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
 		if err != nil {
 			fmt.Println("CreateTask(): breaky 4", err)
@@ -200,7 +191,6 @@ func CreateTask(task Task) (bool, int64, error) {
 			_, err := rStmnt.Exec(taskID, task.Status, nexTime[i])
 
 			if err != nil {
-				// fmt.Println(task)
 				fmt.Println("CreateTask(): breaky 7 ", err)
 				return false, -1, err
 			}
@@ -210,7 +200,6 @@ func CreateTask(task Task) (bool, int64, error) {
 	}
 
 	tx.Commit() //commit transaction to database
-	// fmt.Println("WE ADDED A TASK")
 	return true, taskID, nil
 }
 
@@ -257,12 +246,6 @@ func DeleteTask(tid int, uid string) (bool, error) {
 		return false, err
 	}
 	defer tx.Rollback() // Abort transaction if any error occurs
-
-	// recurrenceTableExists, err := isTableExists("RecurrencePatterns")
-	// if err != nil {
-	// 	fmt.Println("in here 1")
-	// 	return false, err
-	// }
 
 	delTT, err := tx.Preparex("DELETE FROM TaskTable WHERE TaskID = ? AND UserID = ?")
 	if err != nil {
@@ -325,7 +308,7 @@ func Passtask(Tid int, uid string) (bool, error) {
 		UPDATE RecurringLog 
 		SET Status = ?
 		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
-	`, "failed", Tid, time.Now())
+	`, "completed", Tid, time.Now())
 
 		if err != nil {
 			fmt.Printf("Passtask(): breaky 0 %v\n", err)
@@ -399,6 +382,76 @@ func Passtask(Tid int, uid string) (bool, error) {
 	return true, nil
 }
 
+func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
+	task, ok, err := GetTaskId(Tid)
+	if err != nil {
+		fmt.Printf("Passtask(): breaky 0 %v\n", err)
+		return false, err
+	}
+
+	if !ok {
+		fmt.Println("Passtask(): Task not found")
+		return false, fmt.Errorf("task not found")
+	}
+
+	if task.UserID != uid {
+		return false, fmt.Errorf("task not owned by this user")
+	}
+
+	tx, err := DB.Beginx()
+	if err != nil {
+		fmt.Printf("PassRecurringTask(): breaky 1 %v\n", err)
+		return false, err
+	}
+	defer tx.Rollback()
+
+	_, err = DB.Exec(`
+		UPDATE RecurringLog 
+		SET Status = ?
+		WHERE LogId = ?
+	`, "completed", recurrenceID)
+
+	if err != nil {
+		fmt.Printf("PassRecurringTask(): breaky 2 %v\n", err)
+		return false, err
+	}
+
+	tx.Commit()
+
+	// Update user points
+	points := CalculatePoints(task.Difficulty)
+	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
+	if err != nil {
+		fmt.Printf("PassRecurringTask(): breaky 3 %v\n", err)
+		return false, err
+	}
+
+	currBossHealth, err := GetCurrBossHealth(uid)
+	if err != nil {
+		fmt.Printf("PassRecurringTask(): breaky 4 %v\n", err)
+		return false, err
+	}
+
+	// Check if the current boss health is zero
+	if currBossHealth <= 0 {
+		// Switch to the next boss ID (currBossId + 1)
+		_, err := DB.Exec("UPDATE UserTable SET BossId = BossId + 1 WHERE UserID = ?", task.UserID)
+		if err != nil {
+			fmt.Printf("PassRecurringTask(): breaky 5 %v\n", err)
+			return false, err
+		}
+
+		// Reset user points to 0
+		_, err = DB.Exec("UPDATE UserTable SET Points = ? WHERE UserID = ?", 0, task.UserID)
+		if err != nil {
+			fmt.Printf("PassRecurringTask(): breaky 6 %v\n", err)
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
 func Failtask(Tid int, uid string) (bool, error) {
 	task, ok, err := GetTaskId(Tid)
 	if err != nil {
@@ -453,6 +506,45 @@ func Failtask(Tid int, uid string) (bool, error) {
 
 		tx.Commit()
 	}
+
+	return true, nil
+}
+
+func FailRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
+	task, ok, err := GetTaskId(Tid)
+	if err != nil {
+		fmt.Printf("FailRecurringTask(): breaky %v\n", err)
+		return false, err
+	}
+
+	if !ok {
+		fmt.Println("FailRecurringTask(): Task not found")
+		return false, fmt.Errorf("task not found")
+	}
+
+	if task.UserID != uid {
+		return false, fmt.Errorf("task not owned by this user")
+	}
+
+	tx, err := DB.Beginx()
+	if err != nil {
+		fmt.Printf("FailRecurringTask(): breaky 1 %v\n", err)
+		return false, err
+	}
+	defer tx.Rollback()
+
+	_, err = DB.Exec(`
+		UPDATE RecurringLog 
+		SET Status = ?
+		WHERE LogId = ?
+	`, "failed", recurrenceID)
+
+	if err != nil {
+		fmt.Printf("FailRecurringTask(): breaky 2 %v\n", err)
+		return false, err
+	}
+
+	tx.Commit()
 
 	return true, nil
 }

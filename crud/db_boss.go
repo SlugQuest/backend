@@ -82,7 +82,6 @@ func GetCurrBossHealth(uid string) (int, error) {
 	}
 
 	currBossHealth := boss.Health - user.Points
-	fmt.Printf("in crud: currBossHealth: %v\n", currBossHealth)
 
 	if currBossHealth < 0 { //should never get here, pass task has logic to update boss id
 		currBossHealth = 0

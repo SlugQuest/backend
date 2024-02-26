@@ -24,25 +24,21 @@ func GetUser(uid string) (User, bool, error) {
 }
 
 func GetUserPoints(Uid string) (int, bool, error) {
-	log.Println(Uid)
 	rows, err := DB.Query("SELECT Points FROM UserTable WHERE UserID = ?", Uid)
-	thevalue := 0
+	points := 0
 	if err != nil {
-		log.Println(err)
-		log.Println("SOMETHING HAPPENED")
+		log.Printf("GetUserPoints() #1: %v", err)
 		rows.Close()
-		return thevalue, false, err
+		return points, false, err
 	}
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		log.Println(counter)
-		rows.Scan(&thevalue)
-		log.Println("finding")
+		rows.Scan(&points)
 	}
 	rows.Close()
 
-	return thevalue, counter == 1, err
+	return points, counter == 1, err
 
 }
 
