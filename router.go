@@ -209,9 +209,9 @@ func passRecurringTask(c *gin.Context) {
 		return
 	}
 
-	success, err := crud.PassRecurringTask(tid, recurrenceID, uid)
+	success, err, bossId := crud.PassRecurringTask(tid, recurrenceID, uid)
 	if success && err == nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		c.JSON(http.StatusOK, gin.H{"message": "Success", "bossId": bossId})
 		return
 	} else {
 		log.Printf("passRecurringTask(): %v", err)
@@ -491,9 +491,9 @@ func passTheTask(c *gin.Context) {
 		return
 	}
 
-	success, err := crud.Passtask(tid, uid)
+	success, err, bossId := crud.Passtask(tid, uid)
 	if success && err == nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		c.JSON(http.StatusOK, gin.H{"message": "Success", "bossId": bossId})
 		return
 	} else {
 		log.Printf("passTheTask(): %v", err)
