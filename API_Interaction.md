@@ -14,6 +14,100 @@ const response = await fetch(backend/protected, {
 });
 ```
 
+### Searching Users  (GET)
+- **Endpoint**: `/api/v1/searchuser/:method/:query`
+  - **NOTE**: Replace `:method` with the search method and `:query` with the search query.
+- **Description**: Returns a list of users that have similar usernames to the query provided
+  - **Request Method**: GET
+  - **Parameters**:
+    - `method` (string): Method to search users by, must be either `"name"` (by username) or `code` (by social code)
+    - `query` (string): Query to match usernames to
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON
+      ```json
+      {
+          "num_results": 2,
+          "users": [
+            {
+              "BossId": 0,
+              "Picture": "",
+              "Points": 0,
+              "SoicalCode": "1",
+              "Username": "person1"
+            },
+            {
+              "BossId": 0,
+              "Picture": "",
+              "Points": 0,
+              "SoicalCode": "2",
+              "Username": "person2"
+            },
+          ]
+      }
+      ```
+
+### Add Friend (POST)
+- **Endpoint**: `/api/v1/addFreind/:code`
+  - **NOTE**: Replace `:code` with the wanted friend's code.
+- **Description**: Adds the other user as a friend
+  - **Request Method**: POST
+  - **Parameters**:
+    - `code` (string): The friend's social code
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON
+      ```json
+      {
+        "message": "Success"
+      }
+      ```
+
+### Remove Friend (DELETE)
+- **Endpoint**: `/api/v1/removeFriend/:code`
+  - **NOTE**: Replace `:code` with the wanted friend's code.
+- **Description**: Removes the other user as a friend (no side effects if not already friends)
+  - **Request Method**: DELETE
+  - **Parameters**:
+    - `code` (string): The friend's social code
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON
+      ```json
+      {
+        "message": "Success"
+      }
+      ```
+
+### Get Friend List (GET)
+- **Endpoint**: `/api/v1/user/friends`
+- **Description**: Gets the friend list of the current logged in user.
+  - **Request Method**: GET
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON
+      ```json
+      {
+        "list": [
+            {
+              "BossId": 0,
+              "Picture": "",
+              "Points": 0,
+              "SoicalCode": "AYYLMAO1",
+              "Username": "sluggo1"
+            },
+            {
+              "BossId": 0,
+              "Picture": "",
+              "Points": 0,
+              "SoicalCode": "LOLLLL2",
+              "Username": "sluggo2"
+            },
+            "num_friends": 2
+        ]
+      }
+      ```
+
 ### Getting All User Tasks (GET)
 
 - **Endpoint**: `/api/v1/tasks`
@@ -118,7 +212,7 @@ const response = await fetch(backend/protected, {
       }
       ```
 
-  ### Get User Information (GET)
+### Get User Information (GET)
 - **Endpoint**: `/api/v1/user`
 - **Description**: Get public user information that can be displayed to user
   - **Request Method**: GET
@@ -127,9 +221,11 @@ const response = await fetch(backend/protected, {
     - **Body**: JSON Sample Response Body
       ```json
       {
-        "picture": "https://imagehosterlol/lol.png",
-        "points": 42,
-        "username": "sluggo"
+        "BossId": 0,
+        "Picture": "images/lol.png",
+        "Points": 42,
+        "SoicalCode": "AYYLMAO1",
+        "Username": "sluggo1"
       }
       ```
 

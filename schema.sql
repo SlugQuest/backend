@@ -1,7 +1,10 @@
 CREATE TABLE IF NOT EXISTS UserTable (
     UserID VARCHAR(255) PRIMARY KEY NOT NULL,
+    Username VARCHAR(32) NOT NULL,
+    Picture TEXT,
     Points INTEGER NOT NULL,
     BossId INTEGER NOT NULL,
+    SocialCode VARCHAR(8) UNIQUE NOT NULL, -- created in AddUser()
     FOREIGN KEY (BossId) REFERENCES BossTable(BossID)
 );
 
@@ -30,6 +33,16 @@ CREATE TABLE RecurringLog (
     FOREIGN KEY (TaskID) REFERENCES TaskTable(TaskID)
 );
 
+CREATE TABLE Friends (
+    userA VARCHAR(255),
+    userB VARCHAR(255),
+    CONSTRAINT diff_users CHECK (userA <> userB),
+    CONSTRAINT no_dup CHECK (userA < userB), -- sort before inserting
+    UNIQUE(userA, userB),
+    PRIMARY KEY (userA, userB),
+    FOREIGN KEY (userA) REFERENCES UserTable(UserID),
+    FOREIGN KEY (userB) REFERENCES UserTable(UserID)
+);
 
 CREATE TABLE BossTable (
     BossID INTEGER PRIMARY KEY AUTOINCREMENT,
