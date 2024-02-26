@@ -402,6 +402,45 @@ const response = await fetch(backend/protected, {
   - **Response**:
     - **Status Code**: 200 OK
 
+### getTeamTask
+- **Endpoint**: `/getTeamtask/:id`
+  - **NOTE**: Replace `:id` with the actual TeamID.
+- **Description**:  get a teams task by id
+- **Response**:
+  - same as other task fetch endpoints
+
+### addUserTeam
+- **Endpoint**: '/addUserTeam/:id/:uid
+tentative until merge user_search
+
+### getUserTeams
+- **Endpoint**: `/getUserTeams`
+- **Description**:  get current user teams
+- **Response**:
+  - array of team objects, 200 code
+
+### getTeamUsers
+- **Endpoint**: `/getTeamUsers/:i `
+  - **NOTE**:take in a team ID
+- **Description**: tenative until we merge users
+- **Response**:
+  - array of users 200 code
+
+### deleteTeamUser
+ **Endpoint**: '/teamUserDelete/:tid/:uid'
+ -**Description**:tentative until user abstract done
+
+### deleteTeam
+**Endpoint**: '/deleteTeam/:tid'
+  -**NOTE**:team id as id
+-**Description**:deletes the team, send a delete req. 
+-**Response**:200 ok
+
+### createTeam
+**Endpoint**: '/createTeam/:name'
+-**Description**:create request
+-**Response**:
+  - 200 ok with teamID
 
 ## Authentication endpoints
 
