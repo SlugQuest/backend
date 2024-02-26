@@ -3,7 +3,7 @@
 package authentication
 
 import (
-	"crypto/rand"
+	crypto "crypto/rand"
 	"encoding/base64"
 	"net/http"
 	"net/url"
@@ -68,7 +68,7 @@ func LoginHandler(auth *Authenticator, goToSignup bool) gin.HandlerFunc {
 
 func generateRandomState() (string, error) {
 	b := make([]byte, 32)
-	_, err := rand.Read(b)
+	_, err := crypto.Read(b)
 	if err != nil {
 		return "", err
 	}
@@ -135,6 +135,7 @@ func CallbackHandler(auth *Authenticator) gin.HandlerFunc {
 
 		session.Set("access_token", token.AccessToken)
 		session.Set("profile", profile)
+		session.Set("user_id", profile["sub"])
 		if err := session.Save(); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
@@ -207,6 +208,18 @@ func getUserInfo(c *gin.Context) *crud.User {
 			c.String(http.StatusInternalServerError, "Couldn't register user into our records.")
 			return nil
 		}
+	} else {
+		// Do any updates as necessary
+		if user.Username != sesUsername || user.Picture != sesPFP {
+			user.Username = sesUsername
+			user.Picture = sesPFP
+
+			editSuccess, err := crud.EditUser(user, sesUID)
+			if !editSuccess || err != nil {
+				c.String(http.StatusInternalServerError, "Couldn't update our user records.")
+				return nil
+			}
+		}
 	}
 
 	return &user
@@ -216,16 +229,16 @@ func getUserInfo(c *gin.Context) *crud.User {
 func UserProfileHandler(c *gin.Context) {
 	session := sessions.Default(c)
 
-	allUserData, ok := session.Get("user_profile").(crud.User)
-	if !ok {
+	my_uid, ok := session.Get("user_id").(string)
+	if !ok || my_uid == "" {
 		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
 		return
 	}
 
-	publicUser := map[string]interface{}{
-		"picture":  allUserData.Picture,
-		"points":   allUserData.Points,
-		"username": allUserData.Username,
+	publicUser, found, err := crud.GetPublicUser(my_uid)
+	if !found || err != nil {
+		c.String(http.StatusInternalServerError, "Couldn't retrieve user profile.")
+		return
 	}
 
 	c.JSON(http.StatusOK, publicUser)

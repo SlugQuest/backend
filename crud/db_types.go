@@ -58,11 +58,12 @@ type RecurTypeTask struct {
 }
 
 type User struct {
-	UserID   string // Not known to user, do not expose
-	Username string // Set by user, can be exposed
-	Picture  string // A0 stores their profile pics as URLs
-	Points   int
-	BossId   int
+	UserID     string // Not known to user, do not expose
+	Username   string // Set by user, can be exposed
+	Picture    string // A0 stores their profile pics as URLs
+	Points     int
+	BossId     int
+	SocialCode string // Friendly code to uniquely identify (public)
 }
 
 type Boss struct {
