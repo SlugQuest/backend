@@ -407,11 +407,14 @@ const response = await fetch(backend/protected, {
   - **NOTE**: Replace `:id` with the actual TeamID.
 - **Description**:  get a teams task by id
 - **Response**:
-  - same as other task fetch endpoints
+  - same as other task fetch endpoints, an array of tasks
 
 ### addUserTeam
-- **Endpoint**: '/addUserTeam/:id/:uid
-tentative until merge user_search
+- **Endpoint**: '/addUserTeam/:id/:code'
+-  id is team id, code is user code 
+- **Description**:  add a user to a team
+- **Response**:
+  - 200ok, or error
 
 ### getUserTeams
 - **Endpoint**: `/getUserTeams`
@@ -420,22 +423,24 @@ tentative until merge user_search
   - array of team objects, 200 code
 
 ### getTeamUsers
-- **Endpoint**: `/getTeamUsers/:i `
+- **Endpoint**: `/getTeamUsers/:id `
   - **NOTE**:take in a team ID
-- **Description**: tenative until we merge users
+- **Description**: sends back user abstraction array, similar to friends function
 - **Response**:
   - array of users 200 code
 
 ### deleteTeamUser
- **Endpoint**: '/teamUserDelete/:tid/:uid'
- -**Description**:tentative until user abstract done
-
+ **Endpoint**: '/teamUserDelete/:tid/:code'
+  - id is team id, code is user code 
+- **Description**: deletes the user from the team
+-**Response**:
+  - 200 ok or error
 ### deleteTeam
 **Endpoint**: '/deleteTeam/:tid'
   -**NOTE**:team id as id
 -**Description**:deletes the team, send a delete req. 
 -**Response**:200 ok
-
+- **Description**: sends back user abstraction, similar to friends function
 ### createTeam
 **Endpoint**: '/createTeam/:name'
 -**Description**:create request

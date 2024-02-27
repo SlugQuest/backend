@@ -12,7 +12,7 @@ type Category struct {
 type Team struct {
 	TeamID int64
 	Name string
-	Members []string
+	Members []map[string]interface{}
 }
 
 type Task struct {

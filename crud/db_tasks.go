@@ -106,7 +106,13 @@ func GetTeamTask(tid int) ([]Task, error) {
 	return utaskArr, err
 }
 
-func AddUserToTeam(tid int64, uid string) bool {
+func AddUserToTeam(tid int64, ucode string) bool {
+	user, found, err := SearchUserCode(ucode, true)
+	if !found || err != nil {
+		log.Printf("AddFriend() #1: could not find other user: %v", err)
+		return false
+	}
+	uid, _ := user["UserID"].(string)
 	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
 	if err != nil {
 		log.Printf("bricked in adduser team")
@@ -121,8 +127,15 @@ func AddUserToTeam(tid int64, uid string) bool {
 
 }
 
-func GetUserTeams(uid string) ([]Team, error) {
+func GetUserTeams(ucode string) ([]Team, error) {
 	uteamArr := []Team{}
+	user, found, err := SearchUserCode(ucode, true)
+	if !found || err != nil {
+		log.Printf("AddFriend() #1: could not find other user: %v", err)
+		return uteamArr, err
+	}
+	uid, _ := user["UserID"].(string)
+
 	prep, err := DB.Preparex("SELECT t.TeamID, t.TeamName FROM TeamMembers z, Team t WHERE UserID = ? AND t.TeamID = z.TeamID ")
 	rows, err := prep.Query(uid)
 	if err != nil {
@@ -146,14 +159,15 @@ func GetUserTeams(uid string) ([]Team, error) {
 
 }
 
-func GetTeamUsers(tid int64) ([]string, error) {
+func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	uarr := []string{}
+	var users []map[string]interface{}
 	prep, err := DB.Preparex("SELECT UserID FROm UserTable u, TeamMembers m WHERE u.UserID = m.UserID AND t.TeamID = ?")
 	rows, err := prep.Query(tid)
 	if err != nil {
 		log.Printf("getuserteamissue")
 		rows.Close()
-		return uarr, err
+		return users, err
 	}
 
 	for rows.Next() {
@@ -162,15 +176,31 @@ func GetTeamUsers(tid int64) ([]string, error) {
 		if err != nil {
 			fmt.Println(err)
 			rows.Close()
-			return uarr, err
+			return users, err
 		}
 		uarr = append(uarr, uid)
 	}
-	return uarr, err
+	rows.Close()
+	for _, fID := range uarr {
+		fUser, found, err := GetPublicUser(fID)
+		if !found || err != nil {
+			log.Printf("Get TEam useres could not retreive users  %v", err)
+			return users, err
+		}
+		
+		users = append(users, fUser)
+	}
+	return users, err
 
 }
 
-func RemoveUserFromTeam(tid int64, uid string) bool {
+func RemoveUserFromTeam(tid int64, ucode string) bool {
+	user, found, err := SearchUserCode(ucode, true)
+	if !found || err != nil {
+		log.Printf("AddFriend() #1: could not find other user: %v", err)
+		return false
+	}
+	uid, _ := user["UserID"].(string)
 	prep, err := DB.Preparex("DELETE FROM TeamMembers WHERE TeamID = ? AND UserID = ?")
 	if err != nil {
 		log.Printf("bricked in del team")

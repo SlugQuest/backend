@@ -73,10 +73,10 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.DELETE("removeFriend/:code", removeFriend)
 		v1.GET("user/friends", getFriendList)
 		v1.GET("getTeamTask/:id", getTeamTask)
-		v1.PUT("addUserTeam/:id/:uid", addUserTeam)
-		v1.GET("getUserTeams", getUserTeams)
+		v1.PUT("addUserTeam/:id/:code", addUserTeam)
+		v1.GET("getUserTeams/:code", getUserTeams)
 		v1.GET("getTeamUsers/:id", getTeamUsers)
-		v1.DELETE("teamUserDelete/:tid/:uid", deleteTeamUser)
+		v1.DELETE("deleteTeamUser/:tid/:code", deleteTeamUser)
 		v1.DELETE("deleteTeam/:tid", deleteTeam)
 		v1.PUT("createTeam/:name", createTeam)
 
@@ -114,14 +114,14 @@ func getTeamTask(c *gin.Context) {
 
 func addUserTeam(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
-	uid := c.Param("uid")
+	code := c.Param("code")
 	if err1 != nil {
 		log.Println("getTeamTaskId(): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
 
-	succ := crud.AddUserToTeam(int64(tid), uid)
+	succ := crud.AddUserToTeam(int64(tid), code)
 	if succ {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
@@ -133,10 +133,8 @@ func addUserTeam(c *gin.Context) {
 }
 
 func getUserTeams(c *gin.Context) {
-	session := sessions.Default(c)
-	userProfile, _ := session.Get("user_profile").(crud.User)
-	uid := userProfile.UserID
-	ret, err := crud.GetUserTeams(uid)
+	code := c.Param("code")
+	ret, err := crud.GetUserTeams(code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
 		return
@@ -145,13 +143,13 @@ func getUserTeams(c *gin.Context) {
 }
 
 func getTeamUsers(c *gin.Context) {
-	uid, err1 := strconv.Atoi(c.Param("id"))
+	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
 		log.Println("getteamusers): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-	ret, err := crud.GetTeamUsers(int64(uid))
+	ret, err := crud.GetTeamUsers(int64(tid))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
 		return
@@ -161,13 +159,13 @@ func getTeamUsers(c *gin.Context) {
 
 func deleteTeamUser(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
-	uid := c.Param("uid")
+	code := c.Param("code")
 	if err1 != nil {
 		log.Println("getteamusers): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-	ret := crud.RemoveUserFromTeam(int64(tid), uid)
+	ret := crud.RemoveUserFromTeam(int64(tid), code)
 	if !ret {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
