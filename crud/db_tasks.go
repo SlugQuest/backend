@@ -200,7 +200,7 @@ func EditTask(task Task, tid int) (bool, error) {
 
 	defer stmt.Close()
 	log.Printf("thetaskis bieng editedis")
-	log.Printf(task.Category)
+	log.Printf(task.TaskName)
 	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
 		tid, task.UserID)
 	if err != nil {

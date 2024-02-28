@@ -306,20 +306,18 @@ const response = await fetch(backend/protected, {
   - **Body**: JSON
     ```json
       {
-         "task": {
-            "TaskID":         1,
-            "UserID":         "testUserId",
-            "Category":       "yo",
-            "TaskName":       "New Task",
-            "Description":    "Description of the new task",
-            "StartTime":      "2024-01-01T08:00:00Z",
-            "EndTime":        "2024-01-01T17:00:00Z",
-            "Status":         "completed",
-            "IsRecurring":    false,
-            "IsAllDay":       false,
-            "Difficulty":     "easy",
-            "CronExpression": "" //for now, recurring functions are not supported
-        }
+        "TaskID":         1,
+        "UserID":         "testUserId",
+        "Category":       "yo",
+        "TaskName":       "New Task",
+        "Description":    "Description of the new task",
+        "StartTime":      "2024-01-01T08:00:00Z",
+        "EndTime":        "2024-01-01T17:00:00Z",
+        "Status":         "completed",
+        "IsRecurring":    false,
+        "IsAllDay":       false,
+        "Difficulty":     "easy",
+        "CronExpression": "" //for now, recurring functions are not supported
       }
     ```
   - **Response**:
