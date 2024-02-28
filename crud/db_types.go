@@ -31,17 +31,7 @@ type Task struct {
 	CronExpression string
 }
 
-type TaskPreview struct {
-	TaskID      int
-	UserID      string
-	Category    string
-	TaskName    string
-	StartTime   time.Time
-	EndTime     time.Time
-	Status      string
-	IsRecurring bool
-	IsAllDay    bool
-}
+
 
 type RecurTypeTask struct {
 	TaskID       int

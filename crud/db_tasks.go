@@ -42,10 +42,10 @@ func GetTaskId(tid int) (Task, bool, error) {
 }
 
 // Uid is provided in a router context (session cookies)
-func GetUserTask(uid string) ([]TaskPreview, error) {
-	utaskArr := []TaskPreview{}
+func GetUserTask(uid string) ([]Task, error) {
+	utaskArr := []Task{}
 
-	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, StartTime, EndTime, Status, IsRecurring, IsAllDay FROM TaskTable
+	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression FROM TaskTable
 		WHERE UserID = ?;`)
 	if err != nil {
 		log.Printf("GetUserTask() #1: %v", err)
@@ -61,8 +61,8 @@ func GetUserTask(uid string) ([]TaskPreview, error) {
 	}
 
 	for rows.Next() {
-		var taskprev TaskPreview
-		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
+		var taskprev Task
+		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.Description, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &taskprev.Difficulty, &taskprev.CronExpression)
 		if err != nil {
 			log.Printf("GetUserTask() #3: %v", err)
 			rows.Close()
