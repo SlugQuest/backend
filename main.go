@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	_"fmt"
 	"log"
-	"time"
+	_"time"
 
 	envfuncs "github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -33,29 +33,29 @@ func main() {
 		return
 	}
 
-	go func() { //launching a goroutine
-		timer := time.NewTimer(0) // Initial trigger
-		for {                     //loop that runs forever
+	// go func() { //launching a goroutine
+	// 	timer := time.NewTimer(0) // Initial trigger
+	// 	for {                     //loop that runs forever
 
-			// Block until timer finishes. When done, it sends a message on the channel
-			// timer.C; no other code in this goroutine is executed until that happens.
-			<-timer.C
-			fmt.Println("Running task population...")
+	// 		// Block until timer finishes. When done, it sends a message on the channel
+	// 		// timer.C; no other code in this goroutine is executed until that happens.
+	// 		<-timer.C
+	// 		fmt.Println("Running task population...")
 
-			err := crud.PopRecurringTasksMonth()
-			if err != nil {
-				fmt.Printf("Error populating recurring tasks: %v\n", err)
-			}
+	// 		err := crud.PopRecurringTasksMonth()
+	// 		if err != nil {
+	// 			fmt.Printf("Error populating recurring tasks: %v\n", err)
+	// 		}
 
-			// Reschedule for the next month
-			nextMonth := time.Now().AddDate(0, 1, 0)
-			firstDayOfMonth := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
-			timeUntilNextMonth := time.Until(firstDayOfMonth)
-			timer.Reset(timeUntilNextMonth)
-			//Stops a ticker and resets its period to the specified duration.
-			//The next tick will arrive after the new period elapses.
-		}
-	}()
+	// 		// Reschedule for the next month
+	// 		nextMonth := time.Now().AddDate(0, 1, 0)
+	// 		firstDayOfMonth := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
+	// 		timeUntilNextMonth := time.Until(firstDayOfMonth)
+	// 		timer.Reset(timeUntilNextMonth)
+	// 		//Stops a ticker and resets its period to the specified duration.
+	// 		//The next tick will arrive after the new period elapses.
+	// 	}
+	// }()
 
 	log.Print("Running at http://localhost:8080")
 	router_err := router.Run() // listen and serve on 0.0.0.0:8080

@@ -292,6 +292,7 @@ func createTask(c *gin.Context) {
 
 // Edit a task by its ID
 func editTask(c *gin.Context) {
+	fmt.Println("weswaggin")
 	uid, err := getUserId(c)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
@@ -312,7 +313,8 @@ func editTask(c *gin.Context) {
 		return
 	}
 	json.UserID = uid
-
+	fmt.Println("we are checkin the field of the jsawn")
+	fmt.Println(json.Status)
 	success, err := crud.EditTask(json, tid)
 
 	if success {

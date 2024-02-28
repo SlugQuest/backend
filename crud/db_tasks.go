@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/gorhill/cronexpr"
+	_ "github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
@@ -157,24 +157,24 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	if task.IsRecurring {
-		nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-		rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
-		if err != nil {
-			fmt.Println("CreateTask(): breaky 4", err)
-			return false, -1, err
-		}
-		for i := 0; i < 5; i++ {
-			_, err := rStmnt.Exec(taskID, task.Status, nexTime[i])
+	// if task.IsRecurring {
+	// 	nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
+	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
+	// 	if err != nil {
+	// 		fmt.Println("CreateTask(): breaky 4", err)
+	// 		return false, -1, err
+	// 	}
+	// 	for i := 0; i < 5; i++ {
+	// 		_, err := rStmnt.Exec(taskID, task.Status, nexTime[i])
 
-			if err != nil {
-				fmt.Println("CreateTask(): breaky 7 ", err)
-				return false, -1, err
-			}
-		}
-		defer rStmnt.Close()
+	// 		if err != nil {
+	// 			fmt.Println("CreateTask(): breaky 7 ", err)
+	// 			return false, -1, err
+	// 		}
+	// 	}
+	// 	defer rStmnt.Close()
 
-	}
+	// }
 
 	tx.Commit() //commit transaction to database
 	return true, taskID, nil
@@ -199,7 +199,8 @@ func EditTask(task Task, tid int) (bool, error) {
 	}
 
 	defer stmt.Close()
-
+	log.Printf("thetaskis bieng editedis")
+	log.Printf(task.Category)
 	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
 		tid, task.UserID)
 	if err != nil {
