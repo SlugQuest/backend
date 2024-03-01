@@ -200,7 +200,7 @@ func PopRecurringTasksMonth() error {
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
 			if nextTime.Month() == currentMonth {
-				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", time.Now())
+				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
 				if err != nil {
 					fmt.Printf("In here")
 					return err
@@ -216,10 +216,21 @@ func CountRecurringLogEntries() (int, error) {
 
 	query := "SELECT COUNT(*) FROM RecurringLog"
 
-	err := DB.Get(&count, query)
+	rows, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("CountRecurringLogEntries(): Error counting recurring log entries: %v\n", err)
+		fmt.Printf("CountRecurringLogEntries(): Error executing query: %v\n", err)
 		return 0, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err := rows.Scan(&count); err != nil {
+			fmt.Printf("CountRecurringLogEntries(): Error scanning row: %v\n", err)
+			return 0, err
+		}
+	} else {
+		fmt.Println("CountRecurringLogEntries(): No rows returned.")
+		return 0, nil
 	}
 
 	fmt.Printf("Number of recurring log entries: %d\n", count)

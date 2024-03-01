@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gorhill/cronexpr"
 	_ "github.com/gorhill/cronexpr"
 )
 
@@ -157,24 +158,22 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
-	// if task.IsRecurring {
-	// 	nexTime := cronexpr.MustParse("0 0 1 * * ?").NextN(task.StartTime, 10)
-	// 	rStmnt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
-	// 	if err != nil {
-	// 		fmt.Println("CreateTask(): breaky 4", err)
-	// 		return false, -1, err
-	// 	}
-	// 	for i := 0; i < 5; i++ {
-	// 		_, err := rStmnt.Exec(taskID, task.Status, nexTime[i])
+	if task.IsRecurring {
+		currentMonth := time.Now().Month()
+		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
+		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
 
-	// 		if err != nil {
-	// 			fmt.Println("CreateTask(): breaky 7 ", err)
-	// 			return false, -1, err
-	// 		}
-	// 	}
-	// 	defer rStmnt.Close()
-
-	// }
+		for _, nextTime := range nextTimes {
+			// Check if the next occurrence is in the current month
+			if nextTime.Month() == currentMonth {
+				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
+				if err != nil {
+					fmt.Printf("In here")
+					return false, -1, err
+				}
+			}
+		}
+	}
 
 	tx.Commit() //commit transaction to database
 	return true, taskID, nil
