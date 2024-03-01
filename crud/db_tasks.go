@@ -158,6 +158,8 @@ func CreateTask(task Task) (bool, int64, error) {
 		return false, -1, err
 	}
 
+	tx.Commit() //commit transaction to database
+
 	if task.IsRecurring {
 		currentMonth := time.Now().Month()
 		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
@@ -175,7 +177,6 @@ func CreateTask(task Task) (bool, int64, error) {
 		}
 	}
 
-	tx.Commit() //commit transaction to database
 	return true, taskID, nil
 }
 
