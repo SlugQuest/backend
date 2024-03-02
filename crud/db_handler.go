@@ -2,6 +2,7 @@ package crud
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -39,56 +40,56 @@ func LoadDumbData() error {
 	return nil
 }
 
-func ConnectToDB(isunittest bool) error {
-	if isunittest {
+func ConnectToDB(isUnitTest bool) error {
+	if isUnitTest {
 		// Read schema from file
 		schemaCreate, err := os.ReadFile("../schema.sql")
 		if err != nil {
+			log.Printf("ConnectToDB (unit test): Error reading schema file: %v", err)
 			return err
 		}
 
 		// Connect to an in-memory SQLite database
 		db, err := sqlx.Open("sqlite3", ":memory:")
 		if err != nil {
+			log.Printf("ConnectToDB (unit test): Error opening in-memory database: %v", err)
 			return err
 		}
 
 		// Force a connection and test that it worked
 		err = db.Ping()
 		if err != nil {
-			fmt.Println("breaky")
+			log.Printf("ConnectToDB (unit test): Error pinging database: %v", err)
 			return err
-		} else {
-			fmt.Println("not breaky")
 		}
 
-		//Execute the schema creation SQL
+		// Execute the schema creation SQL
 		_, err = db.Exec(string(schemaCreate))
 		if err != nil {
-			fmt.Println("Error executing schema creation SQL:", err)
+			log.Printf("ConnectToDB (unit test): Error executing schema creation SQL: %v", err)
 			return err
 		}
 
 		DB = db
 	} else {
-
 		// Connect to the real database
 		db, err := sqlx.Open("sqlite3", "slugquest.db")
 		if err != nil {
+			log.Printf("ConnectToDB: Error connecting to database: %v", err)
 			return err
 		}
 
 		// Force a connection and test that it worked
 		err = db.Ping()
 		if err != nil {
-			fmt.Println("breaky")
+			log.Printf("ConnectToDB: Error pinging database: %v", err)
 			return err
-		} else {
-			fmt.Println("not breaky")
 		}
 
 		DB = db
 	}
+
+	log.Println("Successfully connected to DB!")
 	return nil
 }
 
@@ -105,7 +106,7 @@ func CalculatePoints(difficulty string) int {
 	}
 }
 
-// for recurrence work in the future
+// for recurrence work
 func CreateRecurringLogEntry(taskID int, status string, timestamp time.Time) (bool, int64, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
