@@ -338,6 +338,49 @@ const response = await fetch(backend/protected, {
     - **Body**: JSON Sample Response Body
       ```json
       {
+        "message": "Success",
+        "bossId": 1
+      }
+      ```
+
+Certainly! Below is the documentation for the endpoints related to passing and failing recurring tasks:
+
+### Pass/Fail Recurring Task (POST)
+
+#### Pass Recurring Task
+
+- **Endpoint**: `/api/v1/passRecurringTask/:id/:recurrenceID`
+  - **NOTE**: Replace `:id` with the actual TaskID and `:recurrenceID` with the ID of the particular recurring task.
+  - Ex.: `/api/v1/passRecurringTask/123/111`
+- **Description**: Marks a recurring task as pass.
+  - **Request Method**: POST
+  - **URL Parameters**:
+    - `id` (integer): Overall task id
+    - `recurrenceID` (integer): reucrring task id
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
+        "message": "Success",
+        "bossId": 1
+      }
+      ```
+
+#### Fail Recurring Task
+- **Endpoint**: `/api/v1/failRecurringTask/:id/:recurrenceID`
+  - **NOTE**: Replace `:id` with the actual TaskID and `:recurrenceID` with the ID of the particular recurring task.
+  - Ex.: `/api/v1/failRecurringTask/123/456`
+- **Description**: Marks a recurring task as failed.
+  - **Request Method**: POST
+  - **URL Parameters**:
+    - `id` (integer): TaskId
+    - `recurrenceID` (integer): ID of actual recurring task
+  - **Response**:
+    - **Status Code**: 200 OK
+    - **Body**: JSON Sample Response Body
+      ```json
+      {
         "message": "Success"
       }
       ```
