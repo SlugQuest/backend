@@ -403,46 +403,46 @@ const response = await fetch(backend/protected, {
     - **Status Code**: 200 OK
 
 ### getTeamTask
-- **Endpoint**: `/getTeamtask/:id`
+- **Endpoint**: `/api/v1/getTeamtask/:id`
   - **NOTE**: Replace `:id` with the actual TeamID.
 - **Description**:  get a teams task by id
 - **Response**:
   - same as other task fetch endpoints, an array of tasks
 
 ### addUserTeam
-- **Endpoint**: '/addUserTeam/:id/:code'
+- **Endpoint**: '/api/v1/addUserTeam/:id/:code'
 -  id is team id, code is user code 
 - **Description**:  add a user to a team
 - **Response**:
   - 200ok, or error
 
 ### getUserTeams
-- **Endpoint**: `/getUserTeams`
+- **Endpoint**: `/api/v1/getUserTeams`
 - **Description**:  get current user teams
 - **Response**:
   - array of team objects, 200 code
 
 ### getTeamUsers
-- **Endpoint**: `/getTeamUsers/:id `
+- **Endpoint**: `/api/v1/getTeamUsers/:id `
   - **NOTE**:take in a team ID
 - **Description**: sends back user abstraction array, similar to friends function
 - **Response**:
   - array of users 200 code
 
 ### deleteTeamUser
- **Endpoint**: '/teamUserDelete/:tid/:code'
+ **Endpoint**: '/api/v1/teamUserDelete/:tid/:code'
   - id is team id, code is user code 
 - **Description**: deletes the user from the team
 -**Response**:
   - 200 ok or error
 ### deleteTeam
-**Endpoint**: '/deleteTeam/:tid'
+**Endpoint**: '/api/v1/deleteTeam/:tid'
   -**NOTE**:team id as id
 -**Description**:deletes the team, send a delete req. 
 -**Response**:200 ok
 - **Description**: sends back user abstraction, similar to friends function
 ### createTeam
-**Endpoint**: '/createTeam/:name'
+**Endpoint**: '/api/v1/createTeam/:name'
 -**Description**:create request
 -**Response**:
   - 200 ok with teamID
