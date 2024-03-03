@@ -52,6 +52,8 @@ func PopBossTable() (bool, error) {
 		return false, err
 	}
 
+	tx.Commit()
+
 	if count == 0 {
 		// Add default bosses if BossTable is not populated
 		basicBosses := []Boss{

@@ -55,6 +55,25 @@ func main() {
 		return
 	}
 
+	_, err := crud.PopBossTable()
+	if err != nil {
+		log.Fatalf("main(): Error populating bossTable: %v", conn_err)
+		return
+	}
+
+	var bossCount int
+	err = crud.DB.Get(&bossCount, "SELECT COUNT(*) FROM BossTable")
+	if err != nil {
+		log.Fatalf("main(): Error checking BossTable population: %v", err)
+		return
+	}
+
+	if bossCount > 0 {
+		log.Println("BossTable is populated.")
+	} else {
+		log.Println("BossTable is empty.")
+	}
+
 	go monthlyTasks()
 
 	log.Print("Running at http://localhost:8080")
