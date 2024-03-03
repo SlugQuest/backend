@@ -145,6 +145,8 @@ func getUserTeams(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
 		return
 	}
+	log.Println(ret)
+
 	c.JSON(http.StatusOK, gin.H{"teams": ret})
 }
 

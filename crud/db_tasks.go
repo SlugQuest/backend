@@ -180,6 +180,7 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 
 	for rows.Next() {
 		var uid string
+		log.Println("found a user")
 		err := rows.Scan(&uid)
 		if err != nil {
 			fmt.Println(err)
@@ -195,7 +196,7 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 			log.Printf("Get TEam useres could not retreive users  %v", err)
 			return users, err
 		}
-		
+		log.Println("found a user", fUser)
 		users = append(users, fUser)
 	}
 	return users, err
