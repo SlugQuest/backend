@@ -74,7 +74,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.GET("user/friends", getFriendList)
 		v1.GET("getTeamTask/:id", getTeamTask)
 		v1.PUT("addUserTeam/:id/:code", addUserTeam)
-		v1.GET("getUserTeams/:code", getUserTeams)
+		v1.GET("getUserTeams", getUserTeams)
 		v1.GET("getTeamUsers/:id", getTeamUsers)
 		v1.DELETE("deleteTeamUser/:tid/:code", deleteTeamUser)
 		v1.DELETE("deleteTeam/:tid", deleteTeam)
@@ -134,8 +134,13 @@ func addUserTeam(c *gin.Context) {
 }
 
 func getUserTeams(c *gin.Context) {
-	code := c.Param("code")
-	ret, err := crud.GetUserTeams(code)
+	uid, err := getUserId(c)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	ret, err := crud.GetUserTeams(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
 		return

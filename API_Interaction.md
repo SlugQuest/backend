@@ -417,8 +417,8 @@ const response = await fetch(backend/protected, {
   - 200ok, or error
 
 ### getUserTeams
-- **Endpoint**: `/api/v1/getUserTeams`
-- **Description**:  get current user teams
+- **Endpoint**: `/api/v1/getUserTeams/:code`
+- **Description**:  get teams for theuser with the given code
 - **Response**:
   - array of team objects, 200 code
 

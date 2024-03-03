@@ -127,17 +127,19 @@ func AddUserToTeam(tid int64, ucode string) bool {
 
 }
 
-func GetUserTeams(ucode string) ([]Team, error) {
+func GetUserTeams(uid string) ([]Team, error) {
 	uteamArr := []Team{}
-	user, found, err := SearchUserCode(ucode, true)
-	if !found || err != nil {
-		log.Printf("AddFriend() #1: could not find other user: %v", err)
+
+	prep, err := DB.Preparex("SELECT t.TeamID, t.TeamName FROM TeamMembers z, TeamTable t WHERE UserID = ? AND t.TeamID = z.TeamID ")
+	if err != nil {
+		log.Println(err)
 		return uteamArr, err
 	}
-	uid, _ := user["UserID"].(string)
-
-	prep, err := DB.Preparex("SELECT t.TeamID, t.TeamName FROM TeamMembers z, Team t WHERE UserID = ? AND t.TeamID = z.TeamID ")
 	rows, err := prep.Query(uid)
+	if err != nil {
+		log.Println(err)
+		return uteamArr, err
+	}
 	if err != nil {
 		log.Printf("getuserteamissue")
 		rows.Close()
@@ -146,15 +148,17 @@ func GetUserTeams(ucode string) ([]Team, error) {
 
 	for rows.Next() {
 		var taskprev Team
-		err := rows.Scan(&taskprev.TeamID, taskprev.Name)
+		err := rows.Scan(&taskprev.TeamID, &taskprev.Name)
 		if err != nil {
 			fmt.Println(err)
 			rows.Close()
 			return uteamArr, err
 		}
+		log.Println("we found a team")
 		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
 		uteamArr = append(uteamArr, taskprev)
 	}
+	
 	return uteamArr, nil
 
 }
@@ -162,10 +166,14 @@ func GetUserTeams(ucode string) ([]Team, error) {
 func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	uarr := []string{}
 	var users []map[string]interface{}
-	prep, err := DB.Preparex("SELECT UserID FROm UserTable u, TeamMembers m WHERE u.UserID = m.UserID AND t.TeamID = ?")
+	prep, err := DB.Preparex("SELECT u.UserID FROM UserTable u, TeamMembers m WHERE u.UserID = m.UserID AND m.TeamID = ?")
+	if err != nil {
+		log.Printf("getuserteamissue", err)
+		return users, err
+	}
 	rows, err := prep.Query(tid)
 	if err != nil {
-		log.Printf("getuserteamissue")
+		log.Printf("getuserteamissue", err)
 		rows.Close()
 		return users, err
 	}
@@ -263,11 +271,27 @@ func CreateTeam(name string, uid string) (bool, int64) {
 		fmt.Println("CreateTeam(): breaky 3 ", err)
 		return false, 0
 	}
-
-	AddUserToTeam(teamins, uid)
 	tx.Commit()
+	AddUserToTeamUid(teamins, uid)
+
 	return true, teamins
 }
+
+func AddUserToTeamUid(tid int64, uid string) bool {
+	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
+	if err != nil {
+		log.Printf("bricked in adduser team", err)
+		return false
+	}
+	_, err = prep.Exec(tid, uid)
+	if err != nil {
+		log.Printf("bricked in adduser team", err)
+		return false
+	}
+	return true
+
+}
+
 func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurTypeTask, error) {
 	utaskArr := []RecurTypeTask{}
 
