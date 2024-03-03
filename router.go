@@ -113,6 +113,7 @@ func getTeamTask(c *gin.Context) {
 }
 
 func addUserTeam(c *gin.Context) {
+	log.Println("getting team")
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	code := c.Param("code")
 	if err1 != nil {

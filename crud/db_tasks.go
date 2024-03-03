@@ -247,20 +247,20 @@ func DeleteTeam(tid int64) bool {
 func CreateTeam(name string, uid string) (bool, int64) {
 	tx, err := DB.Beginx() //start transaction
 	defer tx.Rollback()
-	stmnt, err := tx.Preparex("INSERT INTO Teamtable (TeamName) VALUES (?)")
+	stmnt, err := tx.Preparex("INSERT INTO TeamTable (TeamName) VALUES (?)")
 	if err != nil {
-		log.Printf("bricked in add team")
+		log.Printf("bricked in add team", err)
 		return false, 0
 	}
 	res, err := stmnt.Exec(name)
 	if err != nil {
-		log.Printf("bricked in add team")
+		log.Printf("bricked in add team", err)
 		return false, 0
 	}
 	teamins, err := res.LastInsertId()
 	if err != nil {
 		// fmt.Println(task)
-		fmt.Println("CreateTask(): breaky 3 ", err)
+		fmt.Println("CreateTeam(): breaky 3 ", err)
 		return false, 0
 	}
 
