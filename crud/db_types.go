@@ -20,7 +20,6 @@ type Task struct {
 	Status         string
 	IsRecurring    bool
 	IsAllDay       bool
-	RecurringType  string
 	Difficulty     string
 	CronExpression string
 }

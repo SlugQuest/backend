@@ -118,7 +118,6 @@ func TestEditTask(t *testing.T) {
 		Status:         "failed",
 		IsRecurring:    false,
 		IsAllDay:       true,
-		RecurringType:  "",
 		Difficulty:     "medium",
 		CronExpression: "",
 	}
