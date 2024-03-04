@@ -188,6 +188,7 @@ func GetRecurringTasks() ([]Task, error) {
 
 func PopRecurringTasksMonth() error {
 	currentMonth := time.Now().Month()
+	currentYear := time.Now().Year()
 
 	recurringTasks, err := GetRecurringTasks()
 	if err != nil {
@@ -195,12 +196,15 @@ func PopRecurringTasksMonth() error {
 	}
 
 	for _, task := range recurringTasks {
+		cronExpression := task.CronExpression
+		fmt.Printf("Parsing cron expression: %s\n", cronExpression)
+
 		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
 		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
 
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
-			if nextTime.Month() == currentMonth {
+			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
 				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
 				if err != nil {
 					fmt.Printf("In here")

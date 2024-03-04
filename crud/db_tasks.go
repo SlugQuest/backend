@@ -162,12 +162,13 @@ func CreateTask(task Task) (bool, int64, error) {
 
 	if task.IsRecurring {
 		currentMonth := time.Now().Month()
+		currentYear := time.Now().Year()
 		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
 		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
 
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
-			if nextTime.Month() == currentMonth {
+			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
 				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
 				if err != nil {
 					fmt.Printf("In here")
