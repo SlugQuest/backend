@@ -114,6 +114,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	rowrec, err := p2.Query(uid, startq, endq)
 	for rows.Next() {
 		var taskprev RecurTypeTask
+		log.Println("recur type task in span found")
 		var reftime time.Time
 		err := rowrec.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &reftime, &taskprev.RecurrenceId)
 		if err != nil {
