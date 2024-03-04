@@ -166,7 +166,7 @@ func getTeamUsers(c *gin.Context) {
 }
 
 func deleteTeamUser(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("id"))
+	tid, err1 := strconv.Atoi(c.Param("tid"))
 	code := c.Param("code")
 	log.Println(tid)
 	log.Println(code)
