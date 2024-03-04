@@ -460,14 +460,16 @@ func getuserTaskSpan(c *gin.Context) {
 		return
 	}
 
-	starttime, err1 := time.Parse(time.RFC3339, c.GetString("start"))
+	starttime, err1 := time.Parse(time.RFC3339, c.Param("start"))
 	if err1 != nil {
+		log.Println("startime", err)
 		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
 
-	endtime, err2 := time.Parse(time.RFC3339, c.GetString("end"))
+	endtime, err2 := time.Parse(time.RFC3339, c.Param("end"))
 	if err2 != nil {
+		log.Println("enime", err)
 		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
