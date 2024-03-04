@@ -37,6 +37,44 @@ func AddBoss(boss Boss) (bool, error) {
 	return true, nil
 }
 
+func PopBossTable() (bool, error) {
+	tx, err := DB.Beginx()
+	if err != nil {
+		log.Printf("popBossTable(): error beginning transaction")
+		return false, err
+	}
+	defer tx.Rollback()
+	// Checking if BossTable is already populated
+	var count int
+	err = tx.Get(&count, "SELECT COUNT(*) FROM BossTable")
+	if err != nil {
+		log.Printf("popBossTable(): error checking BossTable population")
+		return false, err
+	}
+
+	tx.Commit()
+
+	if count == 0 {
+		// Add default bosses if BossTable is not populated
+		basicBosses := []Boss{
+			{BossID: 1, Name: "Default Boss 1", Health: 40, Image: "../images/clown.jpeg"},
+			{BossID: 2, Name: "Default Boss 2", Health: 90, Image: "../images/clown.jpeg"},
+			{BossID: 3, Name: "Default Boss 3", Health: 200, Image: "../images/clown.jpeg"},
+			{BossID: 4, Name: "Default Boss 4", Health: 300, Image: "../images/clown.jpeg"},
+		}
+
+		for _, boss := range basicBosses {
+			_, err := AddBoss(boss)
+			if err != nil {
+				log.Printf("PopBossTable(): error adding boss to BossTable: %v", err)
+				return false, err
+			}
+		}
+	}
+
+	return true, nil
+}
+
 // GetBossById retrieves boss information by BossID.
 func GetBossById(bossID int) (Boss, bool, error) {
 	var boss Boss
