@@ -62,7 +62,7 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("failRecurringTask/:id/:recurrenceID", failRecurringTask)
 		v1.PUT("task/:id", editTask)
 		v1.DELETE("task/:id", deleteTask)
-		v1.GET("userTasks/:id/:start/:end", getuserTaskSpan)
+		v1.GET("userTasks/:start/:end", getuserTaskSpan)
 		v1.GET("userPoints", getUserPoints)
 		v1.GET("getCat/:id", getCategory)
 		v1.PUT("makeCat", putCat)

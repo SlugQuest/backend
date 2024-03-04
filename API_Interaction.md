@@ -111,7 +111,7 @@ const response = await fetch(backend/protected, {
 ### Getting All User Tasks (GET)
 
 - **Endpoint**: `/api/v1/tasks`
-- **Description**: Get all tasks for a specific user.
+- **Description**: Get all tasks for the current logged in user.
   - **Request Method**: GET
   - **Response**:
     - **Status Code**: 200 OK
@@ -165,14 +165,12 @@ const response = await fetch(backend/protected, {
       ```
 
 ### Get User Tasks within a Time Range (GET)
-
-- **Endpoint**: `/api/v1/userTasks/:id/:start/:end`
-  - **NOTE**: Replace `:id`, `:start`, and `:end` with the actual user ID, start time, and end time respectively.
+- **Endpoint**: `/api/v1/userTasks/:start/:end`
+  - **NOTE**: Replace `:start`, and `:end` with the actual start time, and end time respectively.
   - Ex.: `/api/v1/userTasks/123/2024-02-09T00:00:00Z/2024-02-10T00:00:00Z`
 - **Description**: Get tasks for the user within a specified time range.
   - **Request Method**: GET
   - **URL Parameters**:
-    - `id` (string): The ID of the authenticated user.
     - `start` The start time of the time range.
     - `end` The end time of the time range.
   - **Response**:
