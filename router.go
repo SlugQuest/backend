@@ -153,7 +153,7 @@ func getUserTeams(c *gin.Context) {
 func getTeamUsers(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	if err1 != nil {
-		log.Println("getteamusers): str2int error")
+		log.Println("getteamusers): str2int error", err1)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
@@ -168,8 +168,10 @@ func getTeamUsers(c *gin.Context) {
 func deleteTeamUser(c *gin.Context) {
 	tid, err1 := strconv.Atoi(c.Param("id"))
 	code := c.Param("code")
+	log.Println(tid)
+	log.Println(code)
 	if err1 != nil {
-		log.Println("getteamusers): str2int error")
+		log.Println("getRrs): str2int error", err1)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
@@ -182,9 +184,9 @@ func deleteTeamUser(c *gin.Context) {
 }
 
 func deleteTeam(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("id"))
+	tid, err1 := strconv.Atoi(c.Param("tid"))
 	if err1 != nil {
-		log.Println("getteamusers): str2int error")
+		log.Println("delmusers): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
