@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
-	_ "fmt"
 	"log"
 	"time"
-	_ "time"
 
 	envfuncs "github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -15,11 +12,11 @@ import (
 )
 
 func monthlyTasks() {
-	fmt.Println("Running task population...")
+	log.Println("Running task population...")
 
 	err := crud.PopRecurringTasksMonth()
 	if err != nil {
-		fmt.Printf("Error populating recurring tasks: %v\n", err)
+		log.Printf("Error populating recurring tasks: %v", err)
 	}
 
 	// Schedule the task for the next month

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gorhill/cronexpr"
-	_ "github.com/gorhill/cronexpr"
 )
 
 // Find task by TaskID
@@ -138,11 +137,7 @@ func GetUserTeams(uid string) ([]Team, error) {
 	}
 	rows, err := prep.Query(uid)
 	if err != nil {
-		log.Println(err)
-		return uteamArr, err
-	}
-	if err != nil {
-		log.Printf("getuserteamissue")
+		log.Printf("GetUserTeams() #1: %v", err)
 		rows.Close()
 		return uteamArr, err
 	}
@@ -159,7 +154,7 @@ func GetUserTeams(uid string) ([]Team, error) {
 		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
 		uteamArr = append(uteamArr, taskprev)
 	}
-	
+
 	return uteamArr, nil
 
 }
@@ -169,12 +164,12 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	var users []map[string]interface{}
 	prep, err := DB.Preparex("SELECT u.UserID FROM UserTable u, TeamMembers m WHERE u.UserID = m.UserID AND m.TeamID = ?")
 	if err != nil {
-		log.Printf("getuserteamissue", err)
+		log.Printf("GetTeamUsers() #1: %v", err)
 		return users, err
 	}
 	rows, err := prep.Query(tid)
 	if err != nil {
-		log.Printf("getuserteamissue", err)
+		log.Printf("GetTeamUsers() #2: %v", err)
 		rows.Close()
 		return users, err
 	}
@@ -194,7 +189,7 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	for _, fID := range uarr {
 		fUser, found, err := GetPublicUser(fID)
 		if !found || err != nil {
-			log.Printf("Get TEam useres could not retreive users  %v", err)
+			log.Printf("GetTeamUsers(): could not retreive users: %v", err)
 			return users, err
 		}
 		log.Println("found a user", fUser)
@@ -204,94 +199,102 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 
 }
 
-func RemoveUserFromTeam(tid int64, ucode string) bool {
+func RemoveUserFromTeam(tid int64, ucode string) (bool, error) {
 	user, found, err := SearchUserCode(ucode, true)
 	if !found || err != nil {
-		log.Printf("AddFriend() #1: could not find other user: %v", err)
-		return false
+		log.Printf("RemoveUserFromTeam() #1: could not find other user: %v", err)
+		return false, err
 	}
 	uid, _ := user["UserID"].(string)
 	prep, err := DB.Preparex("DELETE FROM TeamMembers WHERE TeamID = ? AND UserID = ?")
 	if err != nil {
-		log.Printf("bricked in del team")
-		return false
+		log.Printf("RemoveUserFromTeam() #2: could not prepare statement: %v", err)
+		return false, err
 	}
 	_, err = prep.Exec(tid, uid)
 	if err != nil {
-		log.Printf("bricked in delteam")
-		return false
+		log.Printf("RemoveUserFromTeam() #3: could not remove team member: %v", err)
+		return false, err
 	}
-	return true
-
+	return true, err
 }
 
-func DeleteTeam(tid int64) bool {
+func DeleteTeam(tid int64) (bool, error) {
 	tx, err := DB.Beginx() //start transaction
+	if err != nil {
+		log.Printf("DeleteTeam(): DB issue starting transaction: %v", err)
+		return false, err
+	}
 	defer tx.Rollback()
+
 	stmnt, err := tx.Preparex("DELETE FROM TeamMembers WHERE TeamID = ? ")
 	if err != nil {
-		log.Printf("bricked in del team")
-		return false
+		log.Printf("DeleteTeam() #1: could not prepare statement: %v", err)
+		return false, err
 	}
 	_, err = stmnt.Exec(tid)
 	if err != nil {
-		log.Printf("bricked in del team")
-		return false
+		log.Printf("DeleteTeam() #2: could not delete team members: %v", err)
+		return false, err
 	}
 
 	stmnt2, err := tx.Preparex("DELETE FROM TeamTable WHERE TeamID = ?")
 	if err != nil {
-		log.Printf("bricked in del team")
-		return false
+		log.Printf("DeleteTeam() #3: could not prepare statement: %v", err)
+		return false, err
 	}
 
 	_, err = stmnt2.Exec(tid)
 	if err != nil {
-		log.Printf("bricked in del team")
-		return false
+		log.Printf("DeleteTeam() #4: could not delete team: %v", err)
+		return false, err
 	}
 	tx.Commit()
-	return true
+	return true, nil
 }
 
-func CreateTeam(name string, uid string) (bool, int64) {
+func CreateTeam(name string, uid string) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
+	if err != nil {
+		log.Printf("CreateTeam(): DB issue starting transaction: %v", err)
+		return false, 0, err
+	}
 	defer tx.Rollback()
+
 	stmnt, err := tx.Preparex("INSERT INTO TeamTable (TeamName) VALUES (?)")
 	if err != nil {
-		log.Printf("bricked in add team", err)
-		return false, 0
+		log.Printf("CreateTeam(): could not prepare statement: %v", err)
+		return false, 0, err
 	}
 	res, err := stmnt.Exec(name)
 	if err != nil {
-		log.Printf("bricked in add team", err)
-		return false, 0
+		log.Printf("CreateTeam(): could not create team: %v", err)
+		return false, 0, err
 	}
 	teamins, err := res.LastInsertId()
 	if err != nil {
-		// fmt.Println(task)
-		fmt.Println("CreateTeam(): breaky 3 ", err)
-		return false, 0
+		log.Printf("CreateTeam(): breaky 3: %v", err)
+		return false, 0, err
 	}
 	tx.Commit()
 	AddUserToTeamUid(teamins, uid)
 
-	return true, teamins
+	return true, teamins, nil
 }
 
-func AddUserToTeamUid(tid int64, uid string) bool {
+func AddUserToTeamUid(tid int64, uid string) (bool, error) {
 	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
 	if err != nil {
-		log.Printf("bricked in adduser team", err)
-		return false
+		log.Printf("AddUserToTeamUid(): could not prepare statement %v", err)
+		return false, err
 	}
 	_, err = prep.Exec(tid, uid)
 	if err != nil {
-		log.Printf("bricked in adduser team", err)
-		return false
+		log.Printf("AddUserToTeamUid(): could not add user to team: %v", err)
+		return false, err
 	}
-	return true
 
+	return true, nil
 }
 
 func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurTypeTask, error) {
@@ -353,7 +356,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 func CreateTask(task Task) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
-		fmt.Println("CreateTask(): breaky 1")
+		log.Printf("CreateTask(): DB issue starting transaction: %v", err)
 		return false, -1, err
 	}
 	defer tx.Rollback() // Abort transaction if any error occurs
@@ -361,21 +364,20 @@ func CreateTask(task Task) (bool, int64, error) {
 	//preparing statement to prevent SQL injection issues
 	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println("CreateTask(): breaky 2", err)
+		log.Printf("CreateTask(): could not prepare statement %v", err)
 		return false, -1, err
 	}
-
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
-	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 
+	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
 	if err != nil {
-		fmt.Println("CreateTask(): breaky 3 ", err)
+		log.Printf("CreateTask(): could not insert into table: %v", err)
 		return false, -1, err
 	}
 
 	taskID, err := res.LastInsertId()
 	if err != nil {
-		fmt.Println("CreateTask(): breaky 4 ", err)
+		log.Printf("CreateTask(): breaky 4: %v", err)
 		return false, -1, err
 	}
 
@@ -392,7 +394,6 @@ func CreateTask(task Task) (bool, int64, error) {
 			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
 				_, _, err = CreateRecurringLogEntry(taskID, "todo", nextTime)
 				if err != nil {
-					fmt.Printf("In here")
 					return false, -1, err
 				}
 			}
@@ -405,7 +406,7 @@ func CreateTask(task Task) (bool, int64, error) {
 func EditTask(task Task, tid int) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
-		log.Printf("EditTask() #1: %v", err)
+		log.Printf("EditTask() #1: DB issue starting transaction: %v", err)
 		return false, err
 	}
 
@@ -416,13 +417,11 @@ func EditTask(task Task, tid int) (bool, error) {
 	`)
 
 	if err != nil {
-		log.Printf("EditTask() #2: %v", err)
+		log.Printf("EditTask() #2: could not prepare statement: %v", err)
 		return false, err
 	}
-
 	defer stmt.Close()
-	log.Printf("thetaskis bieng editedis")
-	log.Printf(task.TaskName)
+
 	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
 		tid, task.UserID)
 	if err != nil {
