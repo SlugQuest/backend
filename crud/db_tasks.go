@@ -170,7 +170,7 @@ func CreateTask(task Task) (bool, int64, error) {
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
 			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
-				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
+				_, _, err = CreateRecurringLogEntry(taskID, "todo", nextTime)
 				if err != nil {
 					fmt.Printf("In here")
 					return false, -1, err

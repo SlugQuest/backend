@@ -107,7 +107,7 @@ func CalculatePoints(difficulty string) int {
 }
 
 // for recurrence work
-func CreateRecurringLogEntry(taskID int, status string, timestamp time.Time) (bool, int64, error) {
+func CreateRecurringLogEntry(taskID int64, status string, timestamp time.Time) (bool, int64, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
 		fmt.Printf("CreateRecurringLog(): breaky 1: %v\n", err)
@@ -205,7 +205,7 @@ func PopRecurringTasksMonth() error {
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
 			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
-				_, _, err = CreateRecurringLogEntry(task.TaskID, "todo", nextTime)
+				_, _, err = CreateRecurringLogEntry(int64(task.TaskID), "todo", nextTime)
 				if err != nil {
 					fmt.Printf("In here")
 					return err
