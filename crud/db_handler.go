@@ -18,7 +18,6 @@ var DB *sqlx.DB
 var NoTeamID int = -1
 
 func LoadDumbData() error {
-	// sql.NullInt64{Valid: false} -> Null for TeamID
 	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i),
 			Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false,

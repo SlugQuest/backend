@@ -106,25 +106,30 @@ func GetTeamTask(tid int) ([]Task, error) {
 	return utaskArr, err
 }
 
-func AddUserToTeam(tid int64, ucode string) bool {
+func AddUserToTeam(tid int64, ucode string) (bool, error) {
+	if tid == int64(NoTeamID) {
+		log.Println("AddUserToTeam(): invalid team")
+		return false, nil
+	}
+
 	user, found, err := SearchUserCode(ucode, true)
 	if !found || err != nil {
-		log.Printf("AddFriend() #1: could not find other user: %v", err)
-		return false
+		log.Printf("AddUserToTeam() #1: could not find other user: %v", err)
+		return false, err
 	}
 	uid, _ := user["UserID"].(string)
 	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
 	if err != nil {
-		log.Printf("bricked in adduser team")
-		return false
+		log.Printf("AddUserToTeam(): could not prepare statement: %v", err)
+		return false, err
 	}
 	_, err = prep.Exec(tid, uid)
 	if err != nil {
-		log.Printf("bricked in adduser team")
-		return false
+		log.Printf("AddUserToTeam(): could not add team member: %v", err)
+		return false, err
 	}
-	return true
 
+	return true, nil
 }
 
 func GetUserTeams(uid string) ([]Team, error) {
@@ -146,7 +151,7 @@ func GetUserTeams(uid string) ([]Team, error) {
 		var taskprev Team
 		err := rows.Scan(&taskprev.TeamID, &taskprev.Name)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("GetUserTeams(): could not read from DB: %v", err)
 			rows.Close()
 			return uteamArr, err
 		}

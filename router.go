@@ -132,8 +132,8 @@ func addUserTeam(c *gin.Context) {
 		return
 	}
 
-	succ := crud.AddUserToTeam(int64(tid), code)
-	if succ {
+	succ, err := crud.AddUserToTeam(int64(tid), code)
+	if succ && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
