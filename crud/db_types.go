@@ -9,6 +9,12 @@ type Category struct {
 	Color  int
 }
 
+type Team struct {
+	TeamID int64
+	Name string
+	Members []map[string]interface{}
+}
+
 type Task struct {
 	TaskID         int
 	UserID         string
@@ -24,17 +30,7 @@ type Task struct {
 	CronExpression string
 }
 
-type TaskPreview struct {
-	TaskID      int
-	UserID      string
-	Category    string
-	TaskName    string
-	StartTime   time.Time
-	EndTime     time.Time
-	Status      string
-	IsRecurring bool
-	IsAllDay    bool
-}
+
 
 type RecurTypeTask struct {
 	TaskID       int
