@@ -1,6 +1,8 @@
 package crud
 
-import "time"
+import (
+	"time"
+)
 
 type Category struct {
 	CatID  int

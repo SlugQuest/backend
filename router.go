@@ -105,6 +105,11 @@ func getTeamTask(c *gin.Context) {
 		return
 	}
 
+	if tid == crud.NoTeamID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid team"})
+		return
+	}
+
 	task, err := crud.GetTeamTask(tid)
 	if err != nil {
 		log.Println("getTaskById(): Problem in team tasks, probably DB related")
@@ -119,6 +124,11 @@ func addUserTeam(c *gin.Context) {
 	if err1 != nil {
 		log.Println("getTeamTaskId(): str2int error")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	if tid == crud.NoTeamID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid team"})
 		return
 	}
 
@@ -157,6 +167,12 @@ func getTeamUsers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
+
+	if tid == crud.NoTeamID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid team"})
+		return
+	}
+
 	ret, err := crud.GetTeamUsers(int64(tid))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
@@ -175,6 +191,12 @@ func deleteTeamUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
+
+	if tid == crud.NoTeamID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid team"})
+		return
+	}
+
 	ret, err := crud.RemoveUserFromTeam(int64(tid), code)
 	if !ret || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
@@ -190,6 +212,12 @@ func deleteTeam(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
+
+	if tid == crud.NoTeamID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid team"})
+		return
+	}
+
 	ret, err := crud.DeleteTeam(int64(tid))
 	if !ret || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
@@ -393,15 +421,14 @@ func createTask(c *gin.Context) {
 		return
 	}
 
-	var json crud.Task //instance of Task struct defined in db_handler.go
+	var json crud.Task
 	if err := c.ShouldBindJSON(&json); err != nil {
-		fmt.Println("errorcasexsit", err.Error())
+		log.Printf("createTask(): could not bind request to Task")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 	json.UserID = uid
-	fmt.Println("creat")
-	fmt.Println(json)
+	json.TeamID = crud.NoTeamID
 
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
@@ -422,8 +449,7 @@ func editTask(c *gin.Context) {
 		return
 	}
 
-	var json crud.Task //instance of Task struct defined in handler
-
+	var json crud.Task
 	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println("editTask(): Invalid taskID")
@@ -436,10 +462,11 @@ func editTask(c *gin.Context) {
 		return
 	}
 	json.UserID = uid
+
 	fmt.Println("we are checkin the field of the jsawn")
 	fmt.Println(json.Status)
-	success, err := crud.EditTask(json, tid)
 
+	success, err := crud.EditTask(json, tid)
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return

@@ -21,7 +21,7 @@ CREATE TABLE TaskTable (
     IsAllDay BOOLEAN NOT NULL,
     Difficulty VARCHAR(15) CHECK(Difficulty IN ('easy','medium', 'hard')), -- Backend does conversion of easy/medium/hard to points
     CronExpression VARCHAR(255) NOT NULL,
-    TeamID INTEGER NOT NULL DEFAULT 0,  -- Team 0 -> no team associated
+    TeamID INTEGER NOT NULL DEFAULT -1, -- Default of not associated with a team
     FOREIGN KEY (UserID) REFERENCES UserTable(UserID),
     FOREIGN KEY (Category) REFERENCES Category(CatID),
     FOREIGN KEY (TeamID) REFERENCES TeamTable(TeamID) 

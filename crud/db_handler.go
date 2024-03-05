@@ -14,10 +14,15 @@ import (
 // Shared within the package
 var DB *sqlx.DB
 
+// ID for the default team, for individual tasks
+var NoTeamID int = -1
+
 func LoadDumbData() error {
-	// No recur patterns since we aren't using them yet
+	// sql.NullInt64{Valid: false} -> Null for TeamID
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy", TeamID: -1}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i),
+			Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false,
+			IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy", TeamID: NoTeamID}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -240,4 +245,13 @@ func CountRecurringLogEntries() (int, error) {
 
 	log.Printf("Number of recurring log entries: %d\n", count)
 	return count, nil
+}
+
+func AddDefaultTeam() (bool, error) {
+	_, err := DB.Exec("INSERT OR IGNORE INTO TeamTable VALUES (?, ?)", NoTeamID, "NoTeam")
+	if err != nil {
+		log.Printf("AddDefaultTeam(): error adding default team to DB: %v", err)
+		return false, err
+	}
+	return true, nil
 }

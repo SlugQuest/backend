@@ -73,6 +73,11 @@ func main() {
 
 	go monthlyTasks()
 
+	added, err := crud.AddDefaultTeam()
+	if !added || err != nil {
+		log.Println("Could not add default team")
+	}
+
 	log.Print("Running at http://localhost:8080")
 	router_err := router.Run() // listen and serve on 0.0.0.0:8080
 	if router_err != nil {
