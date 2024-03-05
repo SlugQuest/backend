@@ -45,8 +45,8 @@ func GetTaskId(tid int) (Task, bool, error) {
 func GetUserTask(uid string) ([]Task, error) {
 	utaskArr := []Task{}
 
-	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression FROM TaskTable
-		WHERE UserID = ?;`)
+	prep, err := DB.Preparex(`SELECT TaskID, UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression, TeamID
+		FROM TaskTable WHERE UserID = ?;`)
 	if err != nil {
 		log.Printf("GetUserTask() #1: %v", err)
 		return utaskArr, err
@@ -62,7 +62,7 @@ func GetUserTask(uid string) ([]Task, error) {
 
 	for rows.Next() {
 		var taskprev Task
-		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.Description, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &taskprev.Difficulty, &taskprev.CronExpression)
+		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.Description, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay, &taskprev.Difficulty, &taskprev.CronExpression, &taskprev.TeamID)
 		if err != nil {
 			log.Printf("GetUserTask() #3: %v", err)
 			rows.Close()
@@ -318,7 +318,6 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	for rows.Next() {
 		var taskprev RecurTypeTask
 		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
-		log.Println("found not recur")
 		if err != nil {
 			log.Printf("GetUserTaskDateTime() #3: %v", err)
 			rows.Close()
@@ -345,7 +344,6 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 			rowrec.Close()
 			return utaskArr, err
 		}
-		taskprev.StartTime = taskprev.StartTime
 		utaskArr = append(utaskArr, taskprev)
 	}
 	p2.Close()
@@ -486,79 +484,72 @@ func DeleteTask(tid int, uid string) (bool, error) {
 	return true, nil
 }
 
-func Passtask(Tid int, uid string) (bool, error, int) {
-	task, ok, err := GetTaskId(Tid)
+func PassTask(tid int, uid string) (bool, int, error) {
+	task, found, err := GetTaskId(tid)
 	if err != nil {
-		fmt.Printf("Passtask(): breaky 2 %v\n", err)
-		return false, err, -1
+		log.Printf("PassTask(): error getting task: %v\n", err)
+		return false, -1, err
 	}
-
-	if !ok {
-		fmt.Println("Passtask(): Task not found")
-		return false, fmt.Errorf("task not found"), -1
+	if !found {
+		log.Println("PassTask(): Task not found")
+		return false, -1, fmt.Errorf("task not found")
 	}
 
 	if task.UserID != uid {
-		return false, fmt.Errorf("task not owned by this user"), -1
+		return false, -1, fmt.Errorf("task not owned by this user")
 	}
 
 	if task.IsRecurring {
 		_, err := DB.Exec(`
-		UPDATE RecurringLog 
-		SET Status = ?
-		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
-	`, "completed", Tid, time.Now())
+			UPDATE RecurringLog 
+			SET Status = ?
+			WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
+		`, "completed", tid, time.Now())
 
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 0 %v\n", err)
-			return false, err, -1
+			log.Printf("PassTask(): error updating RecurringLog: %v\n", err)
+			return false, -1, err
 		}
 
 	} else {
 		tx, err := DB.Beginx() // start transaction
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 1 %v\n", err)
-			return false, err, -1
+			log.Printf("PassTask(): DB error starting transaction: %v\n", err)
+			return false, -1, err
 		}
 		defer tx.Rollback() // Abort transaction if any error occurs
+
 		stmt, err := tx.Preparex(`
 			UPDATE TaskTable 
 			SET Status = ?
 			WHERE TaskID = ?
 		`)
-
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 2 %v\n", err)
-			return false, err, -1
+			log.Printf("PassTask(): could not prepare statement: %v\n", err)
+			return false, -1, err
 		}
+		defer stmt.Close()
 
-		_, err = stmt.Exec("completed", Tid)
+		_, err = stmt.Exec("completed", tid)
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 3 %v\n", err)
-			return false, err, -1
+			log.Printf("PassTask(): could not update status: %v\n", err)
+			return false, -1, err
 		}
 
 		tx.Commit()
-
 	}
-
-	// tx, err = DB.Beginx() // start transaction
-	// if err != nil {
-	// 	fmt.Printf("Passtask(): breaky %v\n", err)
-	// 	return false, err
-	// }
 
 	points := CalculatePoints(task.Difficulty)
 	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
-		fmt.Printf("Passtask(): breaky 5 %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassTask(): could not update user's points: %v\n", err)
+		return false, -1, err
 	}
 
 	currBossHealth, err := GetCurrBossHealth(task.UserID)
 	if err != nil {
-		fmt.Printf("Passtask(): breaky %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassTask(): could not retrieve current boss health: %v\n", err)
+		return false, -1, err
 	}
 
 	// Check if the current boss health is zero
@@ -566,43 +557,42 @@ func Passtask(Tid int, uid string) (bool, error, int) {
 		// Switch to the next boss ID (currBossId + 1)
 		_, err := DB.Exec("UPDATE UserTable SET BossId = BossId + 1 WHERE UserID = ?", task.UserID)
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 6 %v\n", err)
-			return false, err, -1
+			fmt.Printf("PassTask(): could not switch to next boss: %v\n", err)
+			return false, -1, err
 		}
 
 		// Reset user points to 0
 		_, err = DB.Exec("UPDATE UserTable SET Points = ? WHERE UserID = ?", 0, task.UserID)
 		if err != nil {
-			fmt.Printf("Passtask(): breaky 7 %v\n", err)
-			return false, err, -1
+			fmt.Printf("PassTask(): could not reset user points to 0: %v\n", err)
+			return false, -1, err
 		}
 	}
 
 	user, _, _ := GetUser(uid)
-
-	return true, nil, user.BossId
+	return true, user.BossId, nil
 }
 
-func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error, int) {
-	task, ok, err := GetTaskId(Tid)
+func PassRecurringTask(tid int, recurrenceID int, uid string) (bool, int, error) {
+	task, ok, err := GetTaskId(tid)
 	if err != nil {
-		fmt.Printf("Passtask(): breaky 0 %v\n", err)
-		return false, err, -1
+		log.Printf("PassRecurringTask(): error getting task: %v\n", err)
+		return false, -1, err
 	}
 
 	if !ok {
-		fmt.Println("Passtask(): Task not found")
-		return false, fmt.Errorf("task not found"), -1
+		fmt.Println("PassTask(): Task not found")
+		return false, -1, fmt.Errorf("task not found")
 	}
 
 	if task.UserID != uid {
-		return false, fmt.Errorf("task not owned by this user"), -1
+		return false, -1, fmt.Errorf("task not owned by this user")
 	}
 
 	tx, err := DB.Beginx()
 	if err != nil {
-		fmt.Printf("PassRecurringTask(): breaky 1 %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassRecurringTask(): DB issue starting transaction %v\n", err)
+		return false, -1, err
 	}
 	defer tx.Rollback()
 
@@ -613,8 +603,8 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error, int)
 	`, "completed", recurrenceID)
 
 	if err != nil {
-		fmt.Printf("PassRecurringTask(): breaky 2 %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassRecurringTask(): could not update status: %v\n", err)
+		return false, -1, err
 	}
 
 	tx.Commit()
@@ -623,14 +613,14 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error, int)
 	points := CalculatePoints(task.Difficulty)
 	_, err = DB.Exec("UPDATE UserTable SET Points = Points + ? WHERE UserID = ?", points, task.UserID)
 	if err != nil {
-		fmt.Printf("PassRecurringTask(): breaky 3 %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassRecurringTask(): could not update user points: %v\n", err)
+		return false, -1, err
 	}
 
 	currBossHealth, err := GetCurrBossHealth(uid)
 	if err != nil {
-		fmt.Printf("PassRecurringTask(): breaky 4 %v\n", err)
-		return false, err, -1
+		fmt.Printf("PassRecurringTask(): could not retrieve current boss health: %v\n", err)
+		return false, -1, err
 	}
 
 	// Check if the current boss health is zero
@@ -638,32 +628,31 @@ func PassRecurringTask(Tid int, recurrenceID int, uid string) (bool, error, int)
 		// Switch to the next boss ID (currBossId + 1)
 		_, err := DB.Exec("UPDATE UserTable SET BossId = BossId + 1 WHERE UserID = ?", task.UserID)
 		if err != nil {
-			fmt.Printf("PassRecurringTask(): breaky 5 %v\n", err)
-			return false, err, -1
+			fmt.Printf("PassRecurringTask(): could not switch to next boss %v\n", err)
+			return false, -1, err
 		}
 
 		// Reset user points to 0
 		_, err = DB.Exec("UPDATE UserTable SET Points = ? WHERE UserID = ?", 0, task.UserID)
 		if err != nil {
-			fmt.Printf("PassRecurringTask(): breaky 6 %v\n", err)
-			return false, err, -1
+			fmt.Printf("PassRecurringTask(): could not reset user points to 0 %v\n", err)
+			return false, -1, err
 		}
 	}
 
 	user, _, _ := GetUser(uid)
 
-	return true, nil, user.BossId
+	return true, user.BossId, nil
 }
 
-func Failtask(Tid int, uid string) (bool, error) {
-	task, ok, err := GetTaskId(Tid)
+func FailTask(tid int, uid string) (bool, error) {
+	task, found, err := GetTaskId(tid)
 	if err != nil {
-		fmt.Printf("Failtask(): breaky %v\n", err)
+		log.Printf("FailTask(): error getting task: %v\n", err)
 		return false, err
 	}
-
-	if !ok {
-		fmt.Println("Failtask(): Task not found")
+	if !found {
+		log.Println("FailTask(): Task not found")
 		return false, fmt.Errorf("task not found")
 	}
 
@@ -673,13 +662,13 @@ func Failtask(Tid int, uid string) (bool, error) {
 
 	if task.IsRecurring {
 		_, err := DB.Exec(`
-		UPDATE RecurringLog 
-		SET Status = ?
-		WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
-	`, "failed", Tid, time.Now())
+			UPDATE RecurringLog 
+			SET Status = ?
+			WHERE (LogId, timestamp) in (SELECT LogId, timestamp from (SELECT r.LogId, MIN(r.timestamp) FROM TaskTable t, RecurringLog r WHERE t.TaskID = r.TaskID AND t.TaskID = ? AND r.timestamp > ?) as temptable)
+		`, "failed", tid, time.Now())
 
 		if err != nil {
-			fmt.Printf("Failtask(): breaky 0 %v\n", err)
+			fmt.Printf("FailTask(): error updating RecurringLog: %v\n", err)
 			return false, err
 		}
 	} else {
@@ -695,15 +684,14 @@ func Failtask(Tid int, uid string) (bool, error) {
 			WHERE TaskID = ?
 		`)
 		if err != nil {
+			log.Printf("FailTask(): could not prepare statement: %v\n", err)
 			return false, err
 		}
-		swag, err := stmt.Exec("failed", Tid)
-		stmt.Close()
+		defer stmt.Close()
+
+		_, err = stmt.Exec("failed", tid)
 		if err != nil {
-			print(err.Error())
-			print("FailtTask(): breaky 1 ")
-			fmt.Println(err)
-			fmt.Println(swag)
+			log.Printf("FailTask(): could not update status: %v\n", err)
 			return false, err
 		}
 
@@ -713,10 +701,10 @@ func Failtask(Tid int, uid string) (bool, error) {
 	return true, nil
 }
 
-func FailRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
-	task, ok, err := GetTaskId(Tid)
+func FailRecurringTask(tid int, recurrenceID int, uid string) (bool, error) {
+	task, ok, err := GetTaskId(tid)
 	if err != nil {
-		fmt.Printf("FailRecurringTask(): breaky %v\n", err)
+		log.Printf("FailRecurringTask(): error getting task %v\n", err)
 		return false, err
 	}
 
@@ -731,7 +719,7 @@ func FailRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
 
 	tx, err := DB.Beginx()
 	if err != nil {
-		fmt.Printf("FailRecurringTask(): breaky 1 %v\n", err)
+		log.Printf("FailRecurringTask(): DB issue starting transaction: %v", err)
 		return false, err
 	}
 	defer tx.Rollback()
@@ -743,7 +731,7 @@ func FailRecurringTask(Tid int, recurrenceID int, uid string) (bool, error) {
 	`, "failed", recurrenceID)
 
 	if err != nil {
-		fmt.Printf("FailRecurringTask(): breaky 2 %v\n", err)
+		fmt.Printf("FailRecurringTask(): could not update status: %v\n", err)
 		return false, err
 	}
 

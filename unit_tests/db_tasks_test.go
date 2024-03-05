@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"slugquest.com/backend/crud"
 	. "slugquest.com/backend/crud"
 )
 
@@ -146,7 +145,7 @@ func TestPassFailTask(t *testing.T) {
 		t.Errorf("TestPassFailTask(): error creating task: %v", err)
 	}
 
-	passsucc, err, _ := Passtask(int(taskID), testTask.UserID)
+	passsucc, _, err := PassTask(int(taskID), testTask.UserID)
 	if err != nil || !passsucc {
 		t.Errorf("TestPassFailTask(): error passing task: %v", err)
 	}
@@ -156,7 +155,7 @@ func TestPassFailTask(t *testing.T) {
 	}
 
 	//points, _, err := GetUserPoints(testUser.UserID)
-	failsucc, err := Failtask(int(taskID), testTask.UserID)
+	failsucc, err := FailTask(int(taskID), testTask.UserID)
 	if !failsucc || err != nil {
 		t.Errorf("TestPassFailTask(): 2 %v", err)
 	}
@@ -204,7 +203,7 @@ func TestPopRecurringTasksMonthGoroutine(t *testing.T) {
 		timer := time.NewTimer(0)
 		for {
 			<-timer.C
-			err := crud.PopRecurringTasksMonth()
+			err := PopRecurringTasksMonth()
 			if err != nil {
 				t.Errorf("Error populating recurring tasks: %v", err)
 			}
