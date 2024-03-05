@@ -307,7 +307,6 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		return utaskArr, err
 	}
 	defer prep.Close()
-	log.Printf("GetUserTaskDateTime() #2: %v", err)
 	log.Println(startq)
 	rows, err := prep.Query(uid, startq, endq)
 	if err != nil {
@@ -330,14 +329,13 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	}
 	prep.Close()
 	rows.Close()
-	p2, err := DB.Preparex("SELECT c.TaskID, c.UserID, c.Category, c.TaskName, c.StartTime, c.EndTime, c.Status, c.IsRecurring, c.IsAllDay, l.timestamp, l.LogId FROM TaskTable c, RecurringLog l WHERE l.TaskID = c.TaskID AND  c.UserID = ? AND l.timestamp > ? AND l.timestamp < ?;")
+	p2, err := DB.Preparex("SELECT c.TaskID, c.UserID, c.Category, c.TaskName, c.StartTime, c.EndTime, c.Status, c.IsRecurring, c.IsAllDay, l.timestamp, l.LogId FROM TaskTable c, RecurringLog l WHERE l.TaskID = c.TaskID AND c.UserID = ? AND l.timestamp > ? AND l.timestamp < ?;")
 	if err != nil {
-		log.Println("found recur")
 		log.Printf("GetUserTaskDateTime() #4: %v", err)
 		return utaskArr, err
 	}
 	rowrec, err := p2.Query(uid, startq, endq)
-	for rows.Next() {
+	for rowrec.Next() {
 		var taskprev RecurTypeTask
 		log.Println("recur type task in span found")
 		var reftime time.Time
