@@ -72,6 +72,14 @@ func CreateRouter(auth *authentication.Authenticator) *gin.Engine {
 		v1.POST("addFriend/:code", addFriend)
 		v1.DELETE("removeFriend/:code", removeFriend)
 		v1.GET("user/friends", getFriendList)
+		v1.GET("getTeamTask/:id", getTeamTask)
+		v1.PUT("addUserTeam/:id/:code", addUserTeam)
+		v1.GET("getUserTeams", getUserTeams)
+		v1.GET("getTeamUsers/:id", getTeamUsers)
+		v1.DELETE("deleteTeamUser/:tid/:code", deleteTeamUser)
+		v1.DELETE("deleteTeam/:tid", deleteTeam)
+		v1.PUT("createTeam/:name", createTeam)
+
 	}
 
 	return router
@@ -87,6 +95,121 @@ func getUserId(c *gin.Context) (string, error) {
 	uid := userProfile.UserID
 
 	return uid, nil
+}
+
+func getTeamTask(c *gin.Context) {
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getTeamTaskId(): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	task, err := crud.GetTeamTask(tid)
+	if err != nil {
+		log.Println("getTaskById(): Problem in team tasks, probably DB related")
+	}
+	c.JSON(http.StatusOK, gin.H{"tasks": task})
+}
+
+func addUserTeam(c *gin.Context) {
+	log.Println("getting team")
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	code := c.Param("code")
+	if err1 != nil {
+		log.Println("getTeamTaskId(): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	succ := crud.AddUserToTeam(int64(tid), code)
+	if succ {
+		c.JSON(http.StatusOK, gin.H{"message": "Success"})
+		return
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cadd memebr"})
+		return
+	}
+
+}
+
+func getUserTeams(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	ret, err := crud.GetUserTeams(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	log.Println(ret)
+
+	c.JSON(http.StatusOK, gin.H{"teams": ret})
+}
+
+func getTeamUsers(c *gin.Context) {
+	tid, err1 := strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		log.Println("getteamusers): str2int error", err1)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret, err := crud.GetTeamUsers(int64(tid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": ret})
+}
+
+func deleteTeamUser(c *gin.Context) {
+	tid, err1 := strconv.Atoi(c.Param("tid"))
+	code := c.Param("code")
+	log.Println(tid)
+	log.Println(code)
+	if err1 != nil {
+		log.Println("getRrs): str2int error", err1)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret := crud.RemoveUserFromTeam(int64(tid), code)
+	if !ret {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func deleteTeam(c *gin.Context) {
+	tid, err1 := strconv.Atoi(c.Param("tid"))
+	if err1 != nil {
+		log.Println("delmusers): str2int error")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	ret := crud.DeleteTeam(int64(tid))
+	if !ret {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Success"})
+}
+
+func createTeam(c *gin.Context) {
+	name := c.Param("name")
+	session := sessions.Default(c)
+	userProfile, _ := session.Get("user_profile").(crud.User)
+	uid := userProfile.UserID
+	ret, val := crud.CreateTeam(name, uid)
+	if !ret {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"teamid": val})
 }
 
 func passRecurringTask(c *gin.Context) {
@@ -466,6 +589,8 @@ func getuserTaskSpan(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
+	log.Println(starttime)
+
 
 	endtime, err2 := time.Parse(time.RFC3339, c.Param("end"))
 	if err2 != nil {
@@ -473,8 +598,9 @@ func getuserTaskSpan(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Error: incorrect request time format")
 		return
 	}
-
+	log.Println(endtime)
 	arr, err := crud.GetUserTaskDateTime(uid, starttime, endtime)
+	log.Println(arr)
 	if err != nil {
 		log.Println("getAllUserTasks(): Problem probably DB related")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
