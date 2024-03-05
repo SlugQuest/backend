@@ -4,20 +4,20 @@ import "time"
 
 type Category struct {
 	CatID  int
-	UserID string
+	UserID string `json:"-"`
 	Name   string
 	Color  int
 }
 
 type Team struct {
-	TeamID int64
-	Name string
+	TeamID  int64
+	Name    string
 	Members []map[string]interface{}
 }
 
 type Task struct {
 	TaskID         int
-	UserID         string
+	UserID         string `json:"-"`
 	Category       string
 	TaskName       string
 	Description    string
@@ -30,11 +30,9 @@ type Task struct {
 	CronExpression string
 }
 
-
-
 type RecurTypeTask struct {
 	TaskID       int
-	UserID       string
+	UserID       string `json:"-"`
 	Category     string
 	TaskName     string
 	StartTime    time.Time
@@ -47,7 +45,7 @@ type RecurTypeTask struct {
 }
 
 type User struct {
-	UserID     string // Not known to user, do not expose
+	UserID     string `json:"-"` // Not known to user, do not expose
 	Username   string // Set by user, can be exposed
 	Picture    string // A0 stores their profile pics as URLs
 	Points     int
