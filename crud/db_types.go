@@ -28,6 +28,7 @@ type Task struct {
 	IsAllDay       bool
 	Difficulty     string
 	CronExpression string
+	TeamID         int
 }
 
 type RecurTypeTask struct {

@@ -29,7 +29,7 @@ func GetTaskId(tid int) (Task, bool, error) {
 	counter := 0
 	for rows.Next() {
 		counter += 1
-		err := rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression)
+		err := rows.Scan(&taskit.TaskID, &taskit.UserID, &taskit.Category, &taskit.TaskName, &taskit.Description, &taskit.StartTime, &taskit.EndTime, &taskit.Status, &taskit.IsRecurring, &taskit.IsAllDay, &taskit.Difficulty, &taskit.CronExpression, &taskit.TeamID)
 		if err != nil {
 			log.Printf("GetTaskId() #3: %v", err)
 			rows.Close()
@@ -364,14 +364,14 @@ func CreateTask(task Task) (bool, int64, error) {
 	defer tx.Rollback() // Abort transaction if any error occurs
 
 	//preparing statement to prevent SQL injection issues
-	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Preparex("INSERT INTO TaskTable (UserID, Category, TaskName, Description, StartTime, EndTime, Status, IsRecurring, IsAllDay, Difficulty, CronExpression, TeamID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("CreateTask(): could not prepare statement %v", err)
 		return false, -1, err
 	}
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
 
-	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression)
+	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, task.TeamID)
 	if err != nil {
 		log.Printf("CreateTask(): could not insert into table: %v", err)
 		return false, -1, err
@@ -414,7 +414,7 @@ func EditTask(task Task, tid int) (bool, error) {
 
 	stmt, err := tx.Preparex(`
 		UPDATE TaskTable 
-		SET Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ? 
+		SET Category = ?, TaskName = ?, Description = ?, StartTime = ?, EndTime = ?, Status = ?, IsRecurring = ?, IsAllDay = ?, Difficulty = ?, CronExpression = ?, TeamID = ? 
 		WHERE TaskID = ? AND UserID = ?
 	`)
 
@@ -424,7 +424,7 @@ func EditTask(task Task, tid int) (bool, error) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression,
+	_, err = stmt.Exec(task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, task.TeamID,
 		tid, task.UserID)
 	if err != nil {
 		log.Printf("EditTask() #3: %v", err)

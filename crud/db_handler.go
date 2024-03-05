@@ -1,7 +1,6 @@
 package crud
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -18,7 +17,7 @@ var DB *sqlx.DB
 func LoadDumbData() error {
 	// No recur patterns since we aren't using them yet
 	for i := 1000; i < 1500; i++ {
-		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy"}
+		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i), Description: "sumdesc" + strconv.Itoa(i), StartTime: time.Now(), EndTime: time.Now(), Status: "todo", IsRecurring: false, IsAllDay: false, CronExpression: "dummycron", Difficulty: "easy", TeamID: -1}
 		lol, _, err := CreateTask(task)
 		if !lol || (err != nil) {
 			return err
@@ -110,27 +109,27 @@ func CalculatePoints(difficulty string) int {
 func CreateRecurringLogEntry(taskID int64, status string, timestamp time.Time) (bool, int64, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
-		fmt.Printf("CreateRecurringLog(): breaky 1: %v\n", err)
+		log.Printf("CreateRecurringLog(): breaky 1: %v\n", err)
 		return false, -1, err
 	}
 	defer tx.Rollback()
 
 	stmt, err := tx.Preparex("INSERT INTO RecurringLog (TaskID, Status, timestamp) VALUES (?, ?, ?)")
 	if err != nil {
-		fmt.Printf("CreateRecurringLog(): breaky 2: %v\n", err)
+		log.Printf("CreateRecurringLog(): breaky 2: %v\n", err)
 		return false, -1, err
 	}
 	defer stmt.Close()
 
 	res, err := stmt.Exec(taskID, status, timestamp)
 	if err != nil {
-		fmt.Printf("CreateRecurringLog(): breaky 3: %v\n", err)
+		log.Printf("CreateRecurringLog(): breaky 3: %v\n", err)
 		return false, -1, err
 	}
 
 	logID, err := res.LastInsertId()
 	if err != nil {
-		fmt.Printf("CreateRecurringLog(): breaky 4: %v\n", err)
+		log.Printf("CreateRecurringLog(): breaky 4: %v\n", err)
 		return false, -1, err
 	}
 
@@ -146,7 +145,7 @@ func GetRecurringTasks() ([]Task, error) {
 
 	rows, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("GetRecurringTasks(): Error querying recurring tasks: %v\n", err)
+		log.Printf("GetRecurringTasks(): Error querying recurring tasks: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -166,21 +165,22 @@ func GetRecurringTasks() ([]Task, error) {
 			&task.IsAllDay,
 			&task.Difficulty,
 			&task.CronExpression,
+			&task.TeamID,
 		)
 		if err != nil {
-			fmt.Printf("GetRecurringTasks(): Error scanning row: %v\n", err)
+			log.Printf("GetRecurringTasks(): Error scanning row: %v\n", err)
 			return nil, err
 		}
 		recurringTasks = append(recurringTasks, task)
 	}
 
 	if err := rows.Err(); err != nil {
-		fmt.Printf("GetRecurringTasks(): Error iterating over rows: %v\n", err)
+		log.Printf("GetRecurringTasks(): Error iterating over rows: %v\n", err)
 		return nil, err
 	}
 
 	if len(recurringTasks) == 0 {
-		fmt.Println("No recurring tasks found.")
+		log.Println("No recurring tasks found.")
 	}
 
 	return recurringTasks, nil
@@ -197,7 +197,7 @@ func PopRecurringTasksMonth() error {
 
 	for _, task := range recurringTasks {
 		cronExpression := task.CronExpression
-		fmt.Printf("Parsing cron expression: %s\n", cronExpression)
+		log.Printf("Parsing cron expression: %s\n", cronExpression)
 
 		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
 		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
@@ -207,7 +207,7 @@ func PopRecurringTasksMonth() error {
 			if nextTime.Month() == currentMonth && nextTime.Year() == currentYear {
 				_, _, err = CreateRecurringLogEntry(int64(task.TaskID), "todo", nextTime)
 				if err != nil {
-					fmt.Printf("In here")
+					log.Printf("PopRecurringTasksMonth(): %v", err)
 					return err
 				}
 			}
@@ -223,21 +223,21 @@ func CountRecurringLogEntries() (int, error) {
 
 	rows, err := DB.Query(query)
 	if err != nil {
-		fmt.Printf("CountRecurringLogEntries(): Error executing query: %v\n", err)
+		log.Printf("CountRecurringLogEntries(): Error executing query: %v\n", err)
 		return 0, err
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		if err := rows.Scan(&count); err != nil {
-			fmt.Printf("CountRecurringLogEntries(): Error scanning row: %v\n", err)
+			log.Printf("CountRecurringLogEntries(): Error scanning row: %v\n", err)
 			return 0, err
 		}
 	} else {
-		fmt.Println("CountRecurringLogEntries(): No rows returned.")
+		log.Println("CountRecurringLogEntries(): No rows returned.")
 		return 0, nil
 	}
 
-	fmt.Printf("Number of recurring log entries: %d\n", count)
+	log.Printf("Number of recurring log entries: %d\n", count)
 	return count, nil
 }
