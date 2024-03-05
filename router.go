@@ -175,8 +175,8 @@ func deleteTeamUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-	ret := crud.RemoveUserFromTeam(int64(tid), code)
-	if !ret {
+	ret, err := crud.RemoveUserFromTeam(int64(tid), code)
+	if !ret || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
@@ -190,8 +190,8 @@ func deleteTeam(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
-	ret := crud.DeleteTeam(int64(tid))
-	if !ret {
+	ret, err := crud.DeleteTeam(int64(tid))
+	if !ret || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
@@ -203,8 +203,8 @@ func createTeam(c *gin.Context) {
 	session := sessions.Default(c)
 	userProfile, _ := session.Get("user_profile").(crud.User)
 	uid := userProfile.UserID
-	ret, val := crud.CreateTeam(name, uid)
-	if !ret {
+	ret, val, err := crud.CreateTeam(name, uid)
+	if !ret || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
 		return
 	}
@@ -590,7 +590,6 @@ func getuserTaskSpan(c *gin.Context) {
 		return
 	}
 	log.Println(starttime)
-
 
 	endtime, err2 := time.Parse(time.RFC3339, c.Param("end"))
 	if err2 != nil {
