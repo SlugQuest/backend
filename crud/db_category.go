@@ -2,7 +2,9 @@ package crud
 
 import "log"
 
-// Get category by ID
+// GetCatID get category by its ID from the Category table.
+// Inputs: Cid - an integer representing the category ID to be retrieved
+// Outputs: Category - the retrieved category, bool - a success flag indicating whether the category was found, error- any error that occurred during the query
 func GetCatId(Cid int) (Category, bool, error) {
 	rows, err := DB.Query("SELECT * FROM Category WHERE CatID=?;", Cid)
 	var cat Category
@@ -20,6 +22,13 @@ func GetCatId(Cid int) (Category, bool, error) {
 	return cat, counter == 1, err
 }
 
+// CreateCategory inserts a new category into the Category table.
+// It starts a transaction, prepares the SQL statement, executes the statement, and commits the transaction.
+// Inputs: cat - a Category struct representing the category to be created
+// Outputs:
+// bool  - a success flag indicating whether the category creation was successful
+// int64 - the ID of the newly created category
+// error - any error that occurred during the transaction or statement execution
 func CreateCategory(cat Category) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
