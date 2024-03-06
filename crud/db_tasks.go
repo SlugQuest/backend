@@ -656,6 +656,7 @@ func FailTask(tid int, uid string) (bool, error) {
 		log.Printf("FailTask(): error getting task: %v\n", err)
 		return false, err
 	}
+
 	if !found {
 		log.Println("FailTask(): Task not found")
 		return false, fmt.Errorf("task not found")
@@ -677,6 +678,7 @@ func FailTask(tid int, uid string) (bool, error) {
 			return false, err
 		}
 	} else {
+		passedBefore := task.Status == "completed"
 		tx, err := DB.Beginx() //start transaction
 		if err != nil {
 			return false, err
@@ -701,6 +703,15 @@ func FailTask(tid int, uid string) (bool, error) {
 		}
 
 		tx.Commit()
+
+		if passedBefore {
+			points := CalculatePoints(task.Difficulty)
+			_, err = DB.Exec("UPDATE UserTable SET Points = Points - ? WHERE UserID = ?", points, task.UserID)
+			if err != nil {
+				fmt.Printf("PassTask(): could not update user's points: %v\n", err)
+				return false, err
+			}
+		}
 	}
 
 	return true, nil
