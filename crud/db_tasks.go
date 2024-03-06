@@ -8,7 +8,9 @@ import (
 	"github.com/gorhill/cronexpr"
 )
 
-// Find task by TaskID
+// GetTaskId finds a task by TaskID.
+// Input: tid (int) - TaskID
+// Output: Task - Retrieved task, bool - Success flag, error - Potential error
 func GetTaskId(tid int) (Task, bool, error) {
 	var taskit Task
 
@@ -42,6 +44,9 @@ func GetTaskId(tid int) (Task, bool, error) {
 }
 
 // Uid is provided in a router context (session cookies)
+// GetUserTask retrieves tasks associated with a specific user.
+// Input: uid (string) - UserID
+// Output: []Task - List of tasks, error - Potential error
 func GetUserTask(uid string) ([]Task, error) {
 	utaskArr := []Task{}
 
@@ -74,6 +79,9 @@ func GetUserTask(uid string) ([]Task, error) {
 	return utaskArr, err
 }
 
+// GetTeamTask retrieves tasks associated with a specific team.
+// Input: tid (int) - TeamID
+// Output: []Task - List of tasks, error - Potential error
 func GetTeamTask(tid int) ([]Task, error) {
 	utaskArr := []Task{}
 
@@ -106,6 +114,9 @@ func GetTeamTask(tid int) ([]Task, error) {
 	return utaskArr, err
 }
 
+// AddUserToTeam adds a user to a team.
+// Input: tid (int64) - TeamID, ucode (string) - User code
+// Output: bool - Success flag, error - Potential error
 func AddUserToTeam(tid int64, ucode string) (bool, error) {
 	if tid == int64(NoTeamID) {
 		log.Println("AddUserToTeam(): invalid team")
@@ -132,6 +143,9 @@ func AddUserToTeam(tid int64, ucode string) (bool, error) {
 	return true, nil
 }
 
+// GetUserTeams retrieves teams associated with a specific user.
+// Input: uid (string) - UserID
+// Output: []Team - List of teams, error - Potential error
 func GetUserTeams(uid string) ([]Team, error) {
 	uteamArr := []Team{}
 
@@ -164,6 +178,9 @@ func GetUserTeams(uid string) ([]Team, error) {
 
 }
 
+// GetTeamUsers retrieves users belonging to a specific team.
+// Input: tid (int64) - TeamID
+// Output: []map[string]interface{} - List of user details, error - Potential error
 func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	uarr := []string{}
 	var users []map[string]interface{}
@@ -204,6 +221,9 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 
 }
 
+// RemoveUserFromTeam removes a user from a team.
+// Input: tid (int64) - TeamID, ucode (string) - User code
+// Output: bool - Success flag, error - Potential error
 func RemoveUserFromTeam(tid int64, ucode string) (bool, error) {
 	user, found, err := SearchUserCode(ucode, true)
 	if !found || err != nil {
@@ -224,6 +244,9 @@ func RemoveUserFromTeam(tid int64, ucode string) (bool, error) {
 	return true, err
 }
 
+// DeleteTeam deletes a team and its members.
+// Input: tid (int64) - TeamID
+// Output: bool - Success flag, error - Potential error
 func DeleteTeam(tid int64) (bool, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -258,6 +281,9 @@ func DeleteTeam(tid int64) (bool, error) {
 	return true, nil
 }
 
+// CreateTeam creates a new team and adds the user to it.
+// Input: name (string) - Team name, uid (string) - UserID
+// Output: bool - Success flag, int64 - TeamID, error - Potential error
 func CreateTeam(name string, uid string) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -287,6 +313,9 @@ func CreateTeam(name string, uid string) (bool, int64, error) {
 	return true, teamins, nil
 }
 
+// AddUserToTeamUid adds a user to a team by UID.
+// Input: tid (int64) - TeamID, uid (string) - UserID
+// Output: bool - Success flag, error - Potential error
 func AddUserToTeamUid(tid int64, uid string) (bool, error) {
 	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
 	if err != nil {
@@ -302,6 +331,9 @@ func AddUserToTeamUid(tid int64, uid string) (bool, error) {
 	return true, nil
 }
 
+// GetUserTaskDateTime retrieves tasks for a user within a specific time range.
+// Input: uid (string) - UserID, startq (time.Time) - Start time, endq (time.Time) - End time
+// Output: []RecurTypeTask - List of tasks, error - Potential error
 func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurTypeTask, error) {
 	utaskArr := []RecurTypeTask{}
 
@@ -356,6 +388,9 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 	return utaskArr, err
 }
 
+// CreateTask creates a new task and handles recurring tasks.
+// Input: task (Task) - Task details
+// Output: bool - Success flag, int64 - TaskID, error - Potential error
 func CreateTask(task Task) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -406,6 +441,9 @@ func CreateTask(task Task) (bool, int64, error) {
 	return true, taskID, nil
 }
 
+// EditTask updates an existing task.
+// Input: task (Task) - Task details, tid (int) - TaskID
+// Output: bool - Success flag, error - Potential error
 func EditTask(task Task, tid int) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
@@ -441,6 +479,9 @@ func EditTask(task Task, tid int) (bool, error) {
 	return true, nil
 }
 
+// DeleteTask deletes a task and its associated recurring logs.
+// Input: tid (int) - TaskID, uid (string) - UserID
+// Output: bool - Success flag, error - Potential error
 func DeleteTask(tid int, uid string) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
@@ -489,6 +530,9 @@ func DeleteTask(tid int, uid string) (bool, error) {
 	return true, nil
 }
 
+// PassTask marks a task as completed, updates user points, and potentially switches to the next boss.
+// Input: tid (int) - TaskID, uid (string) - UserID
+// Output: bool - Success flag, int - Next boss ID, error - Potential error
 func PassTask(tid int, uid string) (bool, int, error) {
 	task, found, err := GetTaskId(tid)
 	if err != nil {
@@ -578,6 +622,9 @@ func PassTask(tid int, uid string) (bool, int, error) {
 	return true, user.BossId, nil
 }
 
+// PassRecurringTask marks a recurring task as completed, updates user points, and potentially switches to the next boss.
+// Input: tid (int) - TaskID, recurrenceID (int) - Recurring Log ID, uid (string) - UserID
+// Output: bool - Success flag, int - user boss ID, error - Potential error
 func PassRecurringTask(tid int, recurrenceID int, uid string) (bool, int, error) {
 	task, ok, err := GetTaskId(tid)
 	if err != nil {
@@ -650,6 +697,9 @@ func PassRecurringTask(tid int, recurrenceID int, uid string) (bool, int, error)
 	return true, user.BossId, nil
 }
 
+// FailTask marks a task as failed, subtracts points if it was previously completed.
+// Input: tid (int) - TaskID, uid (string) - UserID
+// Output: bool - Success flag, error - Potential error
 func FailTask(tid int, uid string) (bool, error) {
 	task, found, err := GetTaskId(tid)
 	if err != nil {
@@ -717,6 +767,9 @@ func FailTask(tid int, uid string) (bool, error) {
 	return true, nil
 }
 
+// FailRecurringTask marks a recurring task as failed.
+// Input: tid (int) - TaskID, recurrenceID (int) - Recurring Log ID, uid (string) - UserID
+// Output: bool - Success flag, error - Potential error
 func FailRecurringTask(tid int, recurrenceID int, uid string) (bool, error) {
 	task, ok, err := GetTaskId(tid)
 	if err != nil {
