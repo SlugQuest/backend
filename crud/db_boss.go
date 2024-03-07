@@ -5,6 +5,12 @@ import (
 	"log"
 )
 
+// AddBoss adds a new boss to the BossTable.
+// Inputs:
+// boss - a Boss struct representing the boss to be added
+// Outputs:
+// bool  - a success flag indicating whether the boss addition was successful
+// error - any error that occurred during the transaction or statement execution
 func AddBoss(boss Boss) (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
@@ -37,6 +43,12 @@ func AddBoss(boss Boss) (bool, error) {
 	return true, nil
 }
 
+// PopBossTable checks if the BossTable is populated and adds default bosses if not.
+// Inputs: None
+// Outputs:
+//
+//	bool  - a success flag indicating whether the BossTable population was successful
+//	error - any error that occurred during the transaction or statement execution
 func PopBossTable() (bool, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
@@ -76,6 +88,12 @@ func PopBossTable() (bool, error) {
 }
 
 // GetBossById retrieves boss information by BossID.
+// Inputs:
+// bossID - an integer representing the BossID
+// Outputs:
+// Boss - the retrieved boss information
+// bool - a success flag indicating whether the boss was found
+// error - any error that occurred during the query
 func GetBossById(bossID int) (Boss, bool, error) {
 	var boss Boss
 	rows, err := DB.Query("SELECT * FROM BossTable WHERE BossID = ?", bossID)
@@ -96,6 +114,12 @@ func GetBossById(bossID int) (Boss, bool, error) {
 	return boss, counter == 1, nil
 }
 
+// GetCurrBossHealth calculates the current boss health based on user points.
+// Inputs:
+// uid - a string representing the UserID
+// Outputs:
+// int  - the calculated current boss health
+// error - any error that occurred during the user or boss retrieval
 func GetCurrBossHealth(uid string) (int, error) {
 	user, exists, err := GetUser(uid)
 	if err != nil {

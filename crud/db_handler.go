@@ -17,6 +17,10 @@ var DB *sqlx.DB
 // ID for the default team, for individual tasks
 var NoTeamID int = -1
 
+// LoadDumbData populates the database with dummy tasks, categories, and a boss for testing purposes.
+// It creates tasks with unique IDs, categories, and adds a boss entry.
+// Inputs: None
+// Outputs: Error, if any
 func LoadDumbData() error {
 	for i := 1000; i < 1500; i++ {
 		task := Task{TaskID: i, UserID: "test_user_id", Category: "test_category", TaskName: "some name" + strconv.Itoa(i),
@@ -43,6 +47,10 @@ func LoadDumbData() error {
 	return nil
 }
 
+// ConnectToDB establishes a connection to the database based on whether it's a unit test or not.
+// For unit tests, it uses an in-memory SQLite database with a schema read from a file. For regular operation, it connects to the real database.
+// Inputs: isUnitTest - a boolean indicating whether it's a unit test
+// Outputs: Error, if any
 func ConnectToDB(isUnitTest bool) error {
 	if isUnitTest {
 		// Read schema from file
@@ -96,6 +104,10 @@ func ConnectToDB(isUnitTest bool) error {
 	return nil
 }
 
+// CalculatePoints assigns points based on the difficulty level.
+// It maps difficulty levels to corresponding point values.
+// Inputs: difficulty - a string representing the difficulty level
+// Outputs: int - the calculated points
 func CalculatePoints(difficulty string) int {
 	switch difficulty {
 	case "easy":
@@ -109,7 +121,10 @@ func CalculatePoints(difficulty string) int {
 	}
 }
 
-// for recurrence work
+// CreateRecurringLogEntry creates a log entry for a recurring task.
+// It starts a transaction, inserts a log entry, and commits the transaction.
+// Inputs: taskID - the ID of the recurring task, status - the status of the log entry (e.g., "todo"), timestamp - the timestamp of the log entry
+// Outputs: bool- success status, int64 - the ID of the created log entry, error
 func CreateRecurringLogEntry(taskID int64, status string, timestamp time.Time) (bool, int64, error) {
 	tx, err := DB.Beginx()
 	if err != nil {
@@ -142,6 +157,9 @@ func CreateRecurringLogEntry(taskID int64, status string, timestamp time.Time) (
 	return true, logID, nil
 }
 
+// GetRecurringTasks retrieves all recurring tasks from the TaskTable.
+// Inputs: None
+// Outputs: []Task - a slice of recurring tasks, error
 func GetRecurringTasks() ([]Task, error) {
 	var recurringTasks []Task
 
@@ -190,6 +208,9 @@ func GetRecurringTasks() ([]Task, error) {
 	return recurringTasks, nil
 }
 
+// PopRecurringTasksMonth populates recurring task logs for the current month.
+// Inputs: None
+// Outputs: Error
 func PopRecurringTasksMonth() error {
 	currentMonth := time.Now().Month()
 	currentYear := time.Now().Year()
@@ -220,6 +241,9 @@ func PopRecurringTasksMonth() error {
 	return nil
 }
 
+// CountRecurringLogEntries retrieves the count of entries in the RecurringLog table.
+// Inputs: None
+// Outputs: int- the count of log entries, error
 func CountRecurringLogEntries() (int, error) {
 	var count int
 
@@ -246,6 +270,9 @@ func CountRecurringLogEntries() (int, error) {
 	return count, nil
 }
 
+// AddDefaultTeam adds a default team entry to the TeamTable if it doesn't exist.
+// Inputs: None
+// Outputs: bool - success status, error
 func AddDefaultTeam() (bool, error) {
 	_, err := DB.Exec("INSERT OR IGNORE INTO TeamTable VALUES (?, ?)", NoTeamID, "NoTeam")
 	if err != nil {

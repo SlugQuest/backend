@@ -1,11 +1,6 @@
-package crud
-
-import (
-	"fmt"
-	"log"
-)
-
-
+// GetTeamTask retrieves tasks associated with a specific team.
+// Input: tid (int) - TeamID
+// Output: []Task - List of tasks, error - Potential error
 func GetTeamTask(tid int) ([]Task, error) {
 	utaskArr := []Task{}
 
@@ -38,6 +33,9 @@ func GetTeamTask(tid int) ([]Task, error) {
 	return utaskArr, err
 }
 
+// AddUserToTeam adds a user to a team.
+// Input: tid (int64) - TeamID, ucode (string) - User code
+// Output: bool - Success flag, error - Potential error
 func AddUserToTeam(tid int64, ucode string) (bool, error) {
 	if tid == int64(NoTeamID) {
 		log.Println("AddUserToTeam(): invalid team")
@@ -64,6 +62,9 @@ func AddUserToTeam(tid int64, ucode string) (bool, error) {
 	return true, nil
 }
 
+// GetUserTeams retrieves teams associated with a specific user.
+// Input: uid (string) - UserID
+// Output: []Team - List of teams, error - Potential error
 func GetUserTeams(uid string) ([]Team, error) {
 	uteamArr := []Team{}
 
@@ -91,11 +92,14 @@ func GetUserTeams(uid string) ([]Team, error) {
 		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
 		uteamArr = append(uteamArr, taskprev)
 	}
-	rows.Close()
+
 	return uteamArr, nil
 
 }
 
+// GetTeamUsers retrieves users belonging to a specific team.
+// Input: tid (int64) - TeamID
+// Output: []map[string]interface{} - List of user details, error - Potential error
 func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 	uarr := []string{}
 	var users []map[string]interface{}
@@ -136,6 +140,9 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 
 }
 
+// RemoveUserFromTeam removes a user from a team.
+// Input: tid (int64) - TeamID, ucode (string) - User code
+// Output: bool - Success flag, error - Potential error
 func RemoveUserFromTeam(tid int64, ucode string) (bool, error) {
 	user, found, err := SearchUserCode(ucode, true)
 	if !found || err != nil {
@@ -156,6 +163,9 @@ func RemoveUserFromTeam(tid int64, ucode string) (bool, error) {
 	return true, err
 }
 
+// DeleteTeam deletes a team and its members.
+// Input: tid (int64) - TeamID
+// Output: bool - Success flag, error - Potential error
 func DeleteTeam(tid int64) (bool, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -190,6 +200,9 @@ func DeleteTeam(tid int64) (bool, error) {
 	return true, nil
 }
 
+// CreateTeam creates a new team and adds the user to it.
+// Input: name (string) - Team name, uid (string) - UserID
+// Output: bool - Success flag, int64 - TeamID, error - Potential error
 func CreateTeam(name string, uid string) (bool, int64, error) {
 	tx, err := DB.Beginx() //start transaction
 	if err != nil {
@@ -219,6 +232,9 @@ func CreateTeam(name string, uid string) (bool, int64, error) {
 	return true, teamins, nil
 }
 
+// AddUserToTeamUid adds a user to a team by UID.
+// Input: tid (int64) - TeamID, uid (string) - UserID
+// Output: bool - Success flag, error - Potential error
 func AddUserToTeamUid(tid int64, uid string) (bool, error) {
 	prep, err := DB.Preparex("INSERT INTO TeamMembers (TeamID, UserID) VALUES (?,?)")
 	if err != nil {
