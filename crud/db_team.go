@@ -3,9 +3,6 @@ package crud
 import (
 	"fmt"
 	"log"
-	"time"
-
-	"github.com/gorhill/cronexpr"
 )
 
 
@@ -94,7 +91,7 @@ func GetUserTeams(uid string) ([]Team, error) {
 		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
 		uteamArr = append(uteamArr, taskprev)
 	}
-
+	rows.Close()
 	return uteamArr, nil
 
 }
