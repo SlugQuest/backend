@@ -1,3 +1,9 @@
+package crud
+
+import (
+	"fmt"
+	"log"
+)
 // GetTeamTask retrieves tasks associated with a specific team.
 // Input: tid (int) - TeamID
 // Output: []Task - List of tasks, error - Potential error
