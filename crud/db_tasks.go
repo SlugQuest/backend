@@ -104,13 +104,15 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 
 	for rows.Next() {
 		var taskprev RecurTypeTask
+		log.Printf("nonrecurtaskfound")
 		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		if err != nil {
 			log.Printf("GetUserTaskDateTime() #3: %v", err)
 			rows.Close()
 			return utaskArr, err
 		}
-		taskprev.RecurrenceId = 1
+		fmt.Printf("%v", utaskArr)
+		taskprev.RecurrenceId = -1
 		utaskArr = append(utaskArr, taskprev)
 	}
 	prep.Close()
@@ -131,6 +133,9 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 			rowrec.Close()
 			return utaskArr, err
 		}
+		taskprev.EndTime = reftime.Add(taskprev.EndTime.Sub(taskprev.StartTime))
+		taskprev.StartTime = reftime
+		fmt.Printf("%v",utaskArr)
 		utaskArr = append(utaskArr, taskprev)
 	}
 	p2.Close()
