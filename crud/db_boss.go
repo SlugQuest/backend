@@ -69,9 +69,9 @@ func PopBossTable() (bool, error) {
 	if count == 0 {
 		// Add default bosses if BossTable is not populated
 		basicBosses := []Boss{
-			{BossID: 1, Name: "Default Boss 1", Health: 40, Image: "sluggo.jpeg"},
-			{BossID: 2, Name: "Default Boss 2", Health: 90, Image: "snail.jpeg"},
-			{BossID: 3, Name: "Default Boss 3", Health: 200, Image: "worm.jpeg"},
+			{BossID: 1, Name: "Default Boss 1", Health: 40, Image: "sluggo.jpg"},
+			{BossID: 2, Name: "Default Boss 2", Health: 90, Image: "snail.jpg"},
+			{BossID: 3, Name: "Default Boss 3", Health: 200, Image: "worm.jpg"},
 			{BossID: 4, Name: "Default Boss 4", Health: 300, Image: "clown.jpeg"},
 		}
 
