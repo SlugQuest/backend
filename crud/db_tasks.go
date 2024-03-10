@@ -79,8 +79,6 @@ func GetUserTask(uid string) ([]Task, error) {
 	return utaskArr, err
 }
 
-
-
 // GetUserTaskDateTime retrieves tasks for a user within a specific time range.
 // Input: uid (string) - UserID, startq (time.Time) - Start time, endq (time.Time) - End time
 // Output: []RecurTypeTask - List of tasks, error - Potential error
@@ -135,7 +133,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		}
 		taskprev.EndTime = reftime.Add(taskprev.EndTime.Sub(taskprev.StartTime))
 		taskprev.StartTime = reftime
-		fmt.Printf("%v",utaskArr)
+		fmt.Printf("%v", utaskArr)
 		utaskArr = append(utaskArr, taskprev)
 	}
 	p2.Close()
@@ -160,7 +158,7 @@ func CreateTask(task Task) (bool, int64, error) {
 		log.Printf("CreateTask(): could not prepare statement %v", err)
 		return false, -1, err
 	}
-	log.Printf("%d",task.TeamID)
+	log.Printf("%d", task.TeamID)
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, task.TeamID)
 	if err != nil {
@@ -177,10 +175,21 @@ func CreateTask(task Task) (bool, int64, error) {
 	tx.Commit() //commit transaction to database
 
 	if task.IsRecurring {
-		currentMonth := time.Now().Month()
-		currentYear := time.Now().Year()
+		currentTime := time.Now()
+		currentMonth := currentTime.Month()
+		currentYear := currentTime.Year()
 		nextTimes := cronexpr.MustParse(task.CronExpression).NextN(time.Now(), 31)
 		//assuming there can only be one recurrence a day, so at most 31 recurrences in a month
+
+		if task.StartTime.Day() == currentTime.Day() &&
+			task.StartTime.Month() == currentMonth &&
+			task.StartTime.Year() == currentYear &&
+			currentTime.After(task.StartTime) {
+			_, _, err := CreateRecurringLogEntry(taskID, "todo", task.StartTime)
+			if err != nil {
+				return false, -1, err
+			}
+		}
 
 		for _, nextTime := range nextTimes {
 			// Check if the next occurrence is in the current month
