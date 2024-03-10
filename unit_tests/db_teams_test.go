@@ -2,57 +2,91 @@ package unit_tests
 
 import (
 	"testing"
-	"time"
 
 	. "slugquest.com/backend/crud"
 )
 
 
-var testUser = User{
+var testTeamUser = User{
 	UserID: "not_a_real_user",
 	Username: "asdf", // Set by user, can be exposed
 	Picture: "url",  // A0 stores their profile pics as URLs
-	Points: "0" ,    
-	BossId: "0",
-	SocialCode: "testuser0" // Friendly code to uniquely identify (public)
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser0", // Friendly code to uniquely identify (public)
 }
 
 
-var testUser2 = User{
+
+var testTeamUser2 = User{
 	UserID: "not_a_real_user2",
 	Username: "xkcd", // Set by user, can be exposed
 	Picture: "url",  // A0 stores their profile pics as URLs
-	Points: "0" ,    
-	BossId: "0",
-	SocialCode: "testuser1" // Friendly code to uniquely identify (public)
+	Points: 0,    
+	BossId: 0,
+	SocialCode: "testTeamUser1", // Friendly code to uniquely identify (public)
+}
+var testTeamUser3 = User{
+	UserID: "not_a_real_user3",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser3", // Friendly code to uniquely identify (public)
+}
+
+var testTeamUser4 = User{
+	UserID: "not_a_real_user4",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser4", // Friendly code to uniquely identify (public)
+}
+
+var testTeamUser5 = User{
+	UserID: "not_a_real_user5",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser5", // Friendly code to uniquely identify (public)
+}
+var testTeamUser6 = User{
+	UserID: "not_a_real_user5",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser6", // Friendly code to uniquely identify (public)
+}
+var testTeamUser7 = User{
+	UserID: "not_a_real_user7",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser7", // Friendly code to uniquely identify (public)
+}
+
+var testTeamUser8 = User{
+	UserID: "not_a_real_user8",
+	Username: "asdf", // Set by user, can be exposed
+	Picture: "url",  // A0 stores their profile pics as URLs
+	Points: 0 ,    
+	BossId: 0,
+	SocialCode: "testTeamUser8", // Friendly code to uniquely identify (public)
 }
 
 
-func LoadUserIfNotExist(userForUserTable User) (bool, error) {
-	_, found, getErr := GetUser(userForUserTable.UserID)
-	if getErr != nil {
-		return false, getErr
-	}
-
-	if !found {
-		addSuccess, addErr := AddUser(userForUserTable)
-		if addErr != nil || !addSuccess {
-			return false, addErr
-		}
-
-	}
-
-	return true, nil
-}
-
-func TestUserOnCreateTeam(t *testing) {
-	LoadUserIfNotExist(testUser)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func testTeamUserOnCreateTeam(t *testing.T) {
+	AddUser(testTeamUser)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser.UserID)
 	if( err != nil || !check){
-		t.Error("TestUserOnCreateTeam(): failed create error", err)
+		t.Error("testTeamUserOnCreateTeam(): failed create error", err)
 	}
 	if(teamnid < 0){
-		t.Error("TestUserOnCreateTeam(): failed create less than 0")
+		t.Error("testTeamUserOnCreateTeam(): failed create less than 0")
 	}
 	user, err2 := GetTeamUsers(teamnid)
 
@@ -66,29 +100,29 @@ func TestUserOnCreateTeam(t *testing) {
 
 
 
-func TestGetUserTeams(t *testing){
-	LoadUserIfNotExist(testUser)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func TestGetUserTeams(t *testing.T){
+	AddUser(testTeamUser2)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser2.UserID)
 	if( err != nil || !check){
-		t.Error("TestUserOnCreateTeam(): failed create error", err)
+		t.Error("testTeamUserOnCreateTeam(): failed create error", err)
 	}
 	if(teamnid < 0){
-		t.Error("TestUserOnCreateTeam(): failed create less than 0")
+		t.Error("testTeamUserOnCreateTeam(): failed create less than 0")
 	}
 
-	teaml, err2 = GetUserTeams(testUser.UserID)
+	teaml, err2 := GetUserTeams(testTeamUser2.UserID)
 	if (err2 != nil ){
 		t.Error("GetUserTeams(): failed to GetUserTeams", err2)
 	}
-	if (teaml.len() ){
+	if (len(teaml) != 1){
 		t.Error("GetUserTeams(): failed user Team Count")
 	}
 
 }
 
-func RemoveUserFromTeam(t *testing){
-	LoadUserIfNotExist(testUser)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func RemoveUserFromTeamTest(t *testing.T){
+	AddUser(testTeamUser3)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser3.UserID)
 	if( err != nil || !check){
 		t.Error("RemoveUSErfRomCreateFail(): failed create error", err)
 	}
@@ -96,11 +130,11 @@ func RemoveUserFromTeam(t *testing){
 		t.Error("RemoveUserFromCreateFail(): failed create less than 0")
 	}
 
-	boo, err2; := RemoveUserFromTeam(teamnid, testUser.SocialCode)
+	boo, err2 := RemoveUserFromTeam(teamnid, testTeamUser3.SocialCode)
 	if(!boo || err2 != nil){
 		t.Error("RemoveUserFromTeam(): broken", err2)
 	}
-	user, err2 := GetTeamUsers(teamnid)
+	user, err3 := GetTeamUsers(teamnid)
 
 	if( err3 != nil){
 		t.Error("GetUserTeam(): getting user team failed", err3)
@@ -109,9 +143,9 @@ func RemoveUserFromTeam(t *testing){
 		t.Error("GetTeamUsers(): failed asgn user not 1")
 	}
 }
-func DeleteTeamTest(t *testing){
-	LoadUserIfNotExist(testUser)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func DeleteTeamTest(t *testing.T){
+	AddUser(testTeamUser4)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser4.UserID)
 	if( err != nil || !check){
 		t.Error("DeleteTeam(): failed create error", err)
 	}
@@ -119,64 +153,64 @@ func DeleteTeamTest(t *testing){
 		t.Error("DeleteTeam(): failed create less than 0")
 	}
 
-	boo, err2; := DeleteTeam(teamnid)
+	boo, err2 := DeleteTeam(teamnid)
 	if(!boo || err2 != nil){
 		t.Error("RemoveUserFromTeam(): broken", err2)
 	}
 
-	teaml, err2 = GetUserTeams(testUser.UserID)
+	teaml, err2 := GetUserTeams(testTeamUser4.UserID)
 	if (err2 != nil ){
 		t.Error("DeleteTeam(): failed to GetUserTeams", err2)
 	}
-	if (teaml.len() ){
+	if (len(teaml) != 0){
 		t.Error("DeleteTeam(): failed user Team Count")
 	}
 }
 
-func TestUserAddTeam(t *testing){
-	LoadUserIfNotExist(testUser)
-	LoadUserIfNotExist(testUser2)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func testTeamUserAddTeam(t *testing.T){
+	AddUser(testTeamUser5)
+	AddUser(testTeamUser6)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser5.UserID)
 	if( err != nil || !check){
-		t.Error("TestUserAddTeam(): failed create error", err)
+		t.Error("testTeamUserAddTeam(): failed create error", err)
 	}
 	if(teamnid < 0){
-		t.Error("TestUserAddTeamFail(): failed create less than 0")
+		t.Error("testTeamUserAddTeamFail(): failed create less than 0")
 	}
-	boo, err1 := AddUserToTeam(teamnid, testUser2.SocialCode);
+	boo, err1 := AddUserToTeam(teamnid, testTeamUser6.SocialCode);
 	if (!boo || err1 != nil){
 		t.Error("AddUserTeam(): adderr", err1)
 	}
-	teaml, err3 = GetUserTeams(testUser2.UserID)
+	teaml, err3 := GetUserTeams(testTeamUser6.UserID)
 	if(err3 != nil){
 		t.Error("TestAddUserTeam(): query fail ", err3)
 	}
-	if(teaml.len() != 0){
+	if(len(teaml) != 0){
 		t.Error("TestAddUserTeam(): not added correctly")
 	}
 
 }
 
 
-func TestUserAddTeamUid(t *testing){
-	LoadUserIfNotExist(testUser)
-	LoadUserIfNotExist(testUser2)
-	check, teamnid, err := CreateTeam("testingTeam", testUser.UserID)
+func testTeamUserAddTeamUid(t *testing.T){
+	AddUser(testTeamUser7)
+	AddUser(testTeamUser2)
+	check, teamnid, err := CreateTeam("testingTeam", testTeamUser7.UserID)
 	if( err != nil || !check){
-		t.Error("TestUserAddTeam(): failed create error", err)
+		t.Error("testTeamUserAddTeam(): failed create error", err)
 	}
 	if(teamnid < 0){
-		t.Error("TestUserAddTeamFail(): failed create less than 0")
+		t.Error("testTeamUserAddTeamFail(): failed create less than 0")
 	}
-	boo, err1 := AddUserToTeamUid(teamnid, testUser2.UserID);
+	boo, err1 := AddUserToTeamUid(teamnid, testTeamUser8.UserID);
 	if (!boo || err1 != nil){
 		t.Error("AddUserTeamUid(): adderr", err1)
 	}
-	teaml, err3 = GetUserTeams(testUser2.UserID)
+	teaml, err3 := GetUserTeams(testTeamUser8.UserID)
 	if(err3 != nil){
 		t.Error("TestAddUserTeamUid(): query fail ", err3)
 	}
-	if(teaml.len() != 0){
+	if(len(teaml) != 0){
 		t.Error("TestAddUserTeamUid(): not added correctly")
 	}
 }
