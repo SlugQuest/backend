@@ -105,6 +105,7 @@ func LogoutHandler(c *gin.Context) {
 
 	// Remove from session
 	session := sessions.Default(c)
+	session.Set("access_token", nil)
 	session.Set("profile", nil)
 	session.Set("user_id", nil)
 	if err := session.Save(); err != nil {
