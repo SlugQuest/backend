@@ -183,8 +183,8 @@ func CreateTask(task Task) (bool, int64, error) {
 
 		if task.StartTime.Day() == currentTime.Day() &&
 			task.StartTime.Month() == currentMonth &&
-			task.StartTime.Year() == currentYear &&
-			currentTime.After(task.StartTime) {
+			task.StartTime.Year() == currentYear {
+			// currentTime.After(task.StartTime) {
 			_, _, err := CreateRecurringLogEntry(taskID, "todo", task.StartTime)
 			if err != nil {
 				return false, -1, err
