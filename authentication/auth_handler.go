@@ -103,6 +103,15 @@ func LogoutHandler(c *gin.Context) {
 	parameters.Add("client_id", os.Getenv("AUTH0_CLIENT_ID"))
 	logoutUrl.RawQuery = parameters.Encode()
 
+	// Remove from session
+	session := sessions.Default(c)
+	session.Set("profile", nil)
+	session.Set("user_id", nil)
+	if err := session.Save(); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	c.Redirect(http.StatusTemporaryRedirect, logoutUrl.String())
 }
 

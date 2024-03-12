@@ -92,7 +92,7 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 		return utaskArr, err
 	}
 	defer prep.Close()
-	log.Println(startq)
+
 	rows, err := prep.Query(uid, startq, endq)
 	if err != nil {
 		log.Printf("GetUserTaskDateTime() #2: %v", err)
@@ -102,19 +102,19 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 
 	for rows.Next() {
 		var taskprev RecurTypeTask
-		log.Printf("nonrecurtaskfound")
 		err := rows.Scan(&taskprev.TaskID, &taskprev.UserID, &taskprev.Category, &taskprev.TaskName, &taskprev.StartTime, &taskprev.EndTime, &taskprev.Status, &taskprev.IsRecurring, &taskprev.IsAllDay)
 		if err != nil {
 			log.Printf("GetUserTaskDateTime() #3: %v", err)
 			rows.Close()
 			return utaskArr, err
 		}
-		fmt.Printf("%v", utaskArr)
+
 		taskprev.RecurrenceId = -1
 		utaskArr = append(utaskArr, taskprev)
 	}
 	prep.Close()
 	rows.Close()
+
 	p2, err := DB.Preparex("SELECT c.TaskID, c.UserID, c.Category, c.TaskName, c.StartTime, c.EndTime, c.Status, c.IsRecurring, c.IsAllDay, l.timestamp, l.LogId FROM TaskTable c, RecurringLog l WHERE l.TaskID = c.TaskID AND c.UserID = ? AND l.timestamp > ? AND l.timestamp < ?;")
 	if err != nil {
 		log.Printf("GetUserTaskDateTime() #4: %v", err)
@@ -131,9 +131,9 @@ func GetUserTaskDateTime(uid string, startq time.Time, endq time.Time) ([]RecurT
 			rowrec.Close()
 			return utaskArr, err
 		}
+
 		taskprev.EndTime = reftime.Add(taskprev.EndTime.Sub(taskprev.StartTime))
 		taskprev.StartTime = reftime
-		fmt.Printf("%v", utaskArr)
 		utaskArr = append(utaskArr, taskprev)
 	}
 	p2.Close()
@@ -158,8 +158,8 @@ func CreateTask(task Task) (bool, int64, error) {
 		log.Printf("CreateTask(): could not prepare statement %v", err)
 		return false, -1, err
 	}
-	log.Printf("%d", task.TeamID)
 	defer stmt.Close() // Defer the closing of SQL statement to ensure it closes once the function completes
+
 	res, err := stmt.Exec(task.UserID, task.Category, task.TaskName, task.Description, task.StartTime, task.EndTime, task.Status, task.IsRecurring, task.IsAllDay, task.Difficulty, task.CronExpression, task.TeamID)
 	if err != nil {
 		log.Printf("CreateTask(): could not insert into table: %v", err)
@@ -522,7 +522,7 @@ func FailTask(tid int, uid string) (bool, error) {
 			points := CalculatePoints(task.Difficulty)
 			_, err = DB.Exec("UPDATE UserTable SET Points = Points - ? WHERE UserID = ?", points, task.UserID)
 			if err != nil {
-				fmt.Printf("PassTask(): could not update user's points: %v\n", err)
+				log.Printf("PassTask(): could not update user's points: %v\n", err)
 				return false, err
 			}
 		}
@@ -542,7 +542,7 @@ func FailRecurringTask(tid int, recurrenceID int, uid string) (bool, error) {
 	}
 
 	if !ok {
-		fmt.Println("FailRecurringTask(): Task not found")
+		log.Println("FailRecurringTask(): Task not found")
 		return false, fmt.Errorf("task not found")
 	}
 
@@ -564,7 +564,7 @@ func FailRecurringTask(tid int, recurrenceID int, uid string) (bool, error) {
 	`, "failed", recurrenceID)
 
 	if err != nil {
-		fmt.Printf("FailRecurringTask(): could not update status: %v\n", err)
+		log.Printf("FailRecurringTask(): could not update status: %v\n", err)
 		return false, err
 	}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	envfuncs "github.com/joho/godotenv"
@@ -78,8 +79,14 @@ func main() {
 		log.Println("Could not add default team")
 	}
 
-	log.Print("Running at http://localhost:8080")
-	router_err := router.Run() // listen and serve on 0.0.0.0:8080
+	// Get port to run server on, or default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Print("Running at http://localhost:" + port)
+	router_err := router.Run(":" + port)
 	if router_err != nil {
 		log.Fatalf("main(): couldn't run server gg: %v", router_err)
 	}

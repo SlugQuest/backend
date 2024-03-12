@@ -90,7 +90,8 @@ func getUserId(c *gin.Context) (string, error) {
 	session := sessions.Default(c)
 	userProfile, ok := session.Get("user_profile").(crud.User)
 	if !ok {
-		return "", fmt.Errorf("couldn't get user id")
+		log.Printf("getUserId(): error retrieving user id")
+		return "", fmt.Errorf("error retrieving user id")
 	}
 	uid := userProfile.UserID
 
@@ -98,10 +99,10 @@ func getUserId(c *gin.Context) (string, error) {
 }
 
 func getTeamTask(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("id"))
-	if err1 != nil {
+	tid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
 		log.Println("getTeamTaskId(): str2int error")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -112,18 +113,18 @@ func getTeamTask(c *gin.Context) {
 
 	task, err := crud.GetTeamTask(tid)
 	if err != nil {
-		log.Println("getTaskById(): Problem in team tasks, probably DB related")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not retrieve team tasks"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"tasks": task})
 }
 
 func addUserTeam(c *gin.Context) {
-	log.Println("getting team")
-	tid, err1 := strconv.Atoi(c.Param("id"))
+	tid, err := strconv.Atoi(c.Param("id"))
 	code := c.Param("code")
-	if err1 != nil {
+	if err != nil {
 		log.Println("getTeamTaskId(): str2int error")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -135,36 +136,32 @@ func addUserTeam(c *gin.Context) {
 	succ, err := crud.AddUserToTeam(int64(tid), code)
 	if succ && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
-		return
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cadd memebr"})
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add user to team"})
 	}
-
 }
 
 func getUserTeams(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
+
 	ret, err := crud.GetUserTeams(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed teams get"})
 		return
 	}
-	log.Println(ret)
 
 	c.JSON(http.StatusOK, gin.H{"teams": ret})
 }
 
 func getTeamUsers(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("id"))
-	if err1 != nil {
-		log.Println("getteamusers): str2int error", err1)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	tid, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println("getTeamUsers(): str2int error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -182,13 +179,11 @@ func getTeamUsers(c *gin.Context) {
 }
 
 func deleteTeamUser(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("tid"))
+	tid, err := strconv.Atoi(c.Param("tid"))
 	code := c.Param("code")
-	log.Println(tid)
-	log.Println(code)
-	if err1 != nil {
-		log.Println("getRrs): str2int error", err1)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	if err != nil {
+		log.Println("deleteTeamUser(): str2int error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -199,17 +194,17 @@ func deleteTeamUser(c *gin.Context) {
 
 	ret, err := crud.RemoveUserFromTeam(int64(tid), code)
 	if !ret || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error removing user from team"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
 func deleteTeam(c *gin.Context) {
-	tid, err1 := strconv.Atoi(c.Param("tid"))
-	if err1 != nil {
-		log.Println("delmusers): str2int error")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	tid, err := strconv.Atoi(c.Param("tid"))
+	if err != nil {
+		log.Println("deleteTeam(): str2int error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
 		return
 	}
 
@@ -220,20 +215,23 @@ func deleteTeam(c *gin.Context) {
 
 	ret, err := crud.DeleteTeam(int64(tid))
 	if !ret || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting team"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
 func createTeam(c *gin.Context) {
+	uid, err := getUserId(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
+		return
+	}
+
 	name := c.Param("name")
-	session := sessions.Default(c)
-	userProfile, _ := session.Get("user_profile").(crud.User)
-	uid := userProfile.UserID
 	ret, val, err := crud.CreateTeam(name, uid)
 	if !ret || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create team"})
 		return
 	}
 
@@ -243,7 +241,7 @@ func createTeam(c *gin.Context) {
 func passRecurringTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -266,7 +264,6 @@ func passRecurringTask(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "bossId": bossId})
 		return
 	} else {
-		log.Printf("passRecurringTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass recurring task"})
 		return
 	}
@@ -275,7 +272,7 @@ func passRecurringTask(c *gin.Context) {
 func failRecurringTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -298,7 +295,6 @@ func failRecurringTask(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 		return
 	} else {
-		log.Printf("failRecurringTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail recurring task"})
 		return
 	}
@@ -328,13 +324,13 @@ func getBossById(c *gin.Context) {
 func getCurrBossHealth(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	currBossHealth, err := crud.GetCurrBossHealth(uid)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Can't find boss health")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error getting current boss health"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"curr_boss_health": currBossHealth})
@@ -343,7 +339,7 @@ func getCurrBossHealth(c *gin.Context) {
 func getCategory(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -366,6 +362,7 @@ func getCategory(c *gin.Context) {
 	}
 
 	if cat.UserID != uid {
+		log.Printf("getCategory(): unauthorized access to category not owned by current user")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Category is not owned by user"})
 		return
 	}
@@ -376,7 +373,7 @@ func getCategory(c *gin.Context) {
 func putCat(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -390,24 +387,21 @@ func putCat(c *gin.Context) {
 	success, catID, err := crud.CreateCategory(json)
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "catID": catID})
-		return
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cat", "details": err.Error()})
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create category", "details": err.Error()})
 	}
 }
 
 func getUserPoints(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	ret, fnd, err := crud.GetUserPoints(uid)
-	if !fnd {
-		log.Println("getTaskById(): Problem in getUserPoints, probably DB related", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+	if !fnd || err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error retrieving user points"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"points": ret})
@@ -417,25 +411,24 @@ func getUserPoints(c *gin.Context) {
 func createTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
+	// Try to bind JSON sent in request into our Task struct
 	var json crud.Task
 	if err := c.ShouldBindJSON(&json); err != nil {
 		log.Printf("createTask(): could not bind request to Task")
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
+	}
 	json.UserID = uid
 
-	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
+	success, taskID, err := crud.CreateTask(json)
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "taskID": taskID})
-		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task", "details": err.Error()})
-		return
 	}
 }
 
@@ -443,7 +436,7 @@ func createTask(c *gin.Context) {
 func editTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -456,21 +449,21 @@ func editTask(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&json); err != nil {
+		log.Printf("editTask(): could not bind request to Task")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	json.UserID = uid
 
-	fmt.Println("we are checkin the field of the jsawn")
-	fmt.Println(json.Status)
+	// Hall of fame comment
+	// fmt.Println("we are checkin the field of the jsawn")
+	// fmt.Println(json.Status)
 
 	success, err := crud.EditTask(json, tid)
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
-		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to edit task", "details": err.Error()})
-		return
 	}
 }
 
@@ -478,7 +471,7 @@ func editTask(c *gin.Context) {
 func deleteTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -490,7 +483,6 @@ func deleteTask(c *gin.Context) {
 	}
 
 	success, err := crud.DeleteTask(tid, uid)
-
 	if success {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
 	} else {
@@ -502,7 +494,7 @@ func deleteTask(c *gin.Context) {
 func getAllUserTasks(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -511,15 +503,13 @@ func getAllUserTasks(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve all user tasks"})
 		return
 	}
-	log.Println("working")
-	log.Println(arr)
 	c.JSON(http.StatusOK, gin.H{"list": arr})
 }
 
 func passTheTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -533,24 +523,20 @@ func passTheTask(c *gin.Context) {
 	success, bossId, err := crud.PassTask(tid, uid)
 	if success && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success", "bossId": bossId})
-		return
 	} else {
-		log.Printf("passTheTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to pass task"})
-		return
 	}
 }
 
 func failTheTask(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	tid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-
 		log.Println("editTask(): Invalid taskID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid TaskId"})
 		return
@@ -559,11 +545,8 @@ func failTheTask(c *gin.Context) {
 	success, err := crud.FailTask(tid, uid)
 	if success && err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Success"})
-		return
 	} else {
-		log.Printf("failTheTask(): %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fail task"})
-		return
 	}
 }
 
@@ -571,7 +554,7 @@ func failTheTask(c *gin.Context) {
 func getTaskById(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
@@ -589,12 +572,13 @@ func getTaskById(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		log.Printf("getTaskById(): %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error retreiving task"})
 		return
 	}
 	if task.UserID != uid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "task not owned by user"})
+		log.Printf("getTaskById(): unauthorized access to task not owned by current user")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "task not owned by current user"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"task": task})
@@ -604,30 +588,26 @@ func getTaskById(c *gin.Context) {
 func getuserTaskSpan(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
-	starttime, err1 := time.Parse(time.RFC3339, c.Param("start"))
-	if err1 != nil {
-		log.Println("startime", err)
-		c.String(http.StatusBadRequest, "Error: incorrect request time format")
+	starttime, err := time.Parse(time.RFC3339, c.Param("start"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect request time format (start)"})
 		return
 	}
-	log.Println(starttime)
 
-	endtime, err2 := time.Parse(time.RFC3339, c.Param("end"))
-	if err2 != nil {
-		log.Println("enime", err)
-		c.String(http.StatusBadRequest, "Error: incorrect request time format")
+	endtime, err := time.Parse(time.RFC3339, c.Param("end"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect request time format (end)"})
 		return
 	}
-	log.Println(endtime)
+
 	arr, err := crud.GetUserTaskDateTime(uid, starttime, endtime)
-	log.Println(arr)
 	if err != nil {
 		log.Println("getAllUserTasks(): Problem probably DB related")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "This is really bad"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to retreive tasks in given span"})
 		return
 	}
 
@@ -640,8 +620,7 @@ func searchUsers(c *gin.Context) {
 	if method == "name" {
 		users, foundAny, err := crud.SearchUsername(query, false)
 		if err != nil {
-			log.Printf("searchUsers(): error searching for users: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "This is really bad"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed searching for users"})
 			return
 		}
 
@@ -667,24 +646,22 @@ func searchUsers(c *gin.Context) {
 
 		res = append(res, user)
 		c.JSON(http.StatusOK, gin.H{"num_results": 1, "users": res})
-
 	} else {
-		c.String(http.StatusBadRequest, "Format error: accepted methods of user search are by \"name\" and \"code\".")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "format error: accepted methods of user search are by \"name\" or \"code\""})
 	}
 }
 
 func addFriend(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	their_code := c.Param("code")
 	addSuccess, err := crud.AddFriend(uid, their_code)
 	if !addSuccess || err != nil {
-		log.Printf("addFriend(): error adding friend: %v", err)
-		c.String(http.StatusInternalServerError, "Failure to add friend")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add friend"})
 		return
 	}
 
@@ -694,15 +671,14 @@ func addFriend(c *gin.Context) {
 func removeFriend(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	their_code := c.Param("code")
 	delSuccess, err := crud.DeleteFriend(uid, their_code)
 	if !delSuccess || err != nil {
-		log.Printf("deleteFriend(): error removing friend: %v", err)
-		c.String(http.StatusInternalServerError, "Failure to remove friend")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove friend"})
 		return
 	}
 
@@ -712,14 +688,13 @@ func removeFriend(c *gin.Context) {
 func getFriendList(c *gin.Context) {
 	uid, err := getUserId(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error authenticating user"})
 		return
 	}
 
 	friends, err := crud.GetFriendList(uid, false)
 	if err != nil {
-		log.Printf("getFriendList(): error retrieving friend list: %v", err)
-		c.String(http.StatusInternalServerError, "Failure to retrieve friend list")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve friend list"})
 		return
 	}
 
