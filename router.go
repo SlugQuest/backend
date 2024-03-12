@@ -428,7 +428,6 @@ func createTask(c *gin.Context) {
 		return
 	} //take any JSON sent in the BODY of the request and try to bind it to our Task struct
 	json.UserID = uid
-	json.TeamID = crud.NoTeamID
 
 	success, taskID, err := crud.CreateTask(json) //pass struct into function to add Task to db
 	if success {
@@ -442,7 +441,6 @@ func createTask(c *gin.Context) {
 
 // Edit a task by its ID
 func editTask(c *gin.Context) {
-	fmt.Println("weswaggin")
 	uid, err := getUserId(c)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failure to retrieve user id")
