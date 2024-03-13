@@ -1,6 +1,0 @@
-- Can complete tasks that are already completed. Which logs points on the frontend, but not the backend.
-- Can fail a completed Task
-- Can't complete tasks from calendar view
-- How do I get my Social code?
-- Cron explode on restarting the server. We are probably ok on this
-- Can view boss not be a button?

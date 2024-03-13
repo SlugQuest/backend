@@ -1,5 +1,14 @@
 # Common problems for why things are broken
 
+## Most common issue: database inconsistencies
+
+Reset the DB by:
+
+```bash
+rm slugquest.db
+sqlite3 slugquest.db < schema.sql
+```
+
 ## My nix fails to build
 
 ### You installed a new go dependency

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 )
+
 // GetTeamTask retrieves tasks associated with a specific team.
 // Input: tid (int) - TeamID
 // Output: []Task - List of tasks, error - Potential error
@@ -94,7 +95,6 @@ func GetUserTeams(uid string) ([]Team, error) {
 			rows.Close()
 			return uteamArr, err
 		}
-		log.Println("we found a team")
 		taskprev.Members, _ = GetTeamUsers(taskprev.TeamID)
 		uteamArr = append(uteamArr, taskprev)
 	}
@@ -123,7 +123,6 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 
 	for rows.Next() {
 		var uid string
-		log.Println("found a user")
 		err := rows.Scan(&uid)
 		if err != nil {
 			fmt.Println(err)
@@ -139,7 +138,6 @@ func GetTeamUsers(tid int64) ([]map[string]interface{}, error) {
 			log.Printf("GetTeamUsers(): could not retreive users: %v", err)
 			return users, err
 		}
-		log.Println("found a user", fUser)
 		users = append(users, fUser)
 	}
 	return users, err
