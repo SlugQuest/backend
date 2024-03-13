@@ -35,7 +35,6 @@ var recurringTask = Task{
 	CronExpression: "0 0 * * *", //every day at midnight
 }
 
-
 func TestGetUserTask(t *testing.T) {
 	taskl, err := GetUserTask(testUser.UserID)
 	if err != nil {
